@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/home_controller_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.github.k1rakishou.kurobanewnavstacktest.widget.DrawerWidthAdjustingLayout
+        android:id="@+id/slide_controller_drawer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.github.k1rakishou.kurobanewnavstacktest.widget.SlidingPaneLayoutEx
+            android:id="@+id/slide_controller_slide_pane_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <com.github.k1rakishou.kurobanewnavstacktest.widget.TouchBlockingFrameLayout
+                android:id="@+id/slide_controller_catalog_controller_container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <com.github.k1rakishou.kurobanewnavstacktest.widget.TouchBlockingFrameLayout
+                android:id="@+id/slide_controller_thread_controller_container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+        </com.github.k1rakishou.kurobanewnavstacktest.widget.SlidingPaneLayoutEx>
+
+        <com.github.k1rakishou.kurobanewnavstacktest.widget.TouchBlockingFrameLayout
+            android:id="@+id/slide_controller_drawer_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="start"
+            android:background="#80505050" />
+
+    </com.github.k1rakishou.kurobanewnavstacktest.widget.DrawerWidthAdjustingLayout>
+
+    <com.github.k1rakishou.kurobanewnavstacktest.widget.TouchBlockingFrameLayout
+        android:id="@+id/slide_controller_toolbar_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top" />
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/slide_controller__bottom_nav_view"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/bottom_nav_view_height"
+        android:layout_gravity="bottom"
+        android:background="@color/colorPrimaryDark"
+        android:elevation="4dp"
+        app:menu="@menu/bottom_navigation_menu" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/slide_controller_catalog_fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginBottom="16dp"
+        android:src="@drawable/ic_baseline_create_24"
+        tools:layout_marginBottom="72dp"
+        tools:layout_marginEnd="16dp" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

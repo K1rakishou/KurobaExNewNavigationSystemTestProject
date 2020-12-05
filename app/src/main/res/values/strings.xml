@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">KurobaNewNavStackTest</string>
+
+    <string name="menu_bookmarks">Bookmarks</string>
+    <string name="menu_browse">Browse</string>
+    <string name="menu_settings">Settings</string>
+</resources>
