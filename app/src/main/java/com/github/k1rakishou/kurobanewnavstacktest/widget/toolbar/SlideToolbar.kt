@@ -9,6 +9,7 @@ import androidx.core.view.updatePadding
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndRequest
 import com.google.android.material.appbar.MaterialToolbar
+import timber.log.Timber
 
 class SlideToolbar @JvmOverloads constructor(
   context: Context,
@@ -20,7 +21,7 @@ class SlideToolbar @JvmOverloads constructor(
 
   private var prevSliding: Float? = null
   private var initialToolbarShown = false
-  private var catalogToolbarVisible: Boolean? = false
+  private var catalogToolbarVisible: Boolean = false
 
   init {
     inflate(context, R.layout.widget_slide_toolbar, this)
@@ -57,20 +58,16 @@ class SlideToolbar @JvmOverloads constructor(
     when (catalogToolbarVisible) {
       true -> actualCatalogToolbar.title = title
       false -> actualThreadToolbar.title = title
-      else -> {
-        // no-op
-      }
     }
   }
 
   fun onSliding(offset: Float) {
-    println("TTTAAA onSliding offset=$offset")
+    Timber.d("onSliding offset=$offset")
 
     // TODO(KurobaEx): not tested
-    catalogToolbarVisible = when {
-      offset <= 0.01f -> true
-      offset >= 0.99f -> false
-      else -> null
+    when {
+      offset >= 0.99f -> catalogToolbarVisible = true
+      offset <= 0.01f -> catalogToolbarVisible = false
     }
   }
 

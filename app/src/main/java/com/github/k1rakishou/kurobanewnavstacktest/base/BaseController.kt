@@ -18,6 +18,7 @@ import com.bluelinelabs.conductor.RouterTransaction
 import com.github.k1rakishou.kurobanewnavstacktest.activity.ActivityContract
 import com.github.k1rakishou.kurobanewnavstacktest.utils.myViewModels
 import kotlinx.coroutines.*
+import timber.log.Timber
 import kotlin.coroutines.CoroutineContext
 import kotlin.reflect.KClass
 
@@ -117,19 +118,19 @@ abstract class BaseController(
   ): View
 
   protected open fun onControllerCreated(savedViewState: Bundle?) {
-    Log.d(TAG, "${this.javaClass.simpleName} onControllerCreated()")
+    Timber.d(this.javaClass.simpleName, "onControllerCreated()")
   }
 
   protected open fun onControllerShown() {
-    Log.d(TAG, "${this.javaClass.simpleName} onControllerShown()")
+    Timber.d(this.javaClass.simpleName, "onControllerShown()")
   }
 
   protected open fun onControllerHidden() {
-    Log.d(TAG, "${this.javaClass.simpleName} onControllerHidden()")
+    Timber.d(this.javaClass.simpleName, "onControllerHidden()")
   }
 
   protected open fun onControllerDestroyed() {
-    Log.d(TAG, "${this.javaClass.simpleName} onControllerDestroyed()")
+    Timber.d(this.javaClass.simpleName, "onControllerDestroyed()")
   }
 
   protected fun ViewGroup.setupChildRouterIfNotSet(transaction: RouterTransaction): Router {

@@ -11,22 +11,10 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <com.github.k1rakishou.kurobanewnavstacktest.widget.SlidingPaneLayoutEx
-            android:id="@+id/slide_controller_slide_pane_layout"
+        <com.github.k1rakishou.kurobanewnavstacktest.widget.TouchBlockingFrameLayout
+            android:id="@+id/slide_controller_catalog_controller_container"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <com.github.k1rakishou.kurobanewnavstacktest.widget.TouchBlockingFrameLayout
-                android:id="@+id/slide_controller_catalog_controller_container"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-
-            <com.github.k1rakishou.kurobanewnavstacktest.widget.TouchBlockingFrameLayout
-                android:id="@+id/slide_controller_thread_controller_container"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-
-        </com.github.k1rakishou.kurobanewnavstacktest.widget.SlidingPaneLayoutEx>
+            android:layout_height="match_parent" />
 
         <com.github.k1rakishou.kurobanewnavstacktest.widget.TouchBlockingFrameLayout
             android:id="@+id/slide_controller_drawer_container"
@@ -44,7 +32,7 @@
         android:layout_gravity="top" />
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/slide_controller__bottom_nav_view"
+        android:id="@+id/slide_controller_bottom_nav_view"
         android:layout_width="match_parent"
         android:layout_height="@dimen/bottom_nav_view_height"
         android:layout_gravity="bottom"

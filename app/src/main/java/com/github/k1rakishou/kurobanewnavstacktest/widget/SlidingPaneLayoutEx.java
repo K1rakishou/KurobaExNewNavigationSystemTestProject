@@ -51,6 +51,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 
+import timber.log.Timber;
+
 /**
  * SlidingPaneLayout provides a horizontal, multi-pane layout for use at the top level
  * of a UI. A left (or first) pane is treated as a content list or browser, subordinate to a
@@ -500,7 +502,7 @@ public class SlidingPaneLayoutEx extends ViewGroup {
         final int childCount = getChildCount();
 
         if (childCount > 2) {
-            Log.e(TAG, "onMeasure: More than two child views are not supported.");
+            Timber.e("%s onMeasure: More than two child views are not supported.", TAG);
         }
 
         // We'll find the current one below.
@@ -1068,15 +1070,13 @@ public class SlidingPaneLayoutEx extends ViewGroup {
                     mGetDisplayList = View.class.getDeclaredMethod("getDisplayList",
                             (Class<?>[]) null);
                 } catch (NoSuchMethodException e) {
-                    Log.e(TAG, "Couldn't fetch getDisplayList method; dimming won't work right.",
-                            e);
+                    Timber.e(e, "%s Couldn't fetch getDisplayList method; dimming won't work right.", TAG);
                 }
                 try {
                     mRecreateDisplayList = View.class.getDeclaredField("mRecreateDisplayList");
                     mRecreateDisplayList.setAccessible(true);
                 } catch (NoSuchFieldException e) {
-                    Log.e(TAG, "Couldn't fetch mRecreateDisplayList field; dimming will be slow.",
-                            e);
+                    Timber.e(e, "%s Couldn't fetch mRecreateDisplayList field; dimming will be slow.", TAG);
                 }
                 mDisplayListReflectionLoaded = true;
             }
@@ -1090,7 +1090,7 @@ public class SlidingPaneLayoutEx extends ViewGroup {
                 mRecreateDisplayList.setBoolean(v, true);
                 mGetDisplayList.invoke(v, (Object[]) null);
             } catch (Exception e) {
-                Log.e(TAG, "Error refreshing display list state", e);
+                Timber.e(e, "%s Error refreshing display list state", TAG);
             }
         }
 

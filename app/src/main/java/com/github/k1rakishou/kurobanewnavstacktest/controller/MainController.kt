@@ -11,7 +11,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.base.BaseController
 import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerPresenterDelegate
 import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
-import com.github.k1rakishou.kurobanewnavstacktest.controller.slide.SlideNavController
+import com.github.k1rakishou.kurobanewnavstacktest.controller.slide.SlideCatalogUiElementsController
 import com.github.k1rakishou.kurobanewnavstacktest.controller.split.SplitNavController
 
 class MainController(args: Bundle? = null) : BaseController(args) {
@@ -41,7 +41,7 @@ class MainController(args: Bundle? = null) : BaseController(args) {
         setControllerPresenterDelegate(presenterDelegate)
       }
     } else {
-      SlideNavController().apply {
+      SlideCatalogUiElementsController().apply {
         setControllerPresenterDelegate(presenterDelegate)
       }
     }

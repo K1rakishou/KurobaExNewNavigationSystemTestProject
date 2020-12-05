@@ -9,75 +9,76 @@ import androidx.core.view.updateLayoutParams
 import com.airbnb.epoxy.AsyncEpoxyController
 import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyRecyclerView
+import timber.log.Timber
 
 val Int.dp: Int
-    get() = (this * Resources.getSystem().displayMetrics.density).toInt()
+  get() = (this * Resources.getSystem().displayMetrics.density).toInt()
 
 fun EpoxyRecyclerView.withModelsAsync(buildModels: EpoxyController.() -> Unit) {
-    val controller = SimpleAsyncEpoxyController(buildModels)
-        .also { setController(it) }
+  val controller = SimpleAsyncEpoxyController(buildModels)
+    .also { setController(it) }
 
-    controller.requestModelBuild()
+  controller.requestModelBuild()
 }
 
 class SimpleAsyncEpoxyController(
     val builder: EpoxyController.() -> Unit
 ) : AsyncEpoxyController() {
-    override fun buildModels() {
-        builder()
-    }
+  override fun buildModels() {
+    builder()
+  }
 }
 
 fun <T : View> View.setBehavior(behavior: CoordinatorLayout.Behavior<T>) {
-    (layoutParams as CoordinatorLayout.LayoutParams).behavior = behavior
+  (layoutParams as CoordinatorLayout.LayoutParams).behavior = behavior
 }
 
 fun <T : CoordinatorLayout.Behavior<*>> View.getBehaviorEx(): T? {
-    return (layoutParams as? CoordinatorLayout.LayoutParams)?.behavior as? T
+  return (layoutParams as? CoordinatorLayout.LayoutParams)?.behavior as? T
 }
 
 fun findChildView(viewGroup: ViewGroup, predicate: (View) -> Boolean): View? {
-    if (predicate(viewGroup)) {
-        return viewGroup
+  if (predicate(viewGroup)) {
+    return viewGroup
+  }
+
+  for (childIndex in 0 until viewGroup.childCount) {
+    val child = viewGroup.getChildAt(childIndex)
+    if (predicate(child)) {
+      return child
     }
 
-    for (childIndex in 0 until viewGroup.childCount) {
-        val child = viewGroup.getChildAt(childIndex)
-        if (predicate(child)) {
-            return child
-        }
-
-        if (child is ViewGroup) {
-            val result = findChildView(child, predicate)
-            if (result != null) {
-                return result
-            }
-        }
+    if (child is ViewGroup) {
+      val result = findChildView(child, predicate)
+      if (result != null) {
+        return result
+      }
     }
+  }
 
-    return null
+  return null
 }
 
 private fun View.requestApplyInsetsWhenAttached() {
-    if (ViewCompat.isAttachedToWindow(this)) {
-        ViewCompat.requestApplyInsets(this)
-        return
-    }
+  if (ViewCompat.isAttachedToWindow(this)) {
+    ViewCompat.requestApplyInsets(this)
+    return
+  }
 
-    this.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
-        override fun onViewAttachedToWindow(v: View) {
-            v.removeOnAttachStateChangeListener(this)
-            ViewCompat.requestApplyInsets(v)
-        }
+  this.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+      override fun onViewAttachedToWindow(v: View) {
+          v.removeOnAttachStateChangeListener(this)
+          ViewCompat.requestApplyInsets(v)
+      }
 
-        override fun onViewDetachedFromWindow(v: View?) {
-        }
-    })
+      override fun onViewDetachedFromWindow(v: View?) {
+      }
+  })
 }
 
 fun View.setOnApplyWindowInsetsListenerAndRequest(listener: View.OnApplyWindowInsetsListener) {
-    setOnApplyWindowInsetsListener(listener)
-    requestApplyInsetsWhenAttached()
+  setOnApplyWindowInsetsListener(listener)
+  requestApplyInsetsWhenAttached()
 }
 
 fun View.updateMargins(
@@ -88,12 +89,20 @@ fun View.updateMargins(
     top: Int? = null,
     bottom: Int? = null
 ) {
-    updateLayoutParams<ViewGroup.MarginLayoutParams> {
-        leftMargin = left ?: leftMargin
-        marginStart = start ?: marginStart
-        rightMargin = right ?: rightMargin
-        marginEnd = end ?: marginEnd
-        topMargin = top ?: topMargin
-        bottomMargin = bottom ?: bottomMargin
-    }
+  updateLayoutParams<ViewGroup.MarginLayoutParams> {
+    leftMargin = left ?: leftMargin
+    marginStart = start ?: marginStart
+    rightMargin = right ?: rightMargin
+    marginEnd = end ?: marginEnd
+    topMargin = top ?: topMargin
+    bottomMargin = bottom ?: bottomMargin
+  }
+}
+
+fun Timber.d(tag: String, message: String) {
+  Timber.tag(tag).d(message)
+}
+
+fun Timber.e(tag: String, message: String) {
+  Timber.tag(tag).e(message)
 }
