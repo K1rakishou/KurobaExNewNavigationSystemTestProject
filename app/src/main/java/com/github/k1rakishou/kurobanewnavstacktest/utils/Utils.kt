@@ -99,10 +99,10 @@ fun View.updateMargins(
   }
 }
 
-fun Timber.d(tag: String, message: String) {
-  Timber.tag(tag).d(message)
-}
+fun Throwable.errorMessageOrClassName(): String {
+  if (message != null) {
+    return message!!
+  }
 
-fun Timber.e(tag: String, message: String) {
-  Timber.tag(tag).e(message)
+  return this::class.java.name
 }

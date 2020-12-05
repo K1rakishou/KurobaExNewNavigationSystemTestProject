@@ -9,6 +9,8 @@ import com.bluelinelabs.conductor.RouterTransaction
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.base.BaseController
 import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
+import com.github.k1rakishou.kurobanewnavstacktest.data.BoardDescriptor
+import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
 
 class SplitNavController(args: Bundle? = null) : BaseController(args) {
   private lateinit var leftControllerContainer: FrameLayout

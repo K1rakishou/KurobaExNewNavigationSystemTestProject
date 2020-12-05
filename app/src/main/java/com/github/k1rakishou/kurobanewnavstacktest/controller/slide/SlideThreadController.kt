@@ -5,7 +5,10 @@ import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
 import com.github.k1rakishou.kurobanewnavstacktest.controller.FocusableController
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ThreadController
 
-class SlideThreadController(args: Bundle? = null) : ThreadController(args), FocusableController {
+class SlideThreadController(
+  args: Bundle? = null
+) : ThreadController(args),
+  FocusableController {
 
   override fun onLostFocus() {
 

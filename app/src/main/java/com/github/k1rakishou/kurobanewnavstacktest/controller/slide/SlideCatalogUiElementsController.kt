@@ -95,6 +95,8 @@ class SlideCatalogUiElementsController(
   private fun getSlideToolbar() = toolbarContract.collapsableView() as SlideToolbar
 
   companion object {
+    private const val TAG = "SlideCatalogUiElementsController"
+
     val CONTROLLER_TAG = ControllerTag("SlideCatalogUiElementsControllerTag")
   }
 }

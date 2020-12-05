@@ -140,6 +140,8 @@ class SlideNavController(args: Bundle? = null) : BaseController(args) {
   }
 
   companion object {
+    private const val TAG = "SlideNavController"
+
     val CONTROLLER_TAG = ControllerTag("SlideNavControllerTag")
   }
 }

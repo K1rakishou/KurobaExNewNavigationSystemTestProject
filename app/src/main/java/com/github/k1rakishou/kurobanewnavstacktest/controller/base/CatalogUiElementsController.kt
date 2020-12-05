@@ -63,12 +63,20 @@ abstract class CatalogUiElementsController(args: Bundle? = null) : BaseControlle
   }
 
   protected fun ViewGroup.switchTo(controller: BaseController) {
-    getChildRouter(this).replaceTopController(
-      RouterTransaction.with(controller)
-        .tag(controller.getControllerTag().tag)
-        .pushChangeHandler(FadeChangeHandler())
-        .popChangeHandler(FadeChangeHandler())
-    )
+    val router = getChildRouter(this)
+
+    val topControllerTag = (router.getTopController() as? BaseController)?.getControllerTag()
+    if (topControllerTag == controller.getControllerTag()) {
+      // This controller is already the topmost
+      return
+    }
+
+    router.replaceTopController(
+        RouterTransaction.with(controller)
+          .tag(controller.getControllerTag().tag)
+          .pushChangeHandler(FadeChangeHandler())
+          .popChangeHandler(FadeChangeHandler())
+      )
   }
 
   protected fun createSlideNavController(

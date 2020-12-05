@@ -1,4 +1,4 @@
-package com.github.k1rakishou.kurobanewnavstacktest
+package com.github.k1rakishou.kurobanewnavstacktest.activity
 
 import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
@@ -6,7 +6,7 @@ import android.os.Bundle
 import com.bluelinelabs.conductor.Conductor
 import com.bluelinelabs.conductor.Router
 import com.bluelinelabs.conductor.RouterTransaction
-import com.github.k1rakishou.kurobanewnavstacktest.activity.ActivityContract
+import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.base.BaseController
 import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerPresenterDelegate
 import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerPresenterDelegateImpl

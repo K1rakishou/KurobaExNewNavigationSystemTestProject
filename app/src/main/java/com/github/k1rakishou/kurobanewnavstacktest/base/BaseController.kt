@@ -2,10 +2,10 @@ package com.github.k1rakishou.kurobanewnavstacktest.base
 
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.annotation.CallSuper
 import androidx.annotation.LayoutRes
@@ -17,6 +17,7 @@ import com.bluelinelabs.conductor.Router
 import com.bluelinelabs.conductor.RouterTransaction
 import com.github.k1rakishou.kurobanewnavstacktest.activity.ActivityContract
 import com.github.k1rakishou.kurobanewnavstacktest.utils.myViewModels
+import com.github.k1rakishou.kurobanewnavstacktest.widget.CancellableToast
 import kotlinx.coroutines.*
 import timber.log.Timber
 import kotlin.coroutines.CoroutineContext
@@ -31,6 +32,7 @@ abstract class BaseController(
 
   private var attachCompletableDeferred = CompletableDeferred<Unit>(job)
   private val activeViewModels = mutableMapOf<KClass<*>, BaseViewModel>()
+  private val cancellableToast = CancellableToast()
 
   init {
     retainViewMode = controllerRetainViewMode
@@ -109,6 +111,8 @@ abstract class BaseController(
 
     activeViewModels.forEach { (_, viewModel) -> viewModel.onDestroy() }
     activeViewModels.clear()
+
+    cancellableToast.cancel()
   }
 
   protected abstract fun instantiateView(
@@ -118,19 +122,19 @@ abstract class BaseController(
   ): View
 
   protected open fun onControllerCreated(savedViewState: Bundle?) {
-    Timber.d(this.javaClass.simpleName, "onControllerCreated()")
+    Timber.tag(TAG).d("${this.javaClass.simpleName} onControllerCreated()")
   }
 
   protected open fun onControllerShown() {
-    Timber.d(this.javaClass.simpleName, "onControllerShown()")
+    Timber.tag(TAG).d("${this.javaClass.simpleName} onControllerShown()")
   }
 
   protected open fun onControllerHidden() {
-    Timber.d(this.javaClass.simpleName, "onControllerHidden()")
+    Timber.tag(TAG).d("${this.javaClass.simpleName} onControllerHidden()")
   }
 
   protected open fun onControllerDestroyed() {
-    Timber.d(this.javaClass.simpleName, "onControllerDestroyed()")
+    Timber.tag(TAG).d("${this.javaClass.simpleName} onControllerDestroyed()")
   }
 
   protected fun ViewGroup.setupChildRouterIfNotSet(transaction: RouterTransaction): Router {
@@ -174,6 +178,10 @@ abstract class BaseController(
 
   protected fun savedStateRegistry(): SavedStateRegistry {
     return currentActivity().savedStateRegistry
+  }
+
+  protected fun showToast(message: String, duration: Int = Toast.LENGTH_SHORT) {
+    cancellableToast.showToast(currentContext(), message, duration)
   }
 
   protected fun <VM : ViewModel> viewModels(vmClass: KClass<VM>): Lazy<VM> {
