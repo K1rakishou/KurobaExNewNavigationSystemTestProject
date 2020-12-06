@@ -24,7 +24,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import timber.log.Timber
 
-abstract class ThreadController(args: Bundle? = null) : BaseController(args) {
+abstract class ThreadController(args: Bundle? = null) : BaseController(args), ThreadNavigationContract {
   private val chanRepository = ChanRepository
 
   protected lateinit var recyclerView: EpoxyRecyclerView
@@ -48,17 +48,6 @@ abstract class ThreadController(args: Bundle? = null) : BaseController(args) {
     super.onControllerCreated(savedViewState)
 
     applyInsetsForRecyclerView()
-
-    launch {
-      chanRepository.listenForThreadOpenUpdates()
-        .collect { threadDescriptor ->
-          if (threadDescriptor == null) {
-            return@collect
-          }
-
-          openThread(threadDescriptor)
-        }
-    }
   }
 
   override fun onControllerDestroyed() {
@@ -68,7 +57,7 @@ abstract class ThreadController(args: Bundle? = null) : BaseController(args) {
     job = null
   }
 
-  private fun openThread(threadDescriptor: ThreadDescriptor) {
+  override fun openThread(threadDescriptor: ThreadDescriptor) {
     Timber.tag(TAG).d("openThread($threadDescriptor)")
     this.threadDescriptor = threadDescriptor
 

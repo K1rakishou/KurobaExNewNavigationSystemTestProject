@@ -122,19 +122,27 @@ abstract class BaseController(
   ): View
 
   protected open fun onControllerCreated(savedViewState: Bundle?) {
-    Timber.tag(TAG).d("${this.javaClass.simpleName} onControllerCreated()")
+    if (LOG_CONTROLLER_STATE) {
+      Timber.tag(TAG).d("${this.javaClass.simpleName} onControllerCreated()")
+    }
   }
 
   protected open fun onControllerShown() {
-    Timber.tag(TAG).d("${this.javaClass.simpleName} onControllerShown()")
+    if (LOG_CONTROLLER_STATE) {
+      Timber.tag(TAG).d("${this.javaClass.simpleName} onControllerShown()")
+    }
   }
 
   protected open fun onControllerHidden() {
-    Timber.tag(TAG).d("${this.javaClass.simpleName} onControllerHidden()")
+    if (LOG_CONTROLLER_STATE) {
+      Timber.tag(TAG).d("${this.javaClass.simpleName} onControllerHidden()")
+    }
   }
 
   protected open fun onControllerDestroyed() {
-    Timber.tag(TAG).d("${this.javaClass.simpleName} onControllerDestroyed()")
+    if (LOG_CONTROLLER_STATE) {
+      Timber.tag(TAG).d("${this.javaClass.simpleName} onControllerDestroyed()")
+    }
   }
 
   protected fun ViewGroup.setupChildRouterIfNotSet(transaction: RouterTransaction): Router {
@@ -195,24 +203,10 @@ abstract class BaseController(
 
   protected fun isDead() = isDestroyed || isBeingDestroyed
 
-  protected fun iterateControllersUpUntil(testFunc: (Controller) -> Boolean): Boolean {
-    var controller: Controller? = parentController
-      ?: return false
-
-    do {
-      if (testFunc(controller!!)) {
-        return true
-      }
-
-      controller = controller.parentController
-    } while (controller != null)
-
-    return false
-  }
-
   abstract fun getControllerTag(): ControllerTag
 
   companion object {
     private const val TAG = "BaseController"
+    private const val LOG_CONTROLLER_STATE = true
   }
 }

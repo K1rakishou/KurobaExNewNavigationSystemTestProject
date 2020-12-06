@@ -12,7 +12,7 @@
         android:layout_height="match_parent">
 
         <com.github.k1rakishou.kurobanewnavstacktest.widget.TouchBlockingFrameLayout
-            android:id="@+id/slide_controller_catalog_controller_container"
+            android:id="@+id/slide_nav_controller_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 

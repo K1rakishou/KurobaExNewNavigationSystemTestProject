@@ -32,27 +32,6 @@ object ChanRepository {
   private val job = SupervisorJob()
   private val scope = CoroutineScope(job + Dispatchers.Default)
 
-  private val currentOpenedBoardFlow = MutableStateFlow<BoardDescriptor?>(null)
-  private val currentOpenedThreadFlow = MutableStateFlow<ThreadDescriptor?>(null)
-
-  fun openBoard(boardDescriptor: BoardDescriptor) {
-    currentOpenedBoardFlow.value = boardDescriptor
-  }
-
-  fun openThread(threadDescriptor: ThreadDescriptor) {
-    currentOpenedThreadFlow.value = threadDescriptor
-  }
-
-  fun listenForBoardOpenUpdates(): Flow<BoardDescriptor?> {
-    return currentOpenedBoardFlow
-      .distinctUntilChanged(areEquivalent = { bd1, bd2 -> bd1 == bd2 })
-  }
-
-  fun listenForThreadOpenUpdates(): Flow<ThreadDescriptor?> {
-    return currentOpenedThreadFlow
-      .distinctUntilChanged(areEquivalent = { td1, td2 -> td1 == td2 })
-  }
-
   fun listenForCatalogChanges(boardDescriptor: BoardDescriptor): Flow<BoardDescriptor> {
     return catalogUpdatesFlow
       .filter { updatedBoardDescriptor -> updatedBoardDescriptor == boardDescriptor }

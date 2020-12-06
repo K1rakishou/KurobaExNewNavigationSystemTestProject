@@ -1,5 +1,6 @@
 package com.github.k1rakishou.kurobanewnavstacktest.controller.split
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -9,16 +10,26 @@ import com.bluelinelabs.conductor.RouterTransaction
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.base.BaseController
 import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
-import com.github.k1rakishou.kurobanewnavstacktest.controller.base.CatalogUiElementsController
-import com.github.k1rakishou.kurobanewnavstacktest.controller.base.UiElementsControllerCallbacks
+import com.github.k1rakishou.kurobanewnavstacktest.controller.base.*
+import com.github.k1rakishou.kurobanewnavstacktest.data.BoardDescriptor
+import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import timber.log.Timber
 
-class SplitCatalogUiElementsController(
+@SuppressLint("TimberTagLength")
+class SplitUiElementsController(
   args: Bundle? = null
-) : CatalogUiElementsController(args),
-  UiElementsControllerCallbacks {
-  private lateinit var catalogControllerContainer: FrameLayout
+) : BaseUiElementsController(args),
+  UiElementsControllerCallbacks,
+  ChanNavigationContract {
   private lateinit var createThreadButton: FloatingActionButton
+  private lateinit var splitControllerCatalogControllerContainer: FrameLayout
+
+  private var threadNavigationContract: ThreadNavigationContract? = null
+
+  fun threadNavigationContract(threadNavigationContract: ThreadNavigationContract) {
+    this.threadNavigationContract = threadNavigationContract
+  }
 
   override fun instantiateView(
     inflater: LayoutInflater,
@@ -26,7 +37,7 @@ class SplitCatalogUiElementsController(
     savedViewState: Bundle?
   ): View {
     return inflater.inflateView(R.layout.controller_split_catalog_ui_elements, container) {
-      catalogControllerContainer = findViewById(R.id.split_controller_catalog_controller_container)
+      splitControllerCatalogControllerContainer = findViewById(R.id.split_controller_catalog_controller_container)
       bottomNavView = findViewById(R.id.split_controller_bottom_nav_view)
       toolbarContainer = findViewById(R.id.split_controller_toolbar_container)
       createThreadButton = findViewById(R.id.split_controller_fab)
@@ -43,7 +54,7 @@ class SplitCatalogUiElementsController(
         return@setOnNavigationItemSelectedListener true
       }
 
-      catalogControllerContainer.switchTo(
+      splitControllerCatalogControllerContainer.switchTo(
         controller = createControllerBySelectedItemId(
           itemId = item.itemId,
           uiElementsControllerCallbacks = this
@@ -53,9 +64,15 @@ class SplitCatalogUiElementsController(
       return@setOnNavigationItemSelectedListener true
     }
 
-    catalogControllerContainer.setupChildRouterIfNotSet(
-      RouterTransaction.with(SplitCatalogController())
+    splitControllerCatalogControllerContainer.setupChildRouterIfNotSet(
+      RouterTransaction.with(createSplitCatalogController(this))
     )
+  }
+
+  override fun onControllerDestroyed() {
+    super.onControllerDestroyed()
+
+    threadNavigationContract = null
   }
 
   override fun showFab() {
@@ -70,6 +87,25 @@ class SplitCatalogUiElementsController(
 
   override fun isSplitLayout(): Boolean = true
 
+  @SuppressLint("BinaryOperationInTimber")
+  override fun openBoard(boardDescriptor: BoardDescriptor) {
+    val router = getChildRouter(splitControllerCatalogControllerContainer)
+
+    val splitCatalogController = router.getControllerWithTag(SplitCatalogController.CONTROLLER_TAG.tag)
+    if (splitCatalogController == null) {
+      // TODO(KurobaEx): add ability to switch to SlideNavController in some cases
+      Timber.tag(TAG).e("openBoard($boardDescriptor) " +
+        "getControllerWithTag(SplitCatalogController) returned null")
+      return
+    }
+
+    (splitCatalogController as CatalogNavigationContract).openBoard(boardDescriptor)
+  }
+
+  override fun openThread(threadDescriptor: ThreadDescriptor) {
+    threadNavigationContract?.openThread(threadDescriptor)
+  }
+
   private fun createControllerBySelectedItemId(
     itemId: Int,
     uiElementsControllerCallbacks: UiElementsControllerCallbacks
@@ -82,7 +118,17 @@ class SplitCatalogUiElementsController(
     }
   }
 
+  private fun createSplitCatalogController(
+    uiElementsControllerCallbacks: UiElementsControllerCallbacks
+  ): SplitCatalogController {
+    return SplitCatalogController().apply {
+      setUiElementsControllerCallbacks(uiElementsControllerCallbacks)
+      threadNavigationContract(this@SplitUiElementsController)
+    }
+  }
+
   companion object {
+    private const val TAG = "SplitUiElementsController"
     val CONTROLLER_TAG = ControllerTag("SplitUiElementsControllerTag")
   }
 }

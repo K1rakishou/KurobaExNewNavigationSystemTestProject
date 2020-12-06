@@ -29,11 +29,11 @@ class SimpleAsyncEpoxyController(
   }
 }
 
-fun <T : View> View.setBehavior(behavior: CoordinatorLayout.Behavior<T>) {
+fun <T : View> View.setBehaviorExt(behavior: CoordinatorLayout.Behavior<T>) {
   (layoutParams as CoordinatorLayout.LayoutParams).behavior = behavior
 }
 
-fun <T : CoordinatorLayout.Behavior<*>> View.getBehaviorEx(): T? {
+fun <T : CoordinatorLayout.Behavior<*>> View.getBehaviorExt(): T? {
   return (layoutParams as? CoordinatorLayout.LayoutParams)?.behavior as? T
 }
 

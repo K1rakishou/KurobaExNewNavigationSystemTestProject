@@ -27,13 +27,18 @@ import timber.log.Timber
 
 abstract class CatalogController(
   args: Bundle? = null
-) : BaseController(args) {
+) : BaseController(args), CatalogNavigationContract {
   private val chanRepository = ChanRepository
 
   protected lateinit var recyclerView: EpoxyRecyclerView
 
+  private var threadNavigationContract: ThreadNavigationContract? = null
   private var boardDescriptor: BoardDescriptor? = null
   private var job: Job? = null
+
+  fun threadNavigationContract(threadNavigationContract: ThreadNavigationContract) {
+    this.threadNavigationContract = threadNavigationContract
+  }
 
   final override fun instantiateView(
     inflater: LayoutInflater,
@@ -50,25 +55,16 @@ abstract class CatalogController(
 
     applyInsetsForRecyclerView()
 
-    launch {
-      chanRepository.listenForBoardOpenUpdates()
-        .collect { boardDescriptor ->
-          if (boardDescriptor == null) {
-            return@collect
-          }
-
-          openBoard(boardDescriptor)
-        }
-    }
-
     // TODO: remove me!!! vvv
     val boardDescriptor = BoardDescriptor("test")
-    chanRepository.openBoard(boardDescriptor)
+    openBoard(boardDescriptor)
     // TODO: remove me!!! ^^^
   }
 
   override fun onControllerDestroyed() {
     super.onControllerDestroyed()
+
+    threadNavigationContract = null
 
     job?.cancel()
     job = null
@@ -89,7 +85,7 @@ abstract class CatalogController(
     }
   }
 
-  private fun openBoard(boardDescriptor: BoardDescriptor) {
+  override fun openBoard(boardDescriptor: BoardDescriptor) {
     Timber.tag(TAG).d("openBoard($boardDescriptor)")
     this.boardDescriptor = boardDescriptor
 
@@ -167,7 +163,7 @@ abstract class CatalogController(
   }
 
   private fun openThread(threadDescriptor: ThreadDescriptor) {
-    chanRepository.openThread(threadDescriptor)
+    threadNavigationContract?.openThread(threadDescriptor)
   }
 
   private fun openImageViewer(postDescriptor: PostDescriptor) {

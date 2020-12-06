@@ -5,15 +5,30 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import androidx.recyclerview.widget.RecyclerView
 import com.bluelinelabs.conductor.RouterTransaction
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.base.BaseController
 import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
+import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
+import com.github.k1rakishou.kurobanewnavstacktest.controller.RecyclerViewProvider
+import com.github.k1rakishou.kurobanewnavstacktest.controller.base.CatalogNavigationContract
+import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ChanNavigationContract
+import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ThreadNavigationContract
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.UiElementsControllerCallbacks
+import com.github.k1rakishou.kurobanewnavstacktest.data.BoardDescriptor
+import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
+import com.github.k1rakishou.kurobanewnavstacktest.utils.dp
+import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.SlideModeFabViewControllerCallbacks
 import com.github.k1rakishou.kurobanewnavstacktest.widget.SlidingPaneLayoutEx
 import com.github.k1rakishou.kurobanewnavstacktest.widget.SlidingPaneLayoutSlideHandler
 
-class SlideNavController(args: Bundle? = null) : BaseController(args) {
+class SlideNavController(
+  args: Bundle? = null
+) : BaseController(args),
+  RecyclerViewProvider,
+  UiElementsControllerCallbacks,
+  ChanNavigationContract {
   private lateinit var slidingPaneLayout: SlidingPaneLayoutEx
   private lateinit var catalogControllerContainer: FrameLayout
   private lateinit var threadControllerContainer: FrameLayout
@@ -21,6 +36,8 @@ class SlideNavController(args: Bundle? = null) : BaseController(args) {
 
   private var uiElementsControllerCallbacks: UiElementsControllerCallbacks? = null
   private var slideCatalogUiElementsControllerCallbacks: SlideCatalogUiElementsControllerCallbacks? = null
+  private var recyclerViewProvider: RecyclerViewProvider? = null
+  private var slideModeFabViewControllerCallbacks: SlideModeFabViewControllerCallbacks? = null
 
   fun setUiElementsControllerCallbacks(callbacks: UiElementsControllerCallbacks) {
     uiElementsControllerCallbacks = callbacks
@@ -28,6 +45,14 @@ class SlideNavController(args: Bundle? = null) : BaseController(args) {
 
   fun setSlideCatalogUiElementsControllerCallbacks(callbacks: SlideCatalogUiElementsControllerCallbacks) {
     slideCatalogUiElementsControllerCallbacks = callbacks
+  }
+
+  fun recyclerViewProvider(recyclerViewProvider: RecyclerViewProvider) {
+    this.recyclerViewProvider = recyclerViewProvider
+  }
+
+  fun slideModeFabViewControllerCallbacks(slideModeFabViewControllerCallbacks: SlideModeFabViewControllerCallbacks) {
+    this.slideModeFabViewControllerCallbacks = slideModeFabViewControllerCallbacks
   }
 
   override fun instantiateView(
@@ -46,34 +71,30 @@ class SlideNavController(args: Bundle? = null) : BaseController(args) {
     super.onControllerCreated(savedViewState)
 
     catalogControllerContainer.setupChildRouterIfNotSet(
-      RouterTransaction.with(SlideCatalogController())
+      RouterTransaction.with(createSlideCatalogController())
     )
 
     threadControllerContainer.setupChildRouterIfNotSet(
       RouterTransaction.with(SlideThreadController())
     )
 
+    slidingPaneLayout.setOverhangSize(OVERHANG_SIZE)
     slidingPaneLayout.setSlidingPaneLayoutDefaultState()
+    slideModeFabViewControllerCallbacks?.onSlidingPaneInitialState(slidingPaneLayout.isOpen)
 
     slidingPaneLayoutSlideHandler = SlidingPaneLayoutSlideHandler(true).apply {
       addListener(object : SlidingPaneLayoutSlideHandler.SlidingPaneLayoutSlideListener {
         override fun onSlidingStarted(wasOpen: Boolean) {
-          // TODO(KurobaEx):
-//          homeFabViewControllerCallbacks?.onSlidingPaneSlidingStarted(wasOpen)
+          slideModeFabViewControllerCallbacks?.onSlidingPaneSlidingStarted(wasOpen)
         }
 
         override fun onSliding(offset: Float) {
-          // TODO(KurobaEx):
-//          homeControllerCallbacks?.onSliding(offset)
-//          homeFabViewControllerCallbacks?.onSlidingPaneSliding(offset)
-
+          slideModeFabViewControllerCallbacks?.onSlidingPaneSliding(offset)
           slideCatalogUiElementsControllerCallbacks?.onSliding(offset)
         }
 
         override fun onSlidingEnded(becameOpen: Boolean) {
-          // TODO(KurobaEx):
-//          homeFabViewControllerCallbacks?.onSlidingPaneSlidingEnded(becameOpen)
-
+          slideModeFabViewControllerCallbacks?.onSlidingPaneSlidingEnded(becameOpen)
           fireSlidingPaneListeners(becameOpen)
         }
       })
@@ -84,11 +105,59 @@ class SlideNavController(args: Bundle? = null) : BaseController(args) {
     slidingPaneLayout.open()
   }
 
+  private fun createSlideCatalogController(): SlideCatalogController {
+    return SlideCatalogController().apply {
+      recyclerViewProvider(this@SlideNavController)
+      uiElementsControllerCallbacks(this@SlideNavController)
+      threadNavigationContract(this@SlideNavController)
+    }
+  }
+
   override fun onControllerDestroyed() {
     super.onControllerDestroyed()
 
     uiElementsControllerCallbacks = null
     slideCatalogUiElementsControllerCallbacks = null
+    recyclerViewProvider = null
+    slideModeFabViewControllerCallbacks = null
+  }
+
+  override fun showFab() {
+    uiElementsControllerCallbacks?.showFab()
+  }
+
+  override fun hideFab() {
+    uiElementsControllerCallbacks?.hideFab()
+  }
+
+  override fun provideRecyclerView(recyclerView: RecyclerView, controllerType: ControllerType) {
+    recyclerViewProvider?.provideRecyclerView(recyclerView, controllerType)
+  }
+
+  override fun withdrawRecyclerView(recyclerView: RecyclerView, controllerType: ControllerType) {
+    recyclerViewProvider?.withdrawRecyclerView(recyclerView, controllerType)
+  }
+
+  override fun openBoard(boardDescriptor: BoardDescriptor) {
+    val catalogController = getCatalogControllerOrNull()
+      ?: return
+
+    if (!slidingPaneLayout.isOpen) {
+      slidingPaneLayout.open()
+    }
+
+    (catalogController as CatalogNavigationContract).openBoard(boardDescriptor)
+  }
+
+  override fun openThread(threadDescriptor: ThreadDescriptor) {
+    val threadController = getThreadControllerOrNull()
+      ?: return
+
+    if (slidingPaneLayout.isOpen) {
+      slidingPaneLayout.close()
+    }
+
+    (threadController as ThreadNavigationContract).openThread(threadDescriptor)
   }
 
   private fun SlidingPaneLayoutEx.setSlidingPaneLayoutDefaultState() {
@@ -98,22 +167,12 @@ class SlideNavController(args: Bundle? = null) : BaseController(args) {
 
   private fun fireSlidingPaneListeners(open: Boolean) {
     if (open) {
-      // TODO(KurobaEx):
-//      homeControllerCallbacks?.onControllerLostFocus(isCatalogController = false)
       getThreadControllerOrNull()?.onLostFocus()
-
-      // TODO(KurobaEx):
-//      homeControllerCallbacks?.onControllerGainedFocus(isCatalogController = true)
       getCatalogControllerOrNull()?.onGainedFocus()
 
       slideCatalogUiElementsControllerCallbacks?.onControllerGainedFocus(isCatalogController = true)
     } else {
-      // TODO(KurobaEx):
-//      homeControllerCallbacks?.onControllerLostFocus(isCatalogController = true)
       getCatalogControllerOrNull()?.onLostFocus()
-
-      // TODO(KurobaEx):
-//      homeControllerCallbacks?.onControllerGainedFocus(isCatalogController = false)
       getThreadControllerOrNull()?.onGainedFocus()
 
       slideCatalogUiElementsControllerCallbacks?.onControllerGainedFocus(isCatalogController = false)
@@ -143,5 +202,6 @@ class SlideNavController(args: Bundle? = null) : BaseController(args) {
     private const val TAG = "SlideNavController"
 
     val CONTROLLER_TAG = ControllerTag("SlideNavControllerTag")
+    val OVERHANG_SIZE = 16.dp
   }
 }

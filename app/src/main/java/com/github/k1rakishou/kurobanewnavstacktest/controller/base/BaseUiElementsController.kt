@@ -13,15 +13,15 @@ import com.github.k1rakishou.kurobanewnavstacktest.base.BaseController
 import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
 import com.github.k1rakishou.kurobanewnavstacktest.controller.BookmarksController
 import com.github.k1rakishou.kurobanewnavstacktest.controller.SettingsController
-import com.github.k1rakishou.kurobanewnavstacktest.controller.slide.SlideNavController
-import com.github.k1rakishou.kurobanewnavstacktest.controller.split.SplitCatalogController
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndRequest
-import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.SlideToolbar
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.NormalToolbar
+import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.SlideToolbar
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarContract
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
-abstract class CatalogUiElementsController(args: Bundle? = null) : BaseController(args) {
+abstract class BaseUiElementsController(
+  args: Bundle? = null
+) : BaseController(args) {
   protected lateinit var toolbarContract: ToolbarContract
 
   protected lateinit var bottomNavView: BottomNavigationView
@@ -77,24 +77,6 @@ abstract class CatalogUiElementsController(args: Bundle? = null) : BaseControlle
           .pushChangeHandler(FadeChangeHandler())
           .popChangeHandler(FadeChangeHandler())
       )
-  }
-
-  protected fun createSlideNavController(
-    uiElementsControllerCallbacks: UiElementsControllerCallbacks,
-    slideCatalogUiElementsControllerCallbacks: SlideNavController.SlideCatalogUiElementsControllerCallbacks
-  ): SlideNavController {
-    return SlideNavController().apply {
-      setUiElementsControllerCallbacks(uiElementsControllerCallbacks)
-      setSlideCatalogUiElementsControllerCallbacks(slideCatalogUiElementsControllerCallbacks)
-    }
-  }
-
-  protected fun createSplitCatalogController(
-    uiElementsControllerCallbacks: UiElementsControllerCallbacks
-  ): SplitCatalogController {
-    return SplitCatalogController().apply {
-      setUiElementsControllerCallbacks(uiElementsControllerCallbacks)
-    }
   }
 
   protected fun createSettingsController(
