@@ -26,21 +26,13 @@ class SlideToolbar @JvmOverloads constructor(
   init {
     inflate(context, R.layout.widget_slide_toolbar, this)
 
+    val slideToolbarRoot = findViewById<FrameLayout>(R.id.slide_toolbar_root)
     actualCatalogToolbar = findViewById(R.id.catalog_toolbar)
     actualThreadToolbar = findViewById(R.id.thread_toolbar)
 
     val toolbarHeight = context.resources.getDimension(R.dimen.toolbar_height).toInt()
 
-    actualCatalogToolbar.setOnApplyWindowInsetsListenerAndRequest { v, insets ->
-      v.updateLayoutParams<FrameLayout.LayoutParams> {
-        height = toolbarHeight + insets.systemWindowInsetTop
-      }
-      v.updatePadding(top = insets.systemWindowInsetTop)
-
-      return@setOnApplyWindowInsetsListenerAndRequest insets
-    }
-
-    actualThreadToolbar.setOnApplyWindowInsetsListenerAndRequest { v, insets ->
+    slideToolbarRoot.setOnApplyWindowInsetsListenerAndRequest { v, insets ->
       v.updateLayoutParams<FrameLayout.LayoutParams> {
         height = toolbarHeight + insets.systemWindowInsetTop
       }

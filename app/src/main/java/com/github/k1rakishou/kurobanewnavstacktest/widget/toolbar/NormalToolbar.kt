@@ -18,12 +18,13 @@ class NormalToolbar @JvmOverloads constructor(
   private val actualToolbar: MaterialToolbar
 
   init {
-    inflate(context, R.layout.widget_catalog_toolbar, this)
+    inflate(context, R.layout.widget_normal_toolbar, this)
     val toolbarHeight = context.resources.getDimension(R.dimen.toolbar_height).toInt()
 
-    actualToolbar = findViewById(R.id.toolbar)
+    val normalToolbarRoot = findViewById<FrameLayout>(R.id.normal_toolbar_root)
+    actualToolbar = findViewById(R.id.normal_toolbar)
 
-    actualToolbar.setOnApplyWindowInsetsListenerAndRequest { v, insets ->
+    normalToolbarRoot.setOnApplyWindowInsetsListenerAndRequest { v, insets ->
       v.updateLayoutParams<FrameLayout.LayoutParams> {
         height = toolbarHeight + insets.systemWindowInsetTop
       }

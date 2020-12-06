@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.updatePadding
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.activity.ImageViewerActivity
@@ -18,6 +19,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.epoxy.epoxyTextView
 import com.github.k1rakishou.kurobanewnavstacktest.epoxy.loadingView
 import com.github.k1rakishou.kurobanewnavstacktest.repository.ChanRepository
 import com.github.k1rakishou.kurobanewnavstacktest.utils.errorMessageOrClassName
+import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndRequest
 import com.github.k1rakishou.kurobanewnavstacktest.viewstate.ViewStateConstants
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
@@ -46,6 +48,8 @@ abstract class CatalogController(
   override fun onControllerCreated(savedViewState: Bundle?) {
     super.onControllerCreated(savedViewState)
 
+    applyInsetsForRecyclerView()
+
     launch {
       chanRepository.listenForBoardOpenUpdates()
         .collect { boardDescriptor ->
@@ -68,6 +72,21 @@ abstract class CatalogController(
 
     job?.cancel()
     job = null
+  }
+
+  private fun applyInsetsForRecyclerView() {
+    val toolbarHeight = currentContext().resources.getDimension(R.dimen.toolbar_height).toInt()
+    val bottomNavViewHeight =
+      currentContext().resources.getDimension(R.dimen.bottom_nav_view_height).toInt()
+
+    recyclerView.setOnApplyWindowInsetsListenerAndRequest { v, insets ->
+      v.updatePadding(
+        top = toolbarHeight + insets.systemWindowInsetTop,
+        bottom = bottomNavViewHeight + insets.systemWindowInsetBottom
+      )
+
+      return@setOnApplyWindowInsetsListenerAndRequest insets
+    }
   }
 
   private fun openBoard(boardDescriptor: BoardDescriptor) {
