@@ -7,7 +7,7 @@ import android.widget.FrameLayout
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import com.github.k1rakishou.kurobanewnavstacktest.R
-import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndRequest
+import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndDoRequest
 import com.google.android.material.appbar.MaterialToolbar
 import timber.log.Timber
 
@@ -32,13 +32,13 @@ class SlideToolbar @JvmOverloads constructor(
 
     val toolbarHeight = context.resources.getDimension(R.dimen.toolbar_height).toInt()
 
-    slideToolbarRoot.setOnApplyWindowInsetsListenerAndRequest { v, insets ->
+    slideToolbarRoot.setOnApplyWindowInsetsListenerAndDoRequest { v, insets ->
       v.updateLayoutParams<FrameLayout.LayoutParams> {
         height = toolbarHeight + insets.systemWindowInsetTop
       }
       v.updatePadding(top = insets.systemWindowInsetTop)
 
-      return@setOnApplyWindowInsetsListenerAndRequest insets
+      return@setOnApplyWindowInsetsListenerAndDoRequest insets
     }
   }
 

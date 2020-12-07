@@ -14,7 +14,7 @@ import kotlin.math.abs
 
 class CollapsingViewController(
   val controllerType: ControllerType,
-  private val viewScreenAttachPoint: ViewScreenAttachPoint
+  private val viewScreenAttachSide: ViewScreenAttachSide
 ) {
   private var viewData: ViewData? = null
   private var viewRef: View? = null
@@ -84,8 +84,8 @@ class CollapsingViewController(
 
     viewData?.let { data ->
       viewRef?.let { view ->
-        when (viewScreenAttachPoint) {
-          ViewScreenAttachPoint.AttachedToTop -> {
+        when (viewScreenAttachSide) {
+          ViewScreenAttachSide.Top -> {
             playTranslationAnimation(
               show = false,
               animate = animate,
@@ -93,7 +93,7 @@ class CollapsingViewController(
               to = data.initialPositionY - data.height
             )
           }
-          ViewScreenAttachPoint.AttachedToBottom -> {
+          ViewScreenAttachSide.Bottom -> {
             playTranslationAnimation(
               show = false,
               animate = animate,
@@ -144,7 +144,7 @@ class CollapsingViewController(
       animationState = ANIMATION_WANT_SHOW
     }
 
-    if (viewScreenAttachPoint == ViewScreenAttachPoint.AttachedToBottom) {
+    if (viewScreenAttachSide == ViewScreenAttachSide.Bottom) {
       view.translationY += dy
 
       if (view.translationY < viewData.initialPositionY) {
@@ -192,9 +192,9 @@ class CollapsingViewController(
 
     animationState = when (animationState) {
       ANIMATION_WANT_HIDE -> {
-        val checkFunc = when (viewScreenAttachPoint) {
-          ViewScreenAttachPoint.AttachedToTop -> topFunc
-          ViewScreenAttachPoint.AttachedToBottom -> bottomFunc
+        val checkFunc = when (viewScreenAttachSide) {
+          ViewScreenAttachSide.Top -> topFunc
+          ViewScreenAttachSide.Bottom -> bottomFunc
         }
 
         // If the view has been scrolled for more than 25% of it's height then we can run the
@@ -206,9 +206,9 @@ class CollapsingViewController(
         }
       }
       ANIMATION_WANT_SHOW -> {
-        val checkFunc = when (viewScreenAttachPoint) {
-          ViewScreenAttachPoint.AttachedToTop -> invTopFunc
-          ViewScreenAttachPoint.AttachedToBottom -> invBottomFunc
+        val checkFunc = when (viewScreenAttachSide) {
+          ViewScreenAttachSide.Top -> invTopFunc
+          ViewScreenAttachSide.Bottom -> invBottomFunc
         }
 
         if (checkFunc.invoke()) {
@@ -227,9 +227,9 @@ class CollapsingViewController(
     val targetY = if (animationState == ANIMATION_RUNNING_SHOW) {
       bottomNavData.initialPositionY
     } else {
-      when (viewScreenAttachPoint) {
-        ViewScreenAttachPoint.AttachedToTop -> bottomNavData.initialPositionY - bottomNavData.height
-        ViewScreenAttachPoint.AttachedToBottom -> bottomNavData.initialPositionY + bottomNavData.height
+      when (viewScreenAttachSide) {
+        ViewScreenAttachSide.Top -> bottomNavData.initialPositionY - bottomNavData.height
+        ViewScreenAttachSide.Bottom -> bottomNavData.initialPositionY + bottomNavData.height
       }
     }
 
@@ -314,11 +314,6 @@ class CollapsingViewController(
     var height: Int
   )
 
-  enum class ViewScreenAttachPoint {
-    AttachedToTop,
-    AttachedToBottom
-  }
-
   companion object {
     private const val ANIMATION_IDLE = 0
     private const val ANIMATION_WANT_SHOW = 1
@@ -328,4 +323,9 @@ class CollapsingViewController(
 
     private val MIN_ANIM_DISTANCE = 4.dp
   }
+}
+
+enum class ViewScreenAttachSide {
+  Top,
+  Bottom
 }

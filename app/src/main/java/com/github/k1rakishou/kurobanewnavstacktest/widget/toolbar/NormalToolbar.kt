@@ -7,7 +7,7 @@ import android.widget.FrameLayout
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import com.github.k1rakishou.kurobanewnavstacktest.R
-import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndRequest
+import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndDoRequest
 import com.google.android.material.appbar.MaterialToolbar
 
 class NormalToolbar @JvmOverloads constructor(
@@ -24,13 +24,13 @@ class NormalToolbar @JvmOverloads constructor(
     val normalToolbarRoot = findViewById<FrameLayout>(R.id.normal_toolbar_root)
     actualToolbar = findViewById(R.id.normal_toolbar)
 
-    normalToolbarRoot.setOnApplyWindowInsetsListenerAndRequest { v, insets ->
+    normalToolbarRoot.setOnApplyWindowInsetsListenerAndDoRequest { v, insets ->
       v.updateLayoutParams<FrameLayout.LayoutParams> {
         height = toolbarHeight + insets.systemWindowInsetTop
       }
       v.updatePadding(top = insets.systemWindowInsetTop)
 
-      return@setOnApplyWindowInsetsListenerAndRequest insets
+      return@setOnApplyWindowInsetsListenerAndDoRequest insets
     }
   }
 

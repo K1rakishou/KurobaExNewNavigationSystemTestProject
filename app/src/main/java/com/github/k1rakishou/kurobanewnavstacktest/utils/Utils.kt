@@ -76,7 +76,7 @@ private fun View.requestApplyInsetsWhenAttached() {
   })
 }
 
-fun View.setOnApplyWindowInsetsListenerAndRequest(listener: View.OnApplyWindowInsetsListener) {
+fun View.setOnApplyWindowInsetsListenerAndDoRequest(listener: View.OnApplyWindowInsetsListener) {
   setOnApplyWindowInsetsListener(listener)
   requestApplyInsetsWhenAttached()
 }

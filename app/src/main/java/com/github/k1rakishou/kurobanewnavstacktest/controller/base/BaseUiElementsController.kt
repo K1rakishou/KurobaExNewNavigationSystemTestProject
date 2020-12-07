@@ -13,7 +13,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.base.BaseController
 import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
 import com.github.k1rakishou.kurobanewnavstacktest.controller.BookmarksController
 import com.github.k1rakishou.kurobanewnavstacktest.controller.SettingsController
-import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndRequest
+import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndDoRequest
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.NormalToolbar
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.SlideToolbar
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarContract
@@ -52,13 +52,13 @@ abstract class BaseUiElementsController(
     val bottomNavViewHeight =
       currentContext().resources.getDimension(R.dimen.bottom_nav_view_height).toInt()
 
-    bottomNavView.setOnApplyWindowInsetsListenerAndRequest { v, insets ->
+    bottomNavView.setOnApplyWindowInsetsListenerAndDoRequest { v, insets ->
       v.updateLayoutParams<CoordinatorLayout.LayoutParams> {
         height = bottomNavViewHeight + insets.systemWindowInsetBottom
       }
       v.updatePadding(bottom = insets.systemWindowInsetBottom)
 
-      return@setOnApplyWindowInsetsListenerAndRequest insets
+      return@setOnApplyWindowInsetsListenerAndDoRequest insets
     }
   }
 

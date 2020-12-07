@@ -17,7 +17,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.epoxy.epoxyTextView
 import com.github.k1rakishou.kurobanewnavstacktest.epoxy.loadingView
 import com.github.k1rakishou.kurobanewnavstacktest.epoxy.threadPostView
 import com.github.k1rakishou.kurobanewnavstacktest.repository.ChanRepository
-import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndRequest
+import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndDoRequest
 import com.github.k1rakishou.kurobanewnavstacktest.viewstate.ViewStateConstants
 import com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaFloatingActionButton
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarContract
@@ -82,13 +82,13 @@ abstract class ThreadController(args: Bundle? = null) : BaseController(args), Th
     val bottomNavViewHeight =
       currentContext().resources.getDimension(R.dimen.bottom_nav_view_height).toInt()
 
-    recyclerView.setOnApplyWindowInsetsListenerAndRequest { v, insets ->
+    recyclerView.setOnApplyWindowInsetsListenerAndDoRequest { v, insets ->
       v.updatePadding(
         top = toolbarHeight + insets.systemWindowInsetTop,
         bottom = bottomNavViewHeight + insets.systemWindowInsetBottom
       )
 
-      return@setOnApplyWindowInsetsListenerAndRequest insets
+      return@setOnApplyWindowInsetsListenerAndDoRequest insets
     }
   }
 

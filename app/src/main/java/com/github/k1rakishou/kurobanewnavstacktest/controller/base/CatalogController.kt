@@ -19,7 +19,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.epoxy.epoxyTextView
 import com.github.k1rakishou.kurobanewnavstacktest.epoxy.loadingView
 import com.github.k1rakishou.kurobanewnavstacktest.repository.ChanRepository
 import com.github.k1rakishou.kurobanewnavstacktest.utils.errorMessageOrClassName
-import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndRequest
+import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndDoRequest
 import com.github.k1rakishou.kurobanewnavstacktest.viewstate.ViewStateConstants
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
@@ -75,13 +75,13 @@ abstract class CatalogController(
     val bottomNavViewHeight =
       currentContext().resources.getDimension(R.dimen.bottom_nav_view_height).toInt()
 
-    recyclerView.setOnApplyWindowInsetsListenerAndRequest { v, insets ->
+    recyclerView.setOnApplyWindowInsetsListenerAndDoRequest { v, insets ->
       v.updatePadding(
         top = toolbarHeight + insets.systemWindowInsetTop,
         bottom = bottomNavViewHeight + insets.systemWindowInsetBottom
       )
 
-      return@setOnApplyWindowInsetsListenerAndRequest insets
+      return@setOnApplyWindowInsetsListenerAndDoRequest insets
     }
   }
 

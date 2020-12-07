@@ -14,13 +14,11 @@ import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
 import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.controller.RecyclerViewProvider
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.*
+import com.github.k1rakishou.kurobanewnavstacktest.core.CollapsingViewsHolder
 import com.github.k1rakishou.kurobanewnavstacktest.data.BoardDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
-import com.github.k1rakishou.kurobanewnavstacktest.utils.AndroidUtils
-import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.CollapsingViewController
-import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.SlideModeFabClickListener
-import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.SlideModeFabViewController
-import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.SlideModeFabViewControllerCallbacks
+import com.github.k1rakishou.kurobanewnavstacktest.utils.ChanSettings
+import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.*
 import com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaFloatingActionButton
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.SlideToolbar
 import timber.log.Timber
@@ -38,8 +36,7 @@ class SlideUiElementsController(
   private lateinit var slideModeFabViewController: SlideModeFabViewController
   private lateinit var slideNavControllerContainer: FrameLayout
 
-  private val collapsingViewControllerMap =
-    mutableMapOf<View, MutableMap<RecyclerView, CollapsingViewController>>()
+  private val collapsingViewsHolder = CollapsingViewsHolder()
 
   override fun instantiateView(
     inflater: LayoutInflater,
@@ -140,33 +137,29 @@ class SlideUiElementsController(
     slideModeFabViewController.reset()
     slideModeFabViewController.init(bottomNavView)
 
-    initCollapsingToolbar(recyclerView, controllerType)
-    initCollapsingBottomNavView(recyclerView, controllerType)
+    collapsingViewsHolder.attach(
+      recyclerView = recyclerView,
+      collapsableView = toolbarContract.collapsableView(),
+      controllerType = controllerType,
+      viewAttachSide = ViewScreenAttachSide.Top
+    )
 
-    if (AndroidUtils.showLockCollapsableViews(currentContext())) {
-      collapsingViewControllerMap.values
-        .flatMap { innerMap -> innerMap.values }
-        .forEach { collapsingViewDelegate ->
-          collapsingViewDelegate.lockUnlock(
-            lock = true,
-            animate = true
-          )
-        }
-    }
+    collapsingViewsHolder.attach(
+      recyclerView = recyclerView,
+      collapsableView = bottomNavView,
+      controllerType = controllerType,
+      viewAttachSide = ViewScreenAttachSide.Bottom
+    )
+
+    collapsingViewsHolder.lockUnlockCollapsableViews(
+      lock = ChanSettings.showLockCollapsableViews(currentContext()),
+      animate = true
+    )
   }
 
   override fun withdrawRecyclerView(recyclerView: RecyclerView, controllerType: ControllerType) {
-    toolbarContract.collapsableView().let { collapsableView ->
-      collapsingViewControllerMap[collapsableView]?.remove(recyclerView)?.detach(recyclerView)
-      if (collapsingViewControllerMap[collapsableView].isNullOrEmpty()) {
-        collapsingViewControllerMap.remove(collapsableView)
-      }
-    }
-
-    collapsingViewControllerMap[bottomNavView]?.remove(recyclerView)?.detach(recyclerView)
-    if (collapsingViewControllerMap[bottomNavView].isNullOrEmpty()) {
-      collapsingViewControllerMap.remove(bottomNavView)
-    }
+    collapsingViewsHolder.detach(recyclerView, toolbarContract.collapsableView())
+    collapsingViewsHolder.detach(recyclerView, bottomNavView)
   }
 
   override fun onSliding(offset: Float) {
@@ -188,44 +181,6 @@ class SlideUiElementsController(
   override fun getControllerTag(): ControllerTag = CONTROLLER_TAG
 
   override fun isSplitLayout(): Boolean = false
-
-  private fun initCollapsingBottomNavView(
-    recyclerView: RecyclerView,
-    controllerType: ControllerType
-  ) {
-    if (!collapsingViewControllerMap.containsKey(bottomNavView)) {
-      collapsingViewControllerMap[bottomNavView] = mutableMapOf()
-    }
-
-    if (!collapsingViewControllerMap[bottomNavView]!!.containsKey(recyclerView)) {
-      collapsingViewControllerMap[bottomNavView]!![recyclerView] = CollapsingViewController(
-        controllerType,
-        CollapsingViewController.ViewScreenAttachPoint.AttachedToBottom
-      )
-    }
-
-    collapsingViewControllerMap[bottomNavView]!![recyclerView]!!.attach(bottomNavView, recyclerView)
-  }
-
-  private fun initCollapsingToolbar(
-    recyclerView: RecyclerView,
-    controllerType: ControllerType
-  ) {
-    toolbarContract.collapsableView().let { collapsableView ->
-      if (!collapsingViewControllerMap.containsKey(collapsableView)) {
-        collapsingViewControllerMap[collapsableView] = mutableMapOf()
-      }
-
-      if (!collapsingViewControllerMap[collapsableView]!!.containsKey(recyclerView)) {
-        collapsingViewControllerMap[collapsableView]!![recyclerView] = CollapsingViewController(
-          controllerType,
-          CollapsingViewController.ViewScreenAttachPoint.AttachedToTop
-        )
-      }
-
-      collapsingViewControllerMap[collapsableView]!![recyclerView]!!.attach(collapsableView, recyclerView)
-    }
-  }
 
   private fun createControllerBySelectedItemId(
     itemId: Int,

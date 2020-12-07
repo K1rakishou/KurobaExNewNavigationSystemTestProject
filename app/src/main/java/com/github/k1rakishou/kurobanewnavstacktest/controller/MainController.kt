@@ -18,7 +18,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.controller.slide.SlideUiEleme
 import com.github.k1rakishou.kurobanewnavstacktest.controller.split.SplitNavController
 import com.github.k1rakishou.kurobanewnavstacktest.data.BoardDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
-import com.github.k1rakishou.kurobanewnavstacktest.utils.AndroidUtils
+import com.github.k1rakishou.kurobanewnavstacktest.utils.ChanSettings
 import timber.log.Timber
 
 class MainController(
@@ -120,7 +120,7 @@ class MainController(
   }
 
   private fun isSplitMode(): Boolean {
-    return AndroidUtils.isSplitMode(currentContext())
+    return ChanSettings.isSplitMode(currentContext())
   }
 
   override fun getControllerTag(): ControllerTag = CONTROLLER_TAG
