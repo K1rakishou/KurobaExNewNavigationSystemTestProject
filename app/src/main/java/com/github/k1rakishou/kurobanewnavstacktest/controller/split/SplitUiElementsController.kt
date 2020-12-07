@@ -6,14 +6,23 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import androidx.core.view.doOnPreDraw
+import androidx.recyclerview.widget.RecyclerView
 import com.bluelinelabs.conductor.RouterTransaction
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.base.BaseController
 import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
+import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
+import com.github.k1rakishou.kurobanewnavstacktest.controller.RecyclerViewProvider
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.*
 import com.github.k1rakishou.kurobanewnavstacktest.data.BoardDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
-import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.github.k1rakishou.kurobanewnavstacktest.utils.AndroidUtils
+import com.github.k1rakishou.kurobanewnavstacktest.utils.getBehaviorExt
+import com.github.k1rakishou.kurobanewnavstacktest.utils.setBehaviorExt
+import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.CollapsingViewController
+import com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaFloatingActionButton
+import com.github.k1rakishou.kurobanewnavstacktest.widget.behavior.CatalogFabBehavior
 import timber.log.Timber
 
 @SuppressLint("TimberTagLength")
@@ -21,9 +30,13 @@ class SplitUiElementsController(
   args: Bundle? = null
 ) : BaseUiElementsController(args),
   UiElementsControllerCallbacks,
-  ChanNavigationContract {
-  private lateinit var createThreadButton: FloatingActionButton
+  ChanNavigationContract,
+  RecyclerViewProvider {
+  private lateinit var catalogFab: KurobaFloatingActionButton
   private lateinit var splitControllerCatalogControllerContainer: FrameLayout
+
+  private val collapsingViewControllerMap =
+    mutableMapOf<View, MutableMap<RecyclerView, CollapsingViewController>>()
 
   private var threadNavigationContract: ThreadNavigationContract? = null
 
@@ -40,7 +53,9 @@ class SplitUiElementsController(
       splitControllerCatalogControllerContainer = findViewById(R.id.split_controller_catalog_controller_container)
       bottomNavView = findViewById(R.id.split_controller_bottom_nav_view)
       toolbarContainer = findViewById(R.id.split_controller_toolbar_container)
-      createThreadButton = findViewById(R.id.split_controller_fab)
+
+      catalogFab = findViewById(R.id.split_controller_fab)
+      catalogFab.setBehaviorExt(CatalogFabBehavior(context, null))
     }
   }
 
@@ -69,18 +84,63 @@ class SplitUiElementsController(
     )
   }
 
+  override fun onControllerShown() {
+    super.onControllerShown()
+
+    bottomNavView.doOnPreDraw {
+      catalogFab.getBehaviorExt<CatalogFabBehavior>()?.init(bottomNavView)
+      catalogFab.translationX = -KurobaFloatingActionButton.DEFAULT_MARGIN_RIGHT.toFloat()
+    }
+  }
+
+  override fun onControllerHidden() {
+    super.onControllerHidden()
+
+    catalogFab.getBehaviorExt<CatalogFabBehavior>()?.reset()
+  }
+
   override fun onControllerDestroyed() {
     super.onControllerDestroyed()
 
     threadNavigationContract = null
   }
 
+  override fun provideRecyclerView(recyclerView: RecyclerView, controllerType: ControllerType) {
+    initCollapsingToolbar(recyclerView, controllerType)
+    initCollapsingBottomNavView(recyclerView, controllerType)
+
+    if (AndroidUtils.showLockCollapsableViews(currentContext())) {
+      collapsingViewControllerMap.values
+        .flatMap { innerMap -> innerMap.values }
+        .forEach { collapsingViewDelegate ->
+          collapsingViewDelegate.lockUnlock(
+            lock = true,
+            animate = true
+          )
+        }
+    }
+  }
+
+  override fun withdrawRecyclerView(recyclerView: RecyclerView, controllerType: ControllerType) {
+    toolbarContract.collapsableView().let { collapsableView ->
+      collapsingViewControllerMap[collapsableView]?.remove(recyclerView)?.detach(recyclerView)
+      if (collapsingViewControllerMap[collapsableView].isNullOrEmpty()) {
+        collapsingViewControllerMap.remove(collapsableView)
+      }
+    }
+
+    collapsingViewControllerMap[bottomNavView]?.remove(recyclerView)?.detach(recyclerView)
+    if (collapsingViewControllerMap[bottomNavView].isNullOrEmpty()) {
+      collapsingViewControllerMap.remove(bottomNavView)
+    }
+  }
+
   override fun showFab() {
-    createThreadButton.show()
+    catalogFab.show()
   }
 
   override fun hideFab() {
-    createThreadButton.hide()
+    catalogFab.hide()
   }
 
   override fun getControllerTag(): ControllerTag = CONTROLLER_TAG
@@ -106,6 +166,44 @@ class SplitUiElementsController(
     threadNavigationContract?.openThread(threadDescriptor)
   }
 
+  private fun initCollapsingBottomNavView(
+    recyclerView: RecyclerView,
+    controllerType: ControllerType
+  ) {
+    if (!collapsingViewControllerMap.containsKey(bottomNavView)) {
+      collapsingViewControllerMap[bottomNavView] = mutableMapOf()
+    }
+
+    if (!collapsingViewControllerMap[bottomNavView]!!.containsKey(recyclerView)) {
+      collapsingViewControllerMap[bottomNavView]!![recyclerView] = CollapsingViewController(
+        controllerType,
+        CollapsingViewController.ViewScreenAttachPoint.AttachedToBottom
+      )
+    }
+
+    collapsingViewControllerMap[bottomNavView]!![recyclerView]!!.attach(bottomNavView, recyclerView)
+  }
+
+  private fun initCollapsingToolbar(
+    recyclerView: RecyclerView,
+    controllerType: ControllerType
+  ) {
+    toolbarContract.collapsableView().let { collapsableView ->
+      if (!collapsingViewControllerMap.containsKey(collapsableView)) {
+        collapsingViewControllerMap[collapsableView] = mutableMapOf()
+      }
+
+      if (!collapsingViewControllerMap[collapsableView]!!.containsKey(recyclerView)) {
+        collapsingViewControllerMap[collapsableView]!![recyclerView] = CollapsingViewController(
+          controllerType,
+          CollapsingViewController.ViewScreenAttachPoint.AttachedToTop
+        )
+      }
+
+      collapsingViewControllerMap[collapsableView]!![recyclerView]!!.attach(collapsableView, recyclerView)
+    }
+  }
+
   private fun createControllerBySelectedItemId(
     itemId: Int,
     uiElementsControllerCallbacks: UiElementsControllerCallbacks
@@ -123,6 +221,7 @@ class SplitUiElementsController(
   ): SplitCatalogController {
     return SplitCatalogController().apply {
       setUiElementsControllerCallbacks(uiElementsControllerCallbacks)
+      recyclerViewProvider(this@SplitUiElementsController)
       threadNavigationContract(this@SplitUiElementsController)
     }
   }

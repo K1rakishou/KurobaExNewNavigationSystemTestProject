@@ -17,7 +17,10 @@ import com.github.k1rakishou.kurobanewnavstacktest.data.BoardDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
 import timber.log.Timber
 
-class SplitNavController(args: Bundle? = null) : BaseController(args), ChanNavigationContract {
+class SplitNavController(
+  args: Bundle? = null
+) : BaseController(args),
+  ChanNavigationContract {
   private lateinit var leftControllerContainer: FrameLayout
   private lateinit var rightControllerContainer: FrameLayout
 
@@ -39,7 +42,7 @@ class SplitNavController(args: Bundle? = null) : BaseController(args), ChanNavig
       RouterTransaction.with(createSplitUiElementsController())
     )
     rightControllerContainer.setupChildRouterIfNotSet(
-      RouterTransaction.with(SplitThreadController())
+      RouterTransaction.with(createSplitThreadController())
     )
   }
 
@@ -77,6 +80,10 @@ class SplitNavController(args: Bundle? = null) : BaseController(args), ChanNavig
     return SplitUiElementsController().apply {
       threadNavigationContract(this@SplitNavController)
     }
+  }
+
+  private fun createSplitThreadController(): SplitThreadController {
+    return SplitThreadController()
   }
 
   override fun getControllerTag(): ControllerTag = CONTROLLER_TAG

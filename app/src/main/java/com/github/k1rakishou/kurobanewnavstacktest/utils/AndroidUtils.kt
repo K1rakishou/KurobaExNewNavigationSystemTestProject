@@ -16,7 +16,11 @@ object AndroidUtils {
     fun getBoolRes(@BoolRes id: Int): Boolean = getResources().getBoolean(id)
     fun isTablet(): Boolean = getBoolRes(R.bool.isTablet)
 
-    fun showLockCollapsableViews(context: Context): Boolean = isSplitMode(context) && isTablet()
+    fun showLockCollapsableViews(context: Context): Boolean {
+        // TODO(KurobaEx):
+        // isSplitMode(context) && isTablet()
+        return false
+    }
 
     fun isSplitMode(context: Context): Boolean {
         if (!isTestMode) {
@@ -27,7 +31,7 @@ object AndroidUtils {
     }
 
     fun isAndroid11(): Boolean {
-        return Build.VERSION.SDK_INT >= 30
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
     }
 
     fun isAndroid10(): Boolean {

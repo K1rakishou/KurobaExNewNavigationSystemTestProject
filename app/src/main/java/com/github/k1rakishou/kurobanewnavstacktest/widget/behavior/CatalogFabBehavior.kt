@@ -1,4 +1,4 @@
-package com.github.k1rakishou.kurobanewnavstacktest.widget
+package com.github.k1rakishou.kurobanewnavstacktest.widget.behavior
 
 import android.content.Context
 import android.util.AttributeSet
@@ -10,7 +10,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 
-class FabHomeControllerBehavior(context: Context, attributeSet: AttributeSet?) :
+class CatalogFabBehavior(context: Context, attributeSet: AttributeSet?) :
   CoordinatorLayout.Behavior<FloatingActionButton>(context, attributeSet) {
   private var initialPositionY: Int? = null
   private var snackBarVisible = false

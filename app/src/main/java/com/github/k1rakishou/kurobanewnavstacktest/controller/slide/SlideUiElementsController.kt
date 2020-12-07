@@ -21,8 +21,8 @@ import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.CollapsingView
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.SlideModeFabClickListener
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.SlideModeFabViewController
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.SlideModeFabViewControllerCallbacks
+import com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaFloatingActionButton
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.SlideToolbar
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import timber.log.Timber
 
 @SuppressLint("TimberTagLength")
@@ -34,7 +34,7 @@ class SlideUiElementsController(
   SlideModeFabClickListener,
   RecyclerViewProvider,
   ChanNavigationContract {
-  private lateinit var createThreadButton: FloatingActionButton
+  private lateinit var createThreadButton: KurobaFloatingActionButton
   private lateinit var slideModeFabViewController: SlideModeFabViewController
   private lateinit var slideNavControllerContainer: FrameLayout
 

@@ -18,6 +18,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ThreadNavigat
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.UiElementsControllerCallbacks
 import com.github.k1rakishou.kurobanewnavstacktest.data.BoardDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
+import com.github.k1rakishou.kurobanewnavstacktest.utils.ScreenOrientationUtils
 import com.github.k1rakishou.kurobanewnavstacktest.utils.dp
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.SlideModeFabViewControllerCallbacks
 import com.github.k1rakishou.kurobanewnavstacktest.widget.SlidingPaneLayoutEx
@@ -85,6 +86,9 @@ class SlideNavController(
     slidingPaneLayoutSlideHandler = SlidingPaneLayoutSlideHandler(true).apply {
       addListener(object : SlidingPaneLayoutSlideHandler.SlidingPaneLayoutSlideListener {
         override fun onSlidingStarted(wasOpen: Boolean) {
+          // Disable orientation change when sliding is in progress
+          ScreenOrientationUtils.lockScreenOrientation(activityContract().activity())
+
           slideModeFabViewControllerCallbacks?.onSlidingPaneSlidingStarted(wasOpen)
         }
 
@@ -96,6 +100,9 @@ class SlideNavController(
         override fun onSlidingEnded(becameOpen: Boolean) {
           slideModeFabViewControllerCallbacks?.onSlidingPaneSlidingEnded(becameOpen)
           fireSlidingPaneListeners(becameOpen)
+
+          // Enable orientation change back after sliding is done
+          ScreenOrientationUtils.unlockScreenOrientation(activityContract().activity())
         }
       })
 
