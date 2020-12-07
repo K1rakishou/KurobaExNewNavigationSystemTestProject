@@ -42,4 +42,11 @@ class NormalToolbar @JvmOverloads constructor(
     actualToolbar.title = title
   }
 
+  override fun setToolbarVisibility(visibility: Int) {
+    check(visibility == View.VISIBLE || visibility == View.INVISIBLE || visibility == View.GONE) {
+      "Bad visibility parameter: $visibility"
+    }
+
+    this.visibility = visibility
+  }
 }

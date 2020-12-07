@@ -53,6 +53,14 @@ class SlideToolbar @JvmOverloads constructor(
     }
   }
 
+  override fun setToolbarVisibility(visibility: Int) {
+    check(visibility == View.VISIBLE || visibility == View.INVISIBLE || visibility == View.GONE) {
+      "Bad visibility parameter: $visibility"
+    }
+
+    this.visibility = visibility
+  }
+
   fun onSliding(offset: Float) {
     Timber.d("onSliding offset=$offset")
 

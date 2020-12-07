@@ -75,7 +75,7 @@ class SlideNavController(
     )
 
     threadControllerContainer.setupChildRouterIfNotSet(
-      RouterTransaction.with(SlideThreadController())
+      RouterTransaction.with(createSlideThreadController())
     )
 
     slidingPaneLayout.setOverhangSize(OVERHANG_SIZE)
@@ -103,6 +103,12 @@ class SlideNavController(
     }
 
     slidingPaneLayout.open()
+  }
+
+  private fun createSlideThreadController(): SlideThreadController {
+    return SlideThreadController().apply {
+      recyclerViewProvider(this@SlideNavController)
+    }
   }
 
   private fun createSlideCatalogController(): SlideCatalogController {
@@ -202,6 +208,6 @@ class SlideNavController(
     private const val TAG = "SlideNavController"
 
     val CONTROLLER_TAG = ControllerTag("SlideNavControllerTag")
-    val OVERHANG_SIZE = 16.dp
+    val OVERHANG_SIZE = 20.dp
   }
 }

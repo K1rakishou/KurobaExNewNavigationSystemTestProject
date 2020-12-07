@@ -5,4 +5,5 @@ import android.view.View
 interface ToolbarContract {
   fun collapsableView(): View
   fun setTitle(title: String)
+  fun setToolbarVisibility(visibility: Int)
 }
