@@ -169,8 +169,21 @@ class SlideUiElementsController(
     toolbarContract.setTitle(controllerType, title)
   }
 
-  override fun onSliding(offset: Float) {
-    (toolbarContract.collapsableView() as SlideToolbar).onSliding(offset)
+  override fun onBeforeSliding(transitioningIntoCatalogToolbar: Boolean) {
+    (toolbarContract.collapsableView() as SlideToolbar).onBeforeSliding(
+      transitioningIntoCatalogToolbar = transitioningIntoCatalogToolbar
+    )
+  }
+
+  override fun onSliding(transitioningIntoCatalogToolbar: Boolean, offset: Float) {
+    (toolbarContract.collapsableView() as SlideToolbar).onSliding(
+      transitioningIntoCatalogToolbar = transitioningIntoCatalogToolbar,
+      offset = offset
+    )
+  }
+
+  override fun onAfterSliding(becameCatalogToolbar: Boolean) {
+    (toolbarContract.collapsableView() as SlideToolbar).onAfterSliding(becameCatalogToolbar)
   }
 
   override fun onControllerGainedFocus(isCatalogController: Boolean) {

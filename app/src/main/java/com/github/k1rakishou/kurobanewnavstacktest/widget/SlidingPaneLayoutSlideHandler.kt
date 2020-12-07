@@ -3,7 +3,7 @@ package com.github.k1rakishou.kurobanewnavstacktest.widget
 import android.view.View
 
 class SlidingPaneLayoutSlideHandler(
-    private val initiallyOpen: Boolean
+  private val initiallyOpen: Boolean
 ) : SlidingPaneLayoutEx.PanelSlideListener {
   private val listeners = mutableSetOf<SlidingPaneLayoutSlideListener>()
   private var sliding = false

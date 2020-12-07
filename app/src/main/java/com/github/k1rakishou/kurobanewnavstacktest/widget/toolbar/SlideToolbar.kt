@@ -8,9 +8,10 @@ import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
+import com.github.k1rakishou.kurobanewnavstacktest.utils.setAlphaFast
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndDoRequest
+import com.github.k1rakishou.kurobanewnavstacktest.utils.setVisibilityFast
 import com.google.android.material.appbar.MaterialToolbar
-import timber.log.Timber
 
 class SlideToolbar @JvmOverloads constructor(
   context: Context,
@@ -20,7 +21,7 @@ class SlideToolbar @JvmOverloads constructor(
   private val actualCatalogToolbar: MaterialToolbar
   private val actualThreadToolbar: MaterialToolbar
 
-  private var prevSliding: Float? = null
+  private var transitioningIntoCatalogToolbar: Boolean? = null
   private var initialToolbarShown = false
   private var catalogToolbarVisible: Boolean = false
 
@@ -62,14 +63,71 @@ class SlideToolbar @JvmOverloads constructor(
     this.visibility = visibility
   }
 
-  fun onSliding(offset: Float) {
-    Timber.d("onSliding offset=$offset")
+  fun onBeforeSliding(transitioningIntoCatalogToolbar: Boolean) {
+    check(this.transitioningIntoCatalogToolbar == null) { "transitioningIntoCatalogToolbar != null" }
+    this.transitioningIntoCatalogToolbar = transitioningIntoCatalogToolbar
 
-    // TODO(KurobaEx): not tested
-    when {
-      offset >= 0.99f -> catalogToolbarVisible = true
-      offset <= 0.01f -> catalogToolbarVisible = false
+    actualCatalogToolbar.setVisibilityFast(View.VISIBLE)
+    actualThreadToolbar.setVisibilityFast(View.VISIBLE)
+
+    if (transitioningIntoCatalogToolbar) {
+      actualCatalogToolbar.setAlphaFast(0f)
+      actualThreadToolbar.setAlphaFast(1f)
+    } else {
+      actualCatalogToolbar.setAlphaFast(1f)
+      actualThreadToolbar.setAlphaFast(0f)
     }
+  }
+
+  fun onSliding(transitioningIntoCatalogToolbar: Boolean, offset: Float) {
+    check(this.transitioningIntoCatalogToolbar != null) { "transitioningIntoCatalogToolbar == null" }
+
+    actualCatalogToolbar.setAlphaFast(offset)
+    actualThreadToolbar.setAlphaFast(1f - offset)
+  }
+
+  fun onAfterSliding(becameCatalogToolbar: Boolean) {
+    check(this.transitioningIntoCatalogToolbar != null) { "transitioningIntoCatalogToolbar == null" }
+
+    if (transitioningIntoCatalogToolbar != becameCatalogToolbar) {
+      // The sliding was canceled, we need to revert everything back
+      if (becameCatalogToolbar) {
+        actualCatalogToolbar.setVisibilityFast(View.VISIBLE)
+        actualCatalogToolbar.setAlphaFast(1f)
+
+        actualThreadToolbar.setVisibilityFast(View.GONE)
+        actualThreadToolbar.setAlphaFast(0f)
+      } else {
+        actualCatalogToolbar.setVisibilityFast(View.GONE)
+        actualCatalogToolbar.setAlphaFast(0f)
+
+        actualThreadToolbar.setVisibilityFast(View.VISIBLE)
+        actualThreadToolbar.setAlphaFast(1f)
+      }
+
+      transitioningIntoCatalogToolbar = null
+      return
+    }
+
+    if (becameCatalogToolbar) {
+      catalogToolbarVisible = true
+
+      actualCatalogToolbar.setAlphaFast(1f)
+      actualCatalogToolbar.setVisibilityFast(View.VISIBLE)
+
+      actualThreadToolbar.setAlphaFast(0f)
+      actualThreadToolbar.setVisibilityFast(View.GONE)
+    } else {
+      catalogToolbarVisible = false
+
+      actualCatalogToolbar.setAlphaFast(0f)
+      actualCatalogToolbar.setVisibilityFast(View.GONE)
+
+      actualThreadToolbar.setAlphaFast(1f)
+      actualThreadToolbar.setVisibilityFast(View.VISIBLE)
+    }
+
+    transitioningIntoCatalogToolbar = null
   }
 
   fun onControllerGainedFocus(isCatalogController: Boolean) {
@@ -81,11 +139,11 @@ class SlideToolbar @JvmOverloads constructor(
 
   private fun showToolbarInitial(isCatalogController: Boolean) {
     if (isCatalogController) {
-      actualCatalogToolbar.visibility = View.VISIBLE
-      actualThreadToolbar.visibility = View.GONE
+      actualCatalogToolbar.setVisibilityFast(View.VISIBLE)
+      actualThreadToolbar.setVisibilityFast(View.GONE)
     } else {
-      actualCatalogToolbar.visibility = View.GONE
-      actualThreadToolbar.visibility = View.VISIBLE
+      actualCatalogToolbar.setVisibilityFast(View.GONE)
+      actualThreadToolbar.setVisibilityFast(View.VISIBLE)
     }
   }
 

@@ -89,19 +89,29 @@ class SlideNavController(
 
     slidingPaneLayoutSlideHandler = SlidingPaneLayoutSlideHandler(true).apply {
       addListener(object : SlidingPaneLayoutSlideHandler.SlidingPaneLayoutSlideListener {
+        private var isCurrentlyOpened = slidingPaneLayout.isOpen
+
         override fun onSlidingStarted(wasOpen: Boolean) {
           // Disable orientation change when sliding is in progress
           ScreenOrientationUtils.lockScreenOrientation(activityContract().activity())
 
           slideModeFabViewControllerCallbacks?.onSlidingPaneSlidingStarted(wasOpen)
+          slideCatalogUiElementsControllerCallbacks?.onBeforeSliding(isCurrentlyOpened.not())
         }
 
         override fun onSliding(offset: Float) {
           slideModeFabViewControllerCallbacks?.onSlidingPaneSliding(offset)
-          slideCatalogUiElementsControllerCallbacks?.onSliding(offset)
+
+          slideCatalogUiElementsControllerCallbacks?.onSliding(
+            transitioningIntoCatalogToolbar = isCurrentlyOpened.not(),
+            offset = offset
+          )
         }
 
         override fun onSlidingEnded(becameOpen: Boolean) {
+          slideCatalogUiElementsControllerCallbacks?.onAfterSliding(becameOpen)
+          isCurrentlyOpened = becameOpen
+
           slideModeFabViewControllerCallbacks?.onSlidingPaneSlidingEnded(becameOpen)
           fireSlidingPaneListeners(becameOpen)
 
@@ -218,7 +228,9 @@ class SlideNavController(
   override fun getControllerTag(): ControllerTag = CONTROLLER_TAG
 
   interface SlideCatalogUiElementsControllerCallbacks {
-    fun onSliding(offset: Float)
+    fun onBeforeSliding(transitioningIntoCatalogToolbar: Boolean)
+    fun onSliding(transitioningIntoCatalogToolbar: Boolean, offset: Float)
+    fun onAfterSliding(becameCatalogToolbar: Boolean)
     fun onControllerGainedFocus(isCatalogController: Boolean)
   }
 

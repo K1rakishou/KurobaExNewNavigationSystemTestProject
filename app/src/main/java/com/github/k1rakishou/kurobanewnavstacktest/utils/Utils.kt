@@ -9,7 +9,6 @@ import androidx.core.view.updateLayoutParams
 import com.airbnb.epoxy.AsyncEpoxyController
 import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyRecyclerView
-import timber.log.Timber
 
 val Int.dp: Int
   get() = (this * Resources.getSystem().displayMetrics.density).toInt()
@@ -105,4 +104,20 @@ fun Throwable.errorMessageOrClassName(): String {
   }
 
   return this::class.java.name
+}
+
+fun View.setVisibilityFast(newVisibility: Int) {
+  if (this.visibility == newVisibility) {
+    return
+  }
+
+  this.visibility = newVisibility
+}
+
+fun View.setAlphaFast(newAlpha: Float) {
+  if (this.alpha == newAlpha) {
+    return
+  }
+
+  this.alpha = newAlpha
 }

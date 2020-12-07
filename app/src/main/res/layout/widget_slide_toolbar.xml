@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/slide_toolbar_root"
     android:layout_width="match_parent"
     android:layout_height="@dimen/toolbar_height"
@@ -11,7 +12,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone"
-        app:titleTextColor="@color/colorTextLight" />
+        app:titleTextColor="@color/colorTextLight"
+        tools:visibility="visible" />
 
 
     <com.google.android.material.appbar.MaterialToolbar
