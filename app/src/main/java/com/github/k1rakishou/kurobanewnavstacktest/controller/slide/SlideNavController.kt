@@ -12,10 +12,8 @@ import com.github.k1rakishou.kurobanewnavstacktest.base.BaseController
 import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
 import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.controller.RecyclerViewProvider
-import com.github.k1rakishou.kurobanewnavstacktest.controller.base.CatalogNavigationContract
-import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ChanNavigationContract
-import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ThreadNavigationContract
-import com.github.k1rakishou.kurobanewnavstacktest.controller.base.UiElementsControllerCallbacks
+import com.github.k1rakishou.kurobanewnavstacktest.controller.base.*
+import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ControllerToolbarContract
 import com.github.k1rakishou.kurobanewnavstacktest.data.BoardDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.utils.ScreenOrientationUtils
@@ -29,7 +27,8 @@ class SlideNavController(
 ) : BaseController(args),
   RecyclerViewProvider,
   UiElementsControllerCallbacks,
-  ChanNavigationContract {
+  ChanNavigationContract,
+  ControllerToolbarContract {
   private lateinit var slidingPaneLayout: SlidingPaneLayoutEx
   private lateinit var catalogControllerContainer: FrameLayout
   private lateinit var threadControllerContainer: FrameLayout
@@ -39,6 +38,7 @@ class SlideNavController(
   private var slideCatalogUiElementsControllerCallbacks: SlideCatalogUiElementsControllerCallbacks? = null
   private var recyclerViewProvider: RecyclerViewProvider? = null
   private var slideModeFabViewControllerCallbacks: SlideModeFabViewControllerCallbacks? = null
+  private var controllerToolbarContract: ControllerToolbarContract? = null
 
   fun setUiElementsControllerCallbacks(callbacks: UiElementsControllerCallbacks) {
     uiElementsControllerCallbacks = callbacks
@@ -54,6 +54,10 @@ class SlideNavController(
 
   fun slideModeFabViewControllerCallbacks(slideModeFabViewControllerCallbacks: SlideModeFabViewControllerCallbacks) {
     this.slideModeFabViewControllerCallbacks = slideModeFabViewControllerCallbacks
+  }
+
+  fun controllerToolbarContract(controllerToolbarContract: ControllerToolbarContract) {
+    this.controllerToolbarContract = controllerToolbarContract
   }
 
   override fun instantiateView(
@@ -115,6 +119,7 @@ class SlideNavController(
   private fun createSlideThreadController(): SlideThreadController {
     return SlideThreadController().apply {
       recyclerViewProvider(this@SlideNavController)
+      controllerToolbarContract(this@SlideNavController)
     }
   }
 
@@ -123,6 +128,8 @@ class SlideNavController(
       recyclerViewProvider(this@SlideNavController)
       uiElementsControllerCallbacks(this@SlideNavController)
       threadNavigationContract(this@SlideNavController)
+      controllerToolbarContract(this@SlideNavController)
+      controllerToolbarContract(this@SlideNavController)
     }
   }
 
@@ -133,6 +140,10 @@ class SlideNavController(
     slideCatalogUiElementsControllerCallbacks = null
     recyclerViewProvider = null
     slideModeFabViewControllerCallbacks = null
+  }
+
+  override fun setToolbarTitle(controllerType: ControllerType, title: String) {
+    controllerToolbarContract?.setToolbarTitle(controllerType, title)
   }
 
   override fun showFab() {

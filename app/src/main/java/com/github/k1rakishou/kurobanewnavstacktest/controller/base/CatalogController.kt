@@ -10,10 +10,7 @@ import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.activity.ImageViewerActivity
 import com.github.k1rakishou.kurobanewnavstacktest.base.BaseController
-import com.github.k1rakishou.kurobanewnavstacktest.data.BoardDescriptor
-import com.github.k1rakishou.kurobanewnavstacktest.data.CatalogData
-import com.github.k1rakishou.kurobanewnavstacktest.data.PostDescriptor
-import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
+import com.github.k1rakishou.kurobanewnavstacktest.data.*
 import com.github.k1rakishou.kurobanewnavstacktest.epoxy.catalogThreadView
 import com.github.k1rakishou.kurobanewnavstacktest.epoxy.epoxyTextView
 import com.github.k1rakishou.kurobanewnavstacktest.epoxy.loadingView
@@ -27,13 +24,15 @@ import timber.log.Timber
 
 abstract class CatalogController(
   args: Bundle? = null
-) : BaseController(args), CatalogNavigationContract {
+) : BaseController(args),
+  CatalogNavigationContract {
+
   private val chanRepository = ChanRepository
 
   protected lateinit var recyclerView: EpoxyRecyclerView
 
   private var threadNavigationContract: ThreadNavigationContract? = null
-  private var boardDescriptor: BoardDescriptor? = null
+  private var boundBoardDescriptor: BoardDescriptor? = null
   private var job: Job? = null
 
   fun threadNavigationContract(threadNavigationContract: ThreadNavigationContract) {
@@ -56,7 +55,7 @@ abstract class CatalogController(
     applyInsetsForRecyclerView()
 
     // TODO: remove me!!! vvv
-    val boardDescriptor = BoardDescriptor("test")
+    val boardDescriptor = BoardDescriptor(SiteDescriptor("4chan.org"), "g")
     openBoard(boardDescriptor)
     // TODO: remove me!!! ^^^
   }
@@ -87,7 +86,7 @@ abstract class CatalogController(
 
   override fun openBoard(boardDescriptor: BoardDescriptor) {
     Timber.tag(TAG).d("openBoard($boardDescriptor)")
-    this.boardDescriptor = boardDescriptor
+    this.boundBoardDescriptor = boardDescriptor
 
     job?.cancel()
     job = null
@@ -109,7 +108,7 @@ abstract class CatalogController(
       return
     }
 
-    val descriptor = boardDescriptor
+    val descriptor = boundBoardDescriptor
     if (descriptor == null) {
       rebuildCatalog(CatalogData.Empty)
       return
@@ -121,42 +120,46 @@ abstract class CatalogController(
 
   private fun rebuildCatalog(catalogData: CatalogData) {
     recyclerView.withModels {
-      val isEmpty = catalogData is CatalogData.Data && catalogData.catalog.isEmpty()
-      if (isEmpty) {
+      if (catalogData is CatalogData.Empty) {
+        epoxyTextView {
+          id("catalog_empty_view")
+          message("No board opened")
+        }
+        return@withModels
+      }
+
+      if (catalogData is CatalogData.Loading) {
         loadingView {
           id("catalog_loading_view")
+        }
+        return@withModels
+      }
+
+      val noThreads = catalogData is CatalogData.Data && catalogData.catalog.isEmpty()
+      if (noThreads) {
+        epoxyTextView {
+          id("catalog_no_posts_view")
+          message("Board has no threads")
         }
 
         return@withModels
       }
 
-      when (catalogData) {
-        CatalogData.Empty -> {
-          epoxyTextView {
-            id("catalog_empty_view")
-            message("No board opened")
-          }
-        }
-        CatalogData.Loading -> {
-          loadingView {
-            id("catalog_loading_view")
-          }
-        }
-        is CatalogData.Data -> {
-          val error = catalogData.error
-          if (error != null) {
-            showToast(error.errorMessageOrClassName())
-          }
+      catalogData as CatalogData.Data
+      setToolbarTitle(catalogData.toCatalogTitleString())
 
-          catalogData.catalog.forEach { post ->
-            catalogThreadView {
-              id("catalog_thread_${post.postDescriptor.postNo}")
-              color(post.color)
-              comment(post.text)
-              clickListener { openThread(post.postDescriptor.threadDescriptor) }
-              imageClickListener { openImageViewer(post.postDescriptor) }
-            }
-          }
+      val error = catalogData.error
+      if (error != null) {
+        showToast(error.errorMessageOrClassName())
+      }
+
+      catalogData.catalog.forEach { post ->
+        catalogThreadView {
+          id("catalog_thread_${post.postDescriptor.postNo}")
+          color(post.color)
+          comment(post.text)
+          clickListener { openThread(post.postDescriptor.threadDescriptor) }
+          imageClickListener { openImageViewer(post.postDescriptor) }
         }
       }
     }
@@ -175,6 +178,8 @@ abstract class CatalogController(
 
     startActivity(intent)
   }
+
+  protected abstract fun setToolbarTitle(title: String)
 
   companion object {
     private const val TAG = "CatalogController"

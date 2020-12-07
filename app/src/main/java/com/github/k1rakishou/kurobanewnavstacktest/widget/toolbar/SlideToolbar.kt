@@ -7,6 +7,7 @@ import android.widget.FrameLayout
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import com.github.k1rakishou.kurobanewnavstacktest.R
+import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndDoRequest
 import com.google.android.material.appbar.MaterialToolbar
 import timber.log.Timber
@@ -46,10 +47,10 @@ class SlideToolbar @JvmOverloads constructor(
     return this
   }
 
-  override fun setTitle(title: String) {
-    when (catalogToolbarVisible) {
-      true -> actualCatalogToolbar.title = title
-      false -> actualThreadToolbar.title = title
+  override fun setTitle(controllerType: ControllerType, title: String) {
+    when (controllerType) {
+      ControllerType.Catalog -> actualCatalogToolbar.title = title
+      ControllerType.Thread -> actualThreadToolbar.title = title
     }
   }
 

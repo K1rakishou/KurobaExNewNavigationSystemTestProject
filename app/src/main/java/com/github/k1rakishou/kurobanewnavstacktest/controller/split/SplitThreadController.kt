@@ -18,6 +18,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.widget.behavior.SplitThreadFa
 class SplitThreadController(
   args: Bundle? = null
 ) : ThreadController(args) {
+
   private lateinit var threadFab: KurobaFloatingActionButton
 
   private val collapsingViewsHolder = CollapsingViewsHolder()
@@ -76,6 +77,10 @@ class SplitThreadController(
     super.onControllerHidden()
 
     collapsingViewsHolder.detach(recyclerView, toolbarContract.collapsableView())
+  }
+
+  override fun setToolbarTitle(title: String) {
+    toolbarContract.setTitle(ControllerType.Thread, title)
   }
 
   override fun getControllerTag(): ControllerTag = CONTROLLER_TAG

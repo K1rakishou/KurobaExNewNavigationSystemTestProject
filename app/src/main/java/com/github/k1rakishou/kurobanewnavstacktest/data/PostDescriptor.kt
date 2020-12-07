@@ -9,6 +9,11 @@ data class PostDescriptor(
     val postNo: Long
 ) : Parcelable {
 
+  fun boardDescriptor(): BoardDescriptor = threadDescriptor.boardDescriptor
+  fun siteDescriptor(): SiteDescriptor = boardDescriptor().siteDescriptor
+  fun boardCode(): String = boardDescriptor().boardCode
+  fun siteName(): String = siteDescriptor().siteName
+
   val isOP: Boolean
     get() = postNo == threadDescriptor.threadNo
 

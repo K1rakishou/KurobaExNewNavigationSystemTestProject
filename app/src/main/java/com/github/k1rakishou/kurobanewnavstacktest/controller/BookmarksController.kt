@@ -7,10 +7,10 @@ import android.view.ViewGroup
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.base.BaseController
 import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
-import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ControllerToolbarContract
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.UiElementsControllerCallbacks
 
-class BookmarksController(args: Bundle? = null) : BaseController(args), ControllerToolbarContract {
+// TODO(KurobaEx): title doesn't work
+class BookmarksController(args: Bundle? = null) : BaseController(args) {
   private var uiElementsControllerCallbacks: UiElementsControllerCallbacks? = null
 
   fun setUiElementsControllerCallbacks(callbacks: UiElementsControllerCallbacks) {
@@ -27,15 +27,15 @@ class BookmarksController(args: Bundle? = null) : BaseController(args), Controll
 
   override fun onControllerShown() {
     super.onControllerShown()
+
     uiElementsControllerCallbacks?.hideFab()
   }
 
   override fun onControllerDestroyed() {
     super.onControllerDestroyed()
+
     uiElementsControllerCallbacks = null
   }
-
-  override fun getTitle(): String = "Bookmarks Controller"
 
   override fun getControllerTag(): ControllerTag = ControllerTag(CONTROLLER_TAG)
 

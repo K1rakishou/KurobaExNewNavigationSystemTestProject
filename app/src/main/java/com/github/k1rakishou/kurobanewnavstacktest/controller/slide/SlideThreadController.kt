@@ -8,12 +8,18 @@ import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.controller.FocusableController
 import com.github.k1rakishou.kurobanewnavstacktest.controller.RecyclerViewProvider
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ThreadController
+import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ControllerToolbarContract
 
 class SlideThreadController(
   args: Bundle? = null
 ) : ThreadController(args),
   FocusableController {
   private var recyclerViewProvider: RecyclerViewProvider? = null
+  private var controllerToolbarContract: ControllerToolbarContract? = null
+
+  fun controllerToolbarContract(controllerToolbarContract: ControllerToolbarContract) {
+    this.controllerToolbarContract = controllerToolbarContract
+  }
 
   fun recyclerViewProvider(recyclerViewProvider: RecyclerViewProvider) {
     this.recyclerViewProvider = recyclerViewProvider
@@ -51,6 +57,13 @@ class SlideThreadController(
     super.onControllerDestroyed()
 
     recyclerViewProvider = null
+  }
+
+  override fun setToolbarTitle(title: String) {
+    controllerToolbarContract?.setToolbarTitle(
+      controllerType = ControllerType.Thread,
+      title = title
+    )
   }
 
   override fun getControllerTag(): ControllerTag = CONTROLLER_TAG

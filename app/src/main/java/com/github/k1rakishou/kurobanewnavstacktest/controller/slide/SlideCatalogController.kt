@@ -7,11 +7,13 @@ import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.controller.FocusableController
 import com.github.k1rakishou.kurobanewnavstacktest.controller.RecyclerViewProvider
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.CatalogController
+import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ControllerToolbarContract
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.UiElementsControllerCallbacks
 
 class SlideCatalogController(args: Bundle? = null) : CatalogController(args), FocusableController {
   private var recyclerViewProvider: RecyclerViewProvider? = null
   private var uiElementsControllerCallbacks: UiElementsControllerCallbacks? = null
+  private var controllerToolbarContract: ControllerToolbarContract? = null
 
   fun recyclerViewProvider(recyclerViewProvider: RecyclerViewProvider) {
     this.recyclerViewProvider = recyclerViewProvider
@@ -19,6 +21,10 @@ class SlideCatalogController(args: Bundle? = null) : CatalogController(args), Fo
 
   fun uiElementsControllerCallbacks(uiElementsControllerCallbacks: UiElementsControllerCallbacks) {
     this.uiElementsControllerCallbacks = uiElementsControllerCallbacks
+  }
+
+  fun controllerToolbarContract(controllerToolbarContract: ControllerToolbarContract) {
+    this.controllerToolbarContract = controllerToolbarContract
   }
 
   override fun onControllerShown() {
@@ -48,6 +54,11 @@ class SlideCatalogController(args: Bundle? = null) : CatalogController(args), Fo
 
     recyclerViewProvider = null
     uiElementsControllerCallbacks = null
+    controllerToolbarContract = null
+  }
+
+  override fun setToolbarTitle(title: String) {
+    controllerToolbarContract?.setToolbarTitle(ControllerType.Catalog, title)
   }
 
   override fun getControllerTag(): ControllerTag = CONTROLLER_TAG

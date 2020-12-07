@@ -7,10 +7,10 @@ import android.view.ViewGroup
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.base.BaseController
 import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
-import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ControllerToolbarContract
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.UiElementsControllerCallbacks
 
-class SettingsController(args: Bundle? = null) : BaseController(args), ControllerToolbarContract {
+// TODO(KurobaEx): title doesn't work
+class SettingsController(args: Bundle? = null) : BaseController(args) {
   private var uiElementsControllerCallbacks: UiElementsControllerCallbacks? = null
 
   fun setUiElementsControllerCallbacks(callbacks: UiElementsControllerCallbacks) {
@@ -36,8 +36,6 @@ class SettingsController(args: Bundle? = null) : BaseController(args), Controlle
 
     uiElementsControllerCallbacks = null
   }
-
-  override fun getTitle(): String = "Settings Controller"
 
   override fun getControllerTag(): ControllerTag = CONTROLLER_TAG
 

@@ -25,13 +25,17 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import timber.log.Timber
 
-abstract class ThreadController(args: Bundle? = null) : BaseController(args), ThreadNavigationContract {
+abstract class ThreadController(
+  args: Bundle? = null
+) : BaseController(args),
+  ThreadNavigationContract {
+
   private val chanRepository = ChanRepository
 
   protected lateinit var recyclerView: EpoxyRecyclerView
   protected lateinit var toolbarContract: ToolbarContract
 
-  private var threadDescriptor: ThreadDescriptor? = null
+  private var boundThreadDescriptor: ThreadDescriptor? = null
   private var job: Job? = null
 
   override fun instantiateView(
@@ -62,7 +66,7 @@ abstract class ThreadController(args: Bundle? = null) : BaseController(args), Th
 
   override fun openThread(threadDescriptor: ThreadDescriptor) {
     Timber.tag(TAG).d("openThread($threadDescriptor)")
-    this.threadDescriptor = threadDescriptor
+    this.boundThreadDescriptor = threadDescriptor
 
     job?.cancel()
     job = null
@@ -97,7 +101,7 @@ abstract class ThreadController(args: Bundle? = null) : BaseController(args), Th
       return
     }
 
-    val descriptor = threadDescriptor
+    val descriptor = boundThreadDescriptor
     if (descriptor == null) {
       rebuildThread(ThreadData.Empty)
       return
@@ -109,41 +113,45 @@ abstract class ThreadController(args: Bundle? = null) : BaseController(args), Th
 
   private fun rebuildThread(threadData: ThreadData) {
     recyclerView.withModels {
-      val isEmpty = threadData is ThreadData.Data && threadData.thread.isEmpty()
-      if (isEmpty) {
+      if (threadData is ThreadData.Empty) {
+        epoxyTextView {
+          id("thread_empty_view")
+          message("No thread opened")
+        }
+        return@withModels
+      }
+
+      if (threadData is ThreadData.Loading) {
         loadingView {
           id("thread_loading_view")
+        }
+        return@withModels
+      }
+
+      val noPosts = threadData is ThreadData.Data && threadData.threadPosts.isEmpty()
+      if (noPosts) {
+        epoxyTextView {
+          id("thread_empty_view")
+          message("No posts in thread")
         }
 
         return@withModels
       }
 
-      when (threadData) {
-        ThreadData.Empty -> {
-          epoxyTextView {
-            id("thread_empty_view")
-            message("No thread opened")
-          }
-        }
-        ThreadData.Loading -> {
-          loadingView {
-            id("thread_loading_view")
-          }
-        }
-        is ThreadData.Data -> {
-          // TODO(KurobaEx):
+      threadData as ThreadData.Data
+      setToolbarTitle(threadData.toThreadTitleString())
+
+      // TODO(KurobaEx):
 //          scrollbarMarksChildDecoration.setPosts(threadData.thread)
 
-          threadData.thread.forEach { post ->
-            threadPostView {
-              id("thread_thread_${post.postDescriptor}")
-              color(post.color)
-              postSelected(post.selected)
-              comment(post.text)
-              clickListener { chanRepository.selectUnSelectPost(post.postDescriptor) }
-              imageClickListener { openImageViewer(post.postDescriptor) }
-            }
-          }
+      threadData.threadPosts.forEach { post ->
+        threadPostView {
+          id("thread_thread_${post.postDescriptor}")
+          color(post.color)
+          postSelected(post.selected)
+          comment(post.text)
+          clickListener { chanRepository.selectUnSelectPost(post.postDescriptor) }
+          imageClickListener { openImageViewer(post.postDescriptor) }
         }
       }
     }
@@ -158,6 +166,8 @@ abstract class ThreadController(args: Bundle? = null) : BaseController(args), Th
 
     startActivity(intent)
   }
+
+  protected abstract fun setToolbarTitle(title: String)
 
   companion object {
     private const val TAG = "ThreadController"

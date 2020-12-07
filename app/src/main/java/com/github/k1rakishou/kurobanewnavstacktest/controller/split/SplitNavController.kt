@@ -10,8 +10,10 @@ import com.bluelinelabs.conductor.RouterTransaction
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.base.BaseController
 import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
+import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.CatalogNavigationContract
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ChanNavigationContract
+import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ControllerToolbarContract
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ThreadNavigationContract
 import com.github.k1rakishou.kurobanewnavstacktest.data.BoardDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
@@ -20,9 +22,16 @@ import timber.log.Timber
 class SplitNavController(
   args: Bundle? = null
 ) : BaseController(args),
-  ChanNavigationContract {
+  ChanNavigationContract,
+  ControllerToolbarContract {
   private lateinit var leftControllerContainer: FrameLayout
   private lateinit var rightControllerContainer: FrameLayout
+
+  private var controllerToolbarContract: ControllerToolbarContract? = null
+
+  fun controllerToolbarContract(controllerToolbarContract: ControllerToolbarContract) {
+    this.controllerToolbarContract = controllerToolbarContract
+  }
 
   override fun instantiateView(
       inflater: LayoutInflater,
@@ -44,6 +53,16 @@ class SplitNavController(
     rightControllerContainer.setupChildRouterIfNotSet(
       RouterTransaction.with(createSplitThreadController())
     )
+  }
+
+  override fun onControllerDestroyed() {
+    super.onControllerDestroyed()
+
+    controllerToolbarContract = null
+  }
+
+  override fun setToolbarTitle(controllerType: ControllerType, title: String) {
+    controllerToolbarContract?.setToolbarTitle(controllerType, title)
   }
 
   @SuppressLint("BinaryOperationInTimber")
@@ -79,6 +98,7 @@ class SplitNavController(
   private fun createSplitUiElementsController(): SplitUiElementsController {
     return SplitUiElementsController().apply {
       threadNavigationContract(this@SplitNavController)
+      controllerToolbarContract(this@SplitNavController)
     }
   }
 
