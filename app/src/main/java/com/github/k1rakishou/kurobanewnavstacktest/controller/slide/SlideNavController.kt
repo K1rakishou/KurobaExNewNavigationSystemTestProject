@@ -135,7 +135,6 @@ class SlideNavController(
       uiElementsControllerCallbacks(this@SlideNavController)
       threadNavigationContract(this@SlideNavController)
       controllerToolbarContract(this@SlideNavController)
-      controllerToolbarContract(this@SlideNavController)
     }
   }
 
@@ -150,6 +149,10 @@ class SlideNavController(
 
   override fun setToolbarTitle(controllerType: ControllerType, title: String) {
     controllerToolbarContract?.setToolbarTitle(controllerType, title)
+  }
+
+  override fun setCatalogToolbarSubTitle(subtitle: String) {
+    controllerToolbarContract?.setCatalogToolbarSubTitle(subtitle)
   }
 
   override fun showFab() {

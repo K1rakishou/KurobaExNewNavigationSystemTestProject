@@ -7,7 +7,7 @@
     android:layout_height="@dimen/toolbar_height"
     android:background="@color/colorPrimaryDark">
 
-    <com.google.android.material.appbar.MaterialToolbar
+    <com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.KurobaToolbar
         android:id="@+id/catalog_toolbar"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -16,7 +16,7 @@
         tools:visibility="visible" />
 
 
-    <com.google.android.material.appbar.MaterialToolbar
+    <com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.KurobaToolbar
         android:id="@+id/thread_toolbar"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

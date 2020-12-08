@@ -25,12 +25,6 @@ class SlideThreadController(
     this.recyclerViewProvider = recyclerViewProvider
   }
 
-  override fun onControllerCreated(savedViewState: Bundle?) {
-    super.onControllerCreated(savedViewState)
-
-    toolbarContract.setToolbarVisibility(View.GONE)
-  }
-
   override fun onControllerShown() {
     super.onControllerShown()
 

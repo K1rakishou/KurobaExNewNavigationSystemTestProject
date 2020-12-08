@@ -20,7 +20,6 @@ import com.github.k1rakishou.kurobanewnavstacktest.repository.ChanRepository
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndDoRequest
 import com.github.k1rakishou.kurobanewnavstacktest.viewstate.ViewStateConstants
 import com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaFloatingActionButton
-import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarContract
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import timber.log.Timber
@@ -33,7 +32,6 @@ abstract class ThreadController(
   private val chanRepository = ChanRepository
 
   protected lateinit var recyclerView: EpoxyRecyclerView
-  protected lateinit var toolbarContract: ToolbarContract
 
   private var boundThreadDescriptor: ThreadDescriptor? = null
   private var job: Job? = null
@@ -45,7 +43,6 @@ abstract class ThreadController(
   ): View {
     return inflater.inflateView(R.layout.controller_thread, container) {
       recyclerView = findViewById(R.id.controller_thread_epoxy_recycler_view)
-      toolbarContract = findViewById(R.id.thread_controller_toolbar)
 
       findViewById<KurobaFloatingActionButton>(R.id.split_controller_thread_fab)!!.visibility = View.GONE
     }

@@ -3,6 +3,7 @@ package com.github.k1rakishou.kurobanewnavstacktest.utils
 import android.content.res.Resources
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.updateLayoutParams
@@ -12,6 +13,12 @@ import com.airbnb.epoxy.EpoxyRecyclerView
 
 val Int.dp: Int
   get() = (this * Resources.getSystem().displayMetrics.density).toInt()
+
+val Float.dp: Float
+  get() = (this * Resources.getSystem().displayMetrics.density)
+
+val <T> T.exhaustive: T
+  get() = this
 
 fun EpoxyRecyclerView.withModelsAsync(buildModels: EpoxyController.() -> Unit) {
   val controller = SimpleAsyncEpoxyController(buildModels)
@@ -120,4 +127,20 @@ fun View.setAlphaFast(newAlpha: Float) {
   }
 
   this.alpha = newAlpha
+}
+
+fun TextView.setTextFast(newText: CharSequence) {
+  if (text == newText) {
+    return
+  }
+
+  text = newText
+}
+
+fun View.setEnabledFast(enable: Boolean) {
+  if (this.isEnabled == enable) {
+    return
+  }
+
+  this.isEnabled = enable
 }

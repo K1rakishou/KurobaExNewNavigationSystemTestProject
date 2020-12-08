@@ -6,7 +6,7 @@
     android:layout_height="wrap_content"
     android:background="@color/colorPrimaryDark">
 
-    <com.google.android.material.appbar.MaterialToolbar
+    <com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.KurobaToolbar
         android:id="@+id/normal_toolbar"
         android:layout_width="match_parent"
         android:layout_height="@dimen/toolbar_height"

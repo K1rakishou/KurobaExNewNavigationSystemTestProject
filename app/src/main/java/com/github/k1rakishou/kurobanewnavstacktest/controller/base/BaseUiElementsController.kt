@@ -12,6 +12,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.base.BaseController
 import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
 import com.github.k1rakishou.kurobanewnavstacktest.controller.BookmarksController
+import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.controller.SettingsController
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndDoRequest
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.NormalToolbar
@@ -37,11 +38,13 @@ abstract class BaseUiElementsController(
   private fun setupToolbar() {
     if (isSplitLayout()) {
       val toolbarView = NormalToolbar(currentContext())
+      toolbarView.init(ControllerType.Catalog)
       toolbarContainer.addView(toolbarView)
 
       toolbarContract = toolbarView
     } else {
       val toolbarView = SlideToolbar(currentContext())
+      toolbarView.init()
       toolbarContainer.addView(toolbarView)
 
       toolbarContract = toolbarView

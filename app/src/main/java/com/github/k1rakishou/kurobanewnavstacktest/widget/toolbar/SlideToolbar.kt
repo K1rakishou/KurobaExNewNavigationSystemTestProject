@@ -11,19 +11,19 @@ import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setAlphaFast
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndDoRequest
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setVisibilityFast
-import com.google.android.material.appbar.MaterialToolbar
 
 class SlideToolbar @JvmOverloads constructor(
   context: Context,
   attributeSet: AttributeSet? = null,
   attrDefStyle: Int = 0
 ) : FrameLayout(context, attributeSet, attrDefStyle), ToolbarContract {
-  private val actualCatalogToolbar: MaterialToolbar
-  private val actualThreadToolbar: MaterialToolbar
+  private val actualCatalogToolbar: KurobaToolbar<KurobaCatalogToolbarViewModel>
+  private val actualThreadToolbar: KurobaToolbar<KurobaThreadToolbarViewModel>
 
   private var transitioningIntoCatalogToolbar: Boolean? = null
   private var initialToolbarShown = false
   private var catalogToolbarVisible: Boolean = false
+  private var initialized: Boolean = false
 
   init {
     inflate(context, R.layout.widget_slide_toolbar, this)
@@ -44,15 +44,39 @@ class SlideToolbar @JvmOverloads constructor(
     }
   }
 
+  fun init() {
+    check(!this.initialized) { "Double initialization!" }
+
+    this.initialized = true
+
+    actualCatalogToolbar.init(
+      KurobaToolbar.DebugTag.CatalogToolbar,
+      KurobaCatalogToolbarViewModel::class
+    )
+
+    actualThreadToolbar.init(
+      KurobaToolbar.DebugTag.ThreadToolbar,
+      KurobaThreadToolbarViewModel::class
+    )
+  }
+
   override fun collapsableView(): View {
     return this
   }
 
   override fun setTitle(controllerType: ControllerType, title: String) {
     when (controllerType) {
-      ControllerType.Catalog -> actualCatalogToolbar.title = title
-      ControllerType.Thread -> actualThreadToolbar.title = title
+      ControllerType.Catalog -> {
+        actualCatalogToolbar.toolbarViewModel.newState(ToolbarStateUpdate.Catalog.UpdateTitle(title))
+      }
+      ControllerType.Thread -> {
+        actualThreadToolbar.toolbarViewModel.newState(ToolbarStateUpdate.Thread.UpdateTitle(title))
+      }
     }
+  }
+
+  override fun setSubTitle(subtitle: String) {
+    actualCatalogToolbar.toolbarViewModel.newState(ToolbarStateUpdate.Catalog.UpdateSubTitle(subtitle))
   }
 
   override fun setToolbarVisibility(visibility: Int) {
@@ -80,14 +104,25 @@ class SlideToolbar @JvmOverloads constructor(
   }
 
   fun onSliding(offset: Float) {
-    check(this.transitioningIntoCatalogToolbar != null) { "transitioningIntoCatalogToolbar == null" }
+    if (transitioningIntoCatalogToolbar == null) {
+      return
+    }
 
     actualCatalogToolbar.setAlphaFast(offset)
     actualThreadToolbar.setAlphaFast(1f - offset)
+
+    actualCatalogToolbar.toolbarViewModel.newState(
+      newStateUpdate = ToolbarStateUpdate.Catalog.UpdateSlideProgress(offset)
+    )
+    actualThreadToolbar.toolbarViewModel.newState(
+      newStateUpdate = ToolbarStateUpdate.Thread.UpdateSlideProgress(offset)
+    )
   }
 
   fun onAfterSliding(becameCatalogToolbar: Boolean) {
-    check(this.transitioningIntoCatalogToolbar != null) { "transitioningIntoCatalogToolbar == null" }
+    if (transitioningIntoCatalogToolbar == null) {
+      return
+    }
 
     if (transitioningIntoCatalogToolbar != becameCatalogToolbar) {
       // The sliding was canceled, we need to revert everything back

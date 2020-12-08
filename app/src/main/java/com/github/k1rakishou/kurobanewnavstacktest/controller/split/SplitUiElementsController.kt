@@ -142,6 +142,10 @@ class SplitUiElementsController(
     toolbarContract.setTitle(controllerType, title)
   }
 
+  override fun setCatalogToolbarSubTitle(subtitle: String) {
+    toolbarContract.setSubTitle(subtitle)
+  }
+
   override fun showFab() {
     catalogFab.show()
   }

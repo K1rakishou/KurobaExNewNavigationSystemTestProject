@@ -169,6 +169,10 @@ class SlideUiElementsController(
     toolbarContract.setTitle(controllerType, title)
   }
 
+  override fun setCatalogToolbarSubTitle(subtitle: String) {
+    toolbarContract.setSubTitle(subtitle)
+  }
+
   override fun onBeforeSliding(transitioningIntoCatalogToolbar: Boolean) {
     (toolbarContract.collapsableView() as SlideToolbar).onBeforeSliding(
       transitioningIntoCatalogToolbar = transitioningIntoCatalogToolbar

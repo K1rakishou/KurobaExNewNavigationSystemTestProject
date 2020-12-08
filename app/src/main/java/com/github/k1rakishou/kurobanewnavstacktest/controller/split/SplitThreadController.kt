@@ -14,12 +14,15 @@ import com.github.k1rakishou.kurobanewnavstacktest.utils.*
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.ViewScreenAttachSide
 import com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaFloatingActionButton
 import com.github.k1rakishou.kurobanewnavstacktest.widget.behavior.SplitThreadFabBehavior
+import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.NormalToolbar
+import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarContract
 
 class SplitThreadController(
   args: Bundle? = null
 ) : ThreadController(args) {
 
   private lateinit var threadFab: KurobaFloatingActionButton
+  private lateinit var toolbarContract: ToolbarContract
 
   private val collapsingViewsHolder = CollapsingViewsHolder()
 
@@ -32,6 +35,11 @@ class SplitThreadController(
       threadFab = findViewById(R.id.split_controller_thread_fab)
       threadFab.visibility = View.VISIBLE
       threadFab.setBehaviorExt(SplitThreadFabBehavior(currentContext(), null))
+
+      val normalToolbar = findViewById<NormalToolbar>(R.id.thread_controller_toolbar)
+      normalToolbar.init(ControllerType.Thread)
+      normalToolbar.visibility = View.VISIBLE
+      toolbarContract = normalToolbar
     }
   }
 

@@ -8,4 +8,5 @@ interface ToolbarContract {
   fun setToolbarVisibility(visibility: Int)
 
   fun setTitle(controllerType: ControllerType, title: String)
+  fun setSubTitle(subtitle: String)
 }

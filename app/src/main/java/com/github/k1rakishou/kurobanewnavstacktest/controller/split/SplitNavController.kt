@@ -65,6 +65,10 @@ class SplitNavController(
     controllerToolbarContract?.setToolbarTitle(controllerType, title)
   }
 
+  override fun setCatalogToolbarSubTitle(subtitle: String) {
+    controllerToolbarContract?.setCatalogToolbarSubTitle(subtitle)
+  }
+
   @SuppressLint("BinaryOperationInTimber")
   override fun openBoard(boardDescriptor: BoardDescriptor) {
     val splitCatalogUiElementsController = getChildRouter(leftControllerContainer).getControllerWithTag(

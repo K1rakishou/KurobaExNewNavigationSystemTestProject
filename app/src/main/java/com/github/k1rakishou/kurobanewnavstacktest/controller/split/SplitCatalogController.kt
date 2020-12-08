@@ -52,6 +52,10 @@ class SplitCatalogController(args: Bundle? = null) : CatalogController(args) {
     controllerToolbarContract?.setToolbarTitle(ControllerType.Catalog, title)
   }
 
+  override fun setCatalogToolbarSubTitle(subtitle: String) {
+    controllerToolbarContract?.setCatalogToolbarSubTitle(subtitle)
+  }
+
   override fun getControllerTag(): ControllerTag = CONTROLLER_TAG
 
   companion object {

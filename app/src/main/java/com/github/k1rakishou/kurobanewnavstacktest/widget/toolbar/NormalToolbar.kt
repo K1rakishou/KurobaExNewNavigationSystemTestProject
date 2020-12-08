@@ -8,15 +8,16 @@ import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
-import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndDoRequest
-import com.google.android.material.appbar.MaterialToolbar
+import kotlin.reflect.KClass
 
 class NormalToolbar @JvmOverloads constructor(
   context: Context,
   attributeSet: AttributeSet? = null,
   attrDefStyle: Int = 0
 ) : FrameLayout(context, attributeSet, attrDefStyle), ToolbarContract {
-  private val actualToolbar: MaterialToolbar
+  private val actualToolbar: KurobaToolbar<KurobaToolbarViewModel>
+  private lateinit var controllerType: ControllerType
+  private var initialized = false
 
   init {
     inflate(context, R.layout.widget_normal_toolbar, this)
@@ -25,14 +26,34 @@ class NormalToolbar @JvmOverloads constructor(
     val normalToolbarRoot = findViewById<FrameLayout>(R.id.normal_toolbar_root)
     actualToolbar = findViewById(R.id.normal_toolbar)
 
-    normalToolbarRoot.setOnApplyWindowInsetsListenerAndDoRequest { v, insets ->
+    normalToolbarRoot.setOnApplyWindowInsetsListener { v, insets ->
       v.updateLayoutParams<FrameLayout.LayoutParams> {
         height = toolbarHeight + insets.systemWindowInsetTop
       }
       v.updatePadding(top = insets.systemWindowInsetTop)
 
-      return@setOnApplyWindowInsetsListenerAndDoRequest insets
+      return@setOnApplyWindowInsetsListener insets
     }
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  fun init(controllerType: ControllerType) {
+    check(!this.initialized) { "Double initialization!" }
+
+    this.initialized = true
+    this.controllerType = controllerType
+
+    val debugTag = when (controllerType) {
+      ControllerType.Catalog -> KurobaToolbar.DebugTag.CatalogToolbar
+      ControllerType.Thread -> KurobaToolbar.DebugTag.ThreadToolbar
+    }
+
+    val viewModelClass = when (controllerType) {
+      ControllerType.Catalog -> KurobaCatalogToolbarViewModel::class
+      ControllerType.Thread -> KurobaThreadToolbarViewModel::class
+    }
+
+    actualToolbar.init(debugTag, viewModelClass as KClass<KurobaToolbarViewModel>)
   }
 
   override fun collapsableView(): View {
@@ -40,7 +61,26 @@ class NormalToolbar @JvmOverloads constructor(
   }
 
   override fun setTitle(controllerType: ControllerType, title: String) {
-    actualToolbar.title = title
+    if (this.controllerType != controllerType) {
+      return
+    }
+
+    when (controllerType) {
+      ControllerType.Catalog -> {
+        actualToolbar.toolbarViewModel.newState(ToolbarStateUpdate.Catalog.UpdateTitle(title))
+      }
+      ControllerType.Thread -> {
+        actualToolbar.toolbarViewModel.newState(ToolbarStateUpdate.Thread.UpdateTitle(title))
+      }
+    }
+  }
+
+  override fun setSubTitle(subtitle: String) {
+    if (controllerType != ControllerType.Catalog) {
+      return
+    }
+
+    actualToolbar.toolbarViewModel.newState(ToolbarStateUpdate.Catalog.UpdateSubTitle(subtitle))
   }
 
   override fun setToolbarVisibility(visibility: Int) {

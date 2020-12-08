@@ -86,11 +86,10 @@ object ChanRepository {
             val postDescriptor = PostDescriptor(threadDescriptor, threadDescriptor.threadNo)
 
             val comment = buildString {
-              appendLine("Thread ${threadDescriptor.threadNo}")
-              val count = random.nextInt(3, 35)
+              val count = random.nextInt(50, 150)
 
-              repeat(count) {
-                appendLine(it)
+              repeat(count) { c ->
+                append("Thread ${threadDescriptor.threadNo} ($c) ")
               }
             }
 
@@ -125,11 +124,10 @@ object ChanRepository {
             val postDescriptor = PostDescriptor(threadDescriptor, postId)
 
             val comment = buildString {
-              appendLine("Post ${postId}")
-              val count = random.nextInt(3, 35)
+              val count = random.nextInt(50, 150)
 
-              repeat(count) {
-                appendLine(it)
+              repeat(count) { c ->
+                append("Post ${postId} ($c) ")
               }
             }
 

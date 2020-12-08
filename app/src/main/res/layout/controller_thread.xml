@@ -13,7 +13,8 @@
     <com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.NormalToolbar
         android:id="@+id/thread_controller_toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:visibility="gone" />
 
     <com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaFloatingActionButton
         android:id="@+id/split_controller_thread_fab"

@@ -4,4 +4,5 @@ import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 
 interface ControllerToolbarContract {
   fun setToolbarTitle(controllerType: ControllerType, title: String)
+  fun setCatalogToolbarSubTitle(subtitle: String)
 }

@@ -147,6 +147,7 @@ abstract class CatalogController(
 
       catalogData as CatalogData.Data
       setToolbarTitle(catalogData.toCatalogTitleString())
+      setCatalogToolbarSubTitle(currentContext().getString(R.string.lorem_ipsum))
 
       val error = catalogData.error
       if (error != null) {
@@ -180,6 +181,7 @@ abstract class CatalogController(
   }
 
   protected abstract fun setToolbarTitle(title: String)
+  protected abstract fun setCatalogToolbarSubTitle(subtitle: String)
 
   companion object {
     private const val TAG = "CatalogController"
