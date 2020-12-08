@@ -9,6 +9,7 @@ import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.github.k1rakishou.kurobanewnavstacktest.R
+import com.google.android.material.textview.MaterialTextView
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
 class CatalogThreadView @JvmOverloads constructor(
@@ -19,7 +20,7 @@ class CatalogThreadView @JvmOverloads constructor(
 
   private val rootView: ConstraintLayout
   private val imageView: View
-  private val textView: TextView
+  private val textView: MaterialTextView
 
   init {
     inflate(context, R.layout.epoxy_catalog_thread_view, this)

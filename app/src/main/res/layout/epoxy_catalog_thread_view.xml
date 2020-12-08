@@ -20,7 +20,7 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:background="@color/colorAccent" />
 
-    <TextView
+    <com.google.android.material.textview.MaterialTextView
         android:id="@+id/catalog_thread_text"
         android:layout_width="0dp"
         android:layout_height="match_parent"

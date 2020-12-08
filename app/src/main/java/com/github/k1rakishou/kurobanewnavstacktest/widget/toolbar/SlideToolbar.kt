@@ -79,7 +79,7 @@ class SlideToolbar @JvmOverloads constructor(
     }
   }
 
-  fun onSliding(transitioningIntoCatalogToolbar: Boolean, offset: Float) {
+  fun onSliding(offset: Float) {
     check(this.transitioningIntoCatalogToolbar != null) { "transitioningIntoCatalogToolbar == null" }
 
     actualCatalogToolbar.setAlphaFast(offset)

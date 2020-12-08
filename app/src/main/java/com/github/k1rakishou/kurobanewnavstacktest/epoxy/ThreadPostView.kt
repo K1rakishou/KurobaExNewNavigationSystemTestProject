@@ -2,6 +2,7 @@ package com.github.k1rakishou.kurobanewnavstacktest.epoxy
 
 import android.content.Context
 import android.graphics.Color
+import android.text.SpannableString
 import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout
@@ -11,6 +12,7 @@ import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.github.k1rakishou.kurobanewnavstacktest.R
+import com.google.android.material.textview.MaterialTextView
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
 class ThreadPostView @JvmOverloads constructor(
@@ -22,7 +24,7 @@ class ThreadPostView @JvmOverloads constructor(
   private val clickableView: FrameLayout
   private val rootView: ConstraintLayout
   private val imageView: View
-  private val textView: TextView
+  private val textView: MaterialTextView
 
   init {
     inflate(context, R.layout.epoxy_thread_post_view, this)
@@ -49,7 +51,7 @@ class ThreadPostView @JvmOverloads constructor(
 
   @ModelProp
   fun setComment(text: String) {
-    textView.text = text
+    textView.setText(SpannableString(text), TextView.BufferType.SPANNABLE)
   }
 
   @CallbackProp

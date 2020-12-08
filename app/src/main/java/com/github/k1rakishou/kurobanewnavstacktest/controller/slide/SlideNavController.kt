@@ -101,11 +101,7 @@ class SlideNavController(
 
         override fun onSliding(offset: Float) {
           slideModeFabViewControllerCallbacks?.onSlidingPaneSliding(offset)
-
-          slideCatalogUiElementsControllerCallbacks?.onSliding(
-            transitioningIntoCatalogToolbar = isCurrentlyOpened.not(),
-            offset = offset
-          )
+          slideCatalogUiElementsControllerCallbacks?.onSliding(offset)
         }
 
         override fun onSlidingEnded(becameOpen: Boolean) {
@@ -229,7 +225,7 @@ class SlideNavController(
 
   interface SlideCatalogUiElementsControllerCallbacks {
     fun onBeforeSliding(transitioningIntoCatalogToolbar: Boolean)
-    fun onSliding(transitioningIntoCatalogToolbar: Boolean, offset: Float)
+    fun onSliding(offset: Float)
     fun onAfterSliding(becameCatalogToolbar: Boolean)
     fun onControllerGainedFocus(isCatalogController: Boolean)
   }
