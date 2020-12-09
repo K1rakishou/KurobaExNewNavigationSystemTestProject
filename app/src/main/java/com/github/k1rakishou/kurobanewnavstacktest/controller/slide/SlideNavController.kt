@@ -40,6 +40,31 @@ class SlideNavController(
   private var slideModeFabViewControllerCallbacks: SlideModeFabViewControllerCallbacks? = null
   private var controllerToolbarContract: ControllerToolbarContract? = null
 
+  private val slidingPaneLayoutSlideListener = object : SlidingPaneLayoutSlideHandler.SlidingPaneLayoutSlideListener {
+    override fun onSlidingStarted(wasOpen: Boolean) {
+      // Disable orientation change when sliding is in progress
+      ScreenOrientationUtils.lockScreenOrientation(activityContract().activity())
+
+      slideModeFabViewControllerCallbacks?.onSlidingPaneSlidingStarted(wasOpen)
+      slideCatalogUiElementsControllerCallbacks?.onBeforeSliding(wasOpen.not())
+    }
+
+    override fun onSliding(offset: Float) {
+      slideModeFabViewControllerCallbacks?.onSlidingPaneSliding(offset)
+      slideCatalogUiElementsControllerCallbacks?.onSliding(offset)
+    }
+
+    override fun onSlidingEnded(becameOpen: Boolean) {
+      slideCatalogUiElementsControllerCallbacks?.onAfterSliding(becameOpen)
+
+      slideModeFabViewControllerCallbacks?.onSlidingPaneSlidingEnded(becameOpen)
+      fireSlidingPaneListeners(becameOpen)
+
+      // Enable orientation change back after sliding is done
+      ScreenOrientationUtils.unlockScreenOrientation(activityContract().activity())
+    }
+  }
+
   fun setUiElementsControllerCallbacks(callbacks: UiElementsControllerCallbacks) {
     uiElementsControllerCallbacks = callbacks
   }
@@ -85,61 +110,24 @@ class SlideNavController(
 
     slidingPaneLayout.setOverhangSize(OVERHANG_SIZE)
     slidingPaneLayout.setSlidingPaneLayoutDefaultState()
+
     slideModeFabViewControllerCallbacks?.onSlidingPaneInitialState(slidingPaneLayout.isOpen)
+    slidingPaneLayoutSlideHandler = SlidingPaneLayoutSlideHandler(slidingPaneLayout.isOpen)
+    slidingPaneLayoutSlideHandler.addListener(slidingPaneLayoutSlideListener)
 
-    slidingPaneLayoutSlideHandler = SlidingPaneLayoutSlideHandler(true).apply {
-      addListener(object : SlidingPaneLayoutSlideHandler.SlidingPaneLayoutSlideListener {
-        private var isCurrentlyOpened = slidingPaneLayout.isOpen
-
-        override fun onSlidingStarted(wasOpen: Boolean) {
-          // Disable orientation change when sliding is in progress
-          ScreenOrientationUtils.lockScreenOrientation(activityContract().activity())
-
-          slideModeFabViewControllerCallbacks?.onSlidingPaneSlidingStarted(wasOpen)
-          slideCatalogUiElementsControllerCallbacks?.onBeforeSliding(isCurrentlyOpened.not())
-        }
-
-        override fun onSliding(offset: Float) {
-          slideModeFabViewControllerCallbacks?.onSlidingPaneSliding(offset)
-          slideCatalogUiElementsControllerCallbacks?.onSliding(offset)
-        }
-
-        override fun onSlidingEnded(becameOpen: Boolean) {
-          slideCatalogUiElementsControllerCallbacks?.onAfterSliding(becameOpen)
-          isCurrentlyOpened = becameOpen
-
-          slideModeFabViewControllerCallbacks?.onSlidingPaneSlidingEnded(becameOpen)
-          fireSlidingPaneListeners(becameOpen)
-
-          // Enable orientation change back after sliding is done
-          ScreenOrientationUtils.unlockScreenOrientation(activityContract().activity())
-        }
-      })
-
-      slidingPaneLayout.setPanelSlideListener(this)
-    }
-
-    slidingPaneLayout.open()
-  }
-
-  private fun createSlideThreadController(): SlideThreadController {
-    return SlideThreadController().apply {
-      recyclerViewProvider(this@SlideNavController)
-      controllerToolbarContract(this@SlideNavController)
-    }
-  }
-
-  private fun createSlideCatalogController(): SlideCatalogController {
-    return SlideCatalogController().apply {
-      recyclerViewProvider(this@SlideNavController)
-      uiElementsControllerCallbacks(this@SlideNavController)
-      threadNavigationContract(this@SlideNavController)
-      controllerToolbarContract(this@SlideNavController)
-    }
+    slidingPaneLayout.setPanelSlideListener(slidingPaneLayoutSlideHandler)
   }
 
   override fun onControllerDestroyed() {
     super.onControllerDestroyed()
+
+    if (::slidingPaneLayoutSlideHandler.isInitialized) {
+      slidingPaneLayoutSlideHandler.removeListener(slidingPaneLayoutSlideListener)
+    }
+
+    if (::slidingPaneLayout.isInitialized) {
+      slidingPaneLayout.setPanelSlideListener(null)
+    }
 
     uiElementsControllerCallbacks = null
     slideCatalogUiElementsControllerCallbacks = null
@@ -191,6 +179,22 @@ class SlideNavController(
     }
 
     (threadController as ThreadNavigationContract).openThread(threadDescriptor)
+  }
+
+  private fun createSlideThreadController(): SlideThreadController {
+    return SlideThreadController().apply {
+      recyclerViewProvider(this@SlideNavController)
+      controllerToolbarContract(this@SlideNavController)
+    }
+  }
+
+  private fun createSlideCatalogController(): SlideCatalogController {
+    return SlideCatalogController().apply {
+      recyclerViewProvider(this@SlideNavController)
+      uiElementsControllerCallbacks(this@SlideNavController)
+      threadNavigationContract(this@SlideNavController)
+      controllerToolbarContract(this@SlideNavController)
+    }
   }
 
   private fun SlidingPaneLayoutEx.setSlidingPaneLayoutDefaultState() {

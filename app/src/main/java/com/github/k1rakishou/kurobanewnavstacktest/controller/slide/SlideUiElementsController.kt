@@ -174,9 +174,7 @@ class SlideUiElementsController(
   }
 
   override fun onBeforeSliding(transitioningIntoCatalogToolbar: Boolean) {
-    (toolbarContract.collapsableView() as SlideToolbar).onBeforeSliding(
-      transitioningIntoCatalogToolbar = transitioningIntoCatalogToolbar
-    )
+    (toolbarContract.collapsableView() as SlideToolbar).onBeforeSliding(transitioningIntoCatalogToolbar)
   }
 
   override fun onSliding(offset: Float) {

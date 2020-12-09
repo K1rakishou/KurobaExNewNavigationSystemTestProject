@@ -28,7 +28,9 @@ class SlidingPaneLayoutSlideHandler(
     }
 
     if (slideOffset > 0.01 || slideOffset < 0.99) {
-      if (Math.abs(slideOffset - prevOffset) < OFFSET_STEP) {
+      if (Math.abs(slideOffset - prevOffset) < OFFSET_MIN_STEP) {
+        // To avoid updating listeners too many times which may lead to stuff being redrawn faster
+        // than needed which may lead to lags
         return
       }
     }
@@ -66,6 +68,6 @@ class SlidingPaneLayoutSlideHandler(
   }
 
   companion object {
-    private const val OFFSET_STEP = 0.03
+    private const val OFFSET_MIN_STEP = 1f / 30f
   }
 }
