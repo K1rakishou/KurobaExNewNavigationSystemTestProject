@@ -1,30 +1,35 @@
-package com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar
+package com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.thread
 
 import android.annotation.SuppressLint
 import android.content.Context
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.kurobanewnavstacktest.R
+import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnThrottlingClickListener
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setTextFast
 import com.github.k1rakishou.kurobanewnavstacktest.widget.drawable.ArrowMenuDrawable
+import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.*
 import com.google.android.material.textview.MaterialTextView
 import timber.log.Timber
 
 @SuppressLint("ViewConstructor")
 class KurobaThreadToolbar(
   context: Context,
-  private val kurobaToolbarViewModel: KurobaThreadToolbarViewModel
-) : ConstraintLayout(context) {
+  private val kurobaToolbarViewModel: KurobaToolbarViewModel,
+  private val kurobaToolbarCallbacks: KurobaToolbarCallbacks
+) : ConstraintLayout(context), KurobaToolbarDelegateContract<KurobaThreadToolbarState> {
   private val arrowMenuDrawable: ArrowMenuDrawable
   private val hamburgButton: AppCompatImageView
 
   private val threadTitle: MaterialTextView
 
+  private val openSearchButton: AppCompatImageView
   private val openGalleryButton: AppCompatImageView
   private val bookmarkThreadButton: AppCompatImageView
   private val openSubmenuButton: AppCompatImageView
 
-  private val prevThreadToolbarState = KurobaThreadToolbarViewModel.KurobaThreadToolbarState()
+  override val toolbarStateClass: ToolbarStateClass
+    get() = ToolbarStateClass.Thread
 
   init {
     inflate(context, R.layout.kuroba_thread_toolbar, this).apply {
@@ -35,45 +40,42 @@ class KurobaThreadToolbar(
 
       threadTitle = findViewById(R.id.thread_title)
 
+      openSearchButton = findViewById(R.id.open_search_button)
       openGalleryButton = findViewById(R.id.open_gallery_button)
       bookmarkThreadButton = findViewById(R.id.bookmark_thread_button)
       openSubmenuButton = findViewById(R.id.open_submenu_button)
 
-      openGalleryButton.setOnClickListener {
+      openSearchButton.setOnThrottlingClickListener {
+        kurobaToolbarCallbacks.pushNewToolbarStateClass(ToolbarStateClass.Search)
+      }
+      openGalleryButton.setOnThrottlingClickListener {
         kurobaToolbarViewModel.fireAction(ToolbarAction.Thread.OpenGalleryButtonClicked)
       }
-      bookmarkThreadButton.setOnClickListener {
+      bookmarkThreadButton.setOnThrottlingClickListener {
         kurobaToolbarViewModel.fireAction(ToolbarAction.Thread.BookmarkThreadButtonClicked)
       }
-      openSubmenuButton.setOnClickListener {
+      openSubmenuButton.setOnThrottlingClickListener {
         kurobaToolbarViewModel.fireAction(ToolbarAction.Thread.OpenSubmenuButtonClicked)
       }
     }
   }
 
-  fun applyStateChange() {
-    val threadToolbarState = kurobaToolbarViewModel.getThreadToolbarState()
-    if (threadToolbarState == prevThreadToolbarState) {
-      return
-    }
+  override fun applyStateToUi(toolbarState: KurobaThreadToolbarState) {
+    Timber.tag(TAG).d("applyStateToUi() toolbarState=$toolbarState")
 
-    Timber.tag(TAG).d("applyStateChange() threadToolbarState=$prevThreadToolbarState")
-
-    threadToolbarState.slideProgress?.let { slideProgress ->
+    toolbarState.slideProgress?.let { slideProgress ->
       if (slideProgress != arrowMenuDrawable.progress) {
         arrowMenuDrawable.progress = 1f - slideProgress
       }
     }
 
-    threadToolbarState.threadTitle?.let { title ->
+    toolbarState.threadTitle?.let { title ->
       threadTitle.setTextFast(title)
     }
 
-    threadToolbarState.enableControls?.let { enable ->
+    toolbarState.enableControls?.let { enable ->
       enableDisableControls(enable)
     }
-
-    prevThreadToolbarState.fillFrom(threadToolbarState)
   }
 
   private fun enableDisableControls(enable: Boolean) {

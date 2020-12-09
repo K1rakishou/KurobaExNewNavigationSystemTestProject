@@ -17,8 +17,8 @@ class SlideToolbar @JvmOverloads constructor(
   attributeSet: AttributeSet? = null,
   attrDefStyle: Int = 0
 ) : FrameLayout(context, attributeSet, attrDefStyle), ToolbarContract {
-  private val actualCatalogToolbar: KurobaToolbar<KurobaCatalogToolbarViewModel>
-  private val actualThreadToolbar: KurobaToolbar<KurobaThreadToolbarViewModel>
+  private val actualCatalogToolbar: KurobaToolbar
+  private val actualThreadToolbar: KurobaToolbar
 
   private var transitioningIntoCatalogToolbar: Boolean? = null
   private var initialToolbarShown = false
@@ -46,18 +46,18 @@ class SlideToolbar @JvmOverloads constructor(
 
   fun init() {
     check(!this.initialized) { "Double initialization!" }
-
     this.initialized = true
 
-    actualCatalogToolbar.init(
-      KurobaToolbar.DebugTag.CatalogToolbar,
-      KurobaCatalogToolbarViewModel::class
-    )
+    actualCatalogToolbar.init(ToolbarStateClass.Catalog)
+    actualThreadToolbar.init(ToolbarStateClass.Thread)
+  }
 
-    actualThreadToolbar.init(
-      KurobaToolbar.DebugTag.ThreadToolbar,
-      KurobaThreadToolbarViewModel::class
-    )
+  override fun onBackPressed(): Boolean {
+    if (catalogToolbarVisible) {
+      return actualCatalogToolbar.onBackPressed()
+    }
+
+    return actualThreadToolbar.onBackPressed()
   }
 
   override fun collapsableView(): View {
@@ -168,7 +168,10 @@ class SlideToolbar @JvmOverloads constructor(
   fun onControllerGainedFocus(isCatalogController: Boolean) {
     if (!initialToolbarShown) {
       initialToolbarShown = true
+      catalogToolbarVisible = isCatalogController
+
       showToolbarInitial(isCatalogController)
+      return
     }
   }
 

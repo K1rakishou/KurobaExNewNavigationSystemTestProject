@@ -7,8 +7,7 @@ import androidx.lifecycle.ViewModelLazy
 import androidx.lifecycle.ViewModelProvider
 import kotlin.reflect.KClass
 
-@MainThread
-fun <VM : ViewModel> ComponentActivity.myViewModels(
+fun <VM : ViewModel> ComponentActivity.viewModelStorage(
   vmClass: KClass<VM>,
   factoryProducer: (() -> ViewModelProvider.Factory)? = null
 ): Lazy<VM> {

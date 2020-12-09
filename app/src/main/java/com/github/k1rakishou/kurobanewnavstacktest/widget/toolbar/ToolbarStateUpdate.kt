@@ -24,16 +24,19 @@ sealed class ToolbarStateUpdate(val toolbarStateClass: ToolbarStateClass) {
 
   class SimpleTitle(val title: String) : ToolbarStateUpdate(ToolbarStateClass.SimpleTitle)
 
-  class Search(val query: String) : ToolbarStateUpdate(ToolbarStateClass.Search)
+  sealed class Search : ToolbarStateUpdate(ToolbarStateClass.Search) {
+    data class Query(val query: String?) : Search()
+    data class FoundItems(val currentItemIndex: Int, val items: List<Any>) : Search()
+  }
 
   class Selection : ToolbarStateUpdate(ToolbarStateClass.Selection)
 }
 
-enum class ToolbarStateClass {
-  Uninitialized,
-  Catalog,
-  Thread,
-  SimpleTitle,
-  Search,
-  Selection
+enum class ToolbarStateClass(val canBeInitialState: Boolean) {
+  Uninitialized(false),
+  Catalog(true),
+  Thread(true),
+  SimpleTitle(false),
+  Search(false),
+  Selection(false)
 }

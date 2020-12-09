@@ -15,7 +15,7 @@ class NormalToolbar @JvmOverloads constructor(
   attributeSet: AttributeSet? = null,
   attrDefStyle: Int = 0
 ) : FrameLayout(context, attributeSet, attrDefStyle), ToolbarContract {
-  private val actualToolbar: KurobaToolbar<KurobaToolbarViewModel>
+  private val actualToolbar: KurobaToolbar
   private lateinit var controllerType: ControllerType
   private var initialized = false
 
@@ -43,17 +43,16 @@ class NormalToolbar @JvmOverloads constructor(
     this.initialized = true
     this.controllerType = controllerType
 
-    val debugTag = when (controllerType) {
-      ControllerType.Catalog -> KurobaToolbar.DebugTag.CatalogToolbar
-      ControllerType.Thread -> KurobaToolbar.DebugTag.ThreadToolbar
+    val initialToolbarStateClass = when (controllerType) {
+      ControllerType.Catalog -> ToolbarStateClass.Catalog
+      ControllerType.Thread -> ToolbarStateClass.Thread
     }
 
-    val viewModelClass = when (controllerType) {
-      ControllerType.Catalog -> KurobaCatalogToolbarViewModel::class
-      ControllerType.Thread -> KurobaThreadToolbarViewModel::class
-    }
+    actualToolbar.init(initialToolbarStateClass)
+  }
 
-    actualToolbar.init(debugTag, viewModelClass as KClass<KurobaToolbarViewModel>)
+  override fun onBackPressed(): Boolean {
+    return actualToolbar.onBackPressed()
   }
 
   override fun collapsableView(): View {

@@ -51,6 +51,14 @@ abstract class BaseUiElementsController(
     }
   }
 
+  override fun handleBack(): Boolean {
+    if (::toolbarContract.isInitialized && toolbarContract.onBackPressed()) {
+      return true
+    }
+
+    return super.handleBack()
+  }
+
   private fun setupBottomNavView() {
     val bottomNavViewHeight =
       currentContext().resources.getDimension(R.dimen.bottom_nav_view_height).toInt()

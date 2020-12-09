@@ -16,7 +16,7 @@ import com.bluelinelabs.conductor.Controller
 import com.bluelinelabs.conductor.Router
 import com.bluelinelabs.conductor.RouterTransaction
 import com.github.k1rakishou.kurobanewnavstacktest.activity.ActivityContract
-import com.github.k1rakishou.kurobanewnavstacktest.utils.myViewModels
+import com.github.k1rakishou.kurobanewnavstacktest.utils.viewModelStorage
 import com.github.k1rakishou.kurobanewnavstacktest.widget.CancellableToast
 import kotlinx.coroutines.*
 import timber.log.Timber
@@ -194,7 +194,7 @@ abstract class BaseController(
 
   protected fun <VM : ViewModel> viewModels(vmClass: KClass<VM>): Lazy<VM> {
     return lazy {
-      val viewModel = (activity as ComponentActivity).myViewModels(vmClass).value
+      val viewModel = (activity as ComponentActivity).viewModelStorage(vmClass).value
       activeViewModels[vmClass] = viewModel as BaseViewModel
 
       return@lazy viewModel

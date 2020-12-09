@@ -1,15 +1,19 @@
 package com.github.k1rakishou.kurobanewnavstacktest.utils
 
 import android.content.res.Resources
+import android.text.TextWatcher
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.TextView
+import androidx.appcompat.widget.AppCompatEditText
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.updateLayoutParams
 import com.airbnb.epoxy.AsyncEpoxyController
 import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyRecyclerView
+import java.util.*
 
 val Int.dp: Int
   get() = (this * Resources.getSystem().displayMetrics.density).toInt()
@@ -143,4 +147,10 @@ fun View.setEnabledFast(enable: Boolean) {
   }
 
   this.isEnabled = enable
+}
+
+fun EditText.doIgnoringTextWatcher(textWatcher: TextWatcher, func: EditText.() -> Unit) {
+  removeTextChangedListener(textWatcher)
+  func(this)
+  addTextChangedListener(textWatcher)
 }

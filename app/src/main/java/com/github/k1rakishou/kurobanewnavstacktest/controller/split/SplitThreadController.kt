@@ -43,6 +43,14 @@ class SplitThreadController(
     }
   }
 
+  override fun handleBack(): Boolean {
+    if (::toolbarContract.isInitialized && toolbarContract.onBackPressed()) {
+      return true
+    }
+
+    return super.handleBack()
+  }
+
   override fun onControllerCreated(savedViewState: Bundle?) {
     super.onControllerCreated(savedViewState)
 

@@ -1,6 +1,6 @@
 package com.github.k1rakishou.kurobanewnavstacktest.viewcontroller
 
-import com.github.k1rakishou.kurobanewnavstacktest.controller.slide.SlideNavController
+import com.github.k1rakishou.kurobanewnavstacktest.utils.ChanSettings
 import com.github.k1rakishou.kurobanewnavstacktest.utils.getBehaviorExt
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setBehaviorExt
 import com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaFloatingActionButton
@@ -59,7 +59,7 @@ class SlideModeFabViewController(
       fabInitialized = true
 
       val translationX = if (isOpened) {
-        initialHorizontalOffset + SlideNavController.OVERHANG_SIZE
+        initialHorizontalOffset + ChanSettings.OVERHANG_SIZE
       } else {
         initialHorizontalOffset
       }
@@ -78,12 +78,8 @@ class SlideModeFabViewController(
   }
 
   override fun onSlidingPaneSliding(slideOffset: Float) {
-    val translationDelta = SlideNavController.OVERHANG_SIZE * slideOffset
+    val translationDelta = ChanSettings.OVERHANG_SIZE * slideOffset
     fab.translationX = -(initialHorizontalOffset + translationDelta)
-  }
-
-  fun updateFabMarginEnd() {
-    fab.translationX = -initialHorizontalOffset
   }
 
   enum class FabType {

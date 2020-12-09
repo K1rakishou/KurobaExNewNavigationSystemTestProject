@@ -14,6 +14,10 @@ class MyApplication : Application() {
 
     AndroidUtils.application = this
     Timber.plant(DebugTree())
+
+    Thread.setDefaultUncaughtExceptionHandler { thread, exception ->
+      Timber.e(exception, "Unhandled exception in thread ${thread.name}")
+    }
   }
 
   private class DebugTree : Timber.Tree() {

@@ -16,8 +16,8 @@ import com.github.k1rakishou.kurobanewnavstacktest.controller.base.*
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ControllerToolbarContract
 import com.github.k1rakishou.kurobanewnavstacktest.data.BoardDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
+import com.github.k1rakishou.kurobanewnavstacktest.utils.ChanSettings
 import com.github.k1rakishou.kurobanewnavstacktest.utils.ScreenOrientationUtils
-import com.github.k1rakishou.kurobanewnavstacktest.utils.dp
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.SlideModeFabViewControllerCallbacks
 import com.github.k1rakishou.kurobanewnavstacktest.widget.SlidingPaneLayoutEx
 import com.github.k1rakishou.kurobanewnavstacktest.widget.SlidingPaneLayoutSlideHandler
@@ -108,7 +108,7 @@ class SlideNavController(
       RouterTransaction.with(createSlideThreadController())
     )
 
-    slidingPaneLayout.setOverhangSize(OVERHANG_SIZE)
+    slidingPaneLayout.setOverhangSize(ChanSettings.OVERHANG_SIZE)
     slidingPaneLayout.setSlidingPaneLayoutDefaultState()
 
     slideModeFabViewControllerCallbacks?.onSlidingPaneInitialState(slidingPaneLayout.isOpen)
@@ -241,6 +241,5 @@ class SlideNavController(
     private const val TAG = "SlideNavController"
 
     val CONTROLLER_TAG = ControllerTag("SlideNavControllerTag")
-    val OVERHANG_SIZE = 20.dp
   }
 }

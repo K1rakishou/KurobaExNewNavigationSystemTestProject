@@ -1,4 +1,4 @@
-package com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar
+package com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.catalog
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -6,16 +6,19 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setEnabledFast
+import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnThrottlingClickListener
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setTextFast
 import com.github.k1rakishou.kurobanewnavstacktest.widget.drawable.ArrowMenuDrawable
+import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.*
 import com.google.android.material.textview.MaterialTextView
 import timber.log.Timber
 
 @SuppressLint("ViewConstructor")
 class KurobaCatalogToolbar(
   context: Context,
-  private val kurobaToolbarViewModel: KurobaCatalogToolbarViewModel
-) : ConstraintLayout(context) {
+  private val kurobaToolbarViewModel: KurobaToolbarViewModel,
+  private val kurobaToolbarCallbacks: KurobaToolbarCallbacks
+) : ConstraintLayout(context), KurobaToolbarDelegateContract<KurobaCatalogToolbarState> {
   private val arrowMenuDrawable: ArrowMenuDrawable
   private val hamburgButton: AppCompatImageView
   private val boardSelectionMenuButton: ConstraintLayout
@@ -26,7 +29,8 @@ class KurobaCatalogToolbar(
   private val refreshCatalogButton: AppCompatImageView
   private val openSubMenuButton: AppCompatImageView
 
-  private val prevCatalogToolbarState = KurobaCatalogToolbarViewModel.KurobaCatalogToolbarState()
+  override val toolbarStateClass: ToolbarStateClass
+    get() = ToolbarStateClass.Catalog
 
   init {
     inflate(context, R.layout.kuroba_catalog_toolbar, this).apply {
@@ -43,54 +47,41 @@ class KurobaCatalogToolbar(
       refreshCatalogButton = findViewById(R.id.refresh_catalog_button)
       openSubMenuButton = findViewById(R.id.open_submenu_button)
 
-      boardSelectionMenuButton.setOnClickListener {
+      boardSelectionMenuButton.setOnThrottlingClickListener {
         kurobaToolbarViewModel.fireAction(ToolbarAction.Catalog.BoardSelectionMenuButtonClicked)
       }
-      openSearchButton.setOnClickListener {
-        kurobaToolbarViewModel.fireAction(ToolbarAction.Catalog.OpenSearchButtonClicked)
+      openSearchButton.setOnThrottlingClickListener {
+        kurobaToolbarCallbacks.pushNewToolbarStateClass(ToolbarStateClass.Search)
       }
-      refreshCatalogButton.setOnClickListener {
+      refreshCatalogButton.setOnThrottlingClickListener {
         kurobaToolbarViewModel.fireAction(ToolbarAction.Catalog.RefreshCatalogButtonClicked)
       }
-      openSubMenuButton.setOnClickListener {
+      openSubMenuButton.setOnThrottlingClickListener {
         kurobaToolbarViewModel.fireAction(ToolbarAction.Catalog.OpenSubMenuButtonClicked)
       }
     }
   }
 
-  override fun onAttachedToWindow() {
-    super.onAttachedToWindow()
+  override fun applyStateToUi(toolbarState: KurobaCatalogToolbarState) {
+    Timber.tag(TAG).d("applyStateToUi() toolbarState=$toolbarState")
 
-    prevCatalogToolbarState.reset()
-  }
-
-  fun applyStateChange() {
-    val catalogToolbarState = kurobaToolbarViewModel.getCatalogToolbarState()
-    if (catalogToolbarState == prevCatalogToolbarState) {
-      return
-    }
-
-    Timber.tag(TAG).d("applyStateChange() catalogToolbarState=$catalogToolbarState")
-
-    catalogToolbarState.slideProgress?.let { slideProgress ->
+    toolbarState.slideProgress?.let { slideProgress ->
       if (slideProgress != arrowMenuDrawable.progress) {
         arrowMenuDrawable.progress = 1f - slideProgress
       }
     }
 
-    catalogToolbarState.title?.let { title ->
+    toolbarState.title?.let { title ->
       catalogTitle.setTextFast(title)
     }
 
-    catalogToolbarState.subtitle?.let { subtitle ->
+    toolbarState.subtitle?.let { subtitle ->
       catalogSubtitle.setTextFast(subtitle)
     }
 
-    catalogToolbarState.enableControls?.let { enable ->
+    toolbarState.enableControls?.let { enable ->
       enableDisableControls(enable)
     }
-
-    prevCatalogToolbarState.fillFrom(catalogToolbarState)
   }
 
   private fun enableDisableControls(enable: Boolean) {

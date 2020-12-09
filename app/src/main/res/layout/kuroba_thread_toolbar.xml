@@ -26,12 +26,12 @@
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:ellipsize="end"
-        android:maxLines="1"
         android:gravity="center_vertical"
-        android:textColor="#fff"
-        android:textSize="20sp"
+        android:maxLines="1"
         android:paddingStart="@dimen/toolbar_icon_padding"
         android:paddingEnd="@dimen/toolbar_icon_padding"
+        android:textColor="#fff"
+        android:textSize="20sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/catalog_buttons_holder"
         app:layout_constraintStart_toEndOf="@+id/hamburg_button"
@@ -48,6 +48,23 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/open_search_button"
+            android:layout_width="@dimen/toolbar_icon_width"
+            android:layout_height="match_parent"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingStart="@dimen/toolbar_icon_padding"
+            android:paddingEnd="@dimen/toolbar_icon_padding"
+            android:src="@drawable/ic_baseline_search_24"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/open_gallery_button"
+            app:layout_constraintHorizontal_bias="1"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/open_gallery_button"
             android:layout_width="@dimen/toolbar_icon_width"
             android:layout_height="match_parent"
@@ -61,7 +78,7 @@
             app:layout_constraintEnd_toStartOf="@+id/bookmark_thread_button"
             app:layout_constraintHorizontal_bias="1"
             app:layout_constraintHorizontal_chainStyle="packed"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/open_search_button"
             app:layout_constraintTop_toTopOf="parent" />
 
         <androidx.appcompat.widget.AppCompatImageView
