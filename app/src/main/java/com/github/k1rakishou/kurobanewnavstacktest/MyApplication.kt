@@ -17,6 +17,8 @@ class MyApplication : Application() {
 
     Thread.setDefaultUncaughtExceptionHandler { thread, exception ->
       Timber.e(exception, "Unhandled exception in thread ${thread.name}")
+
+      throw exception
     }
   }
 

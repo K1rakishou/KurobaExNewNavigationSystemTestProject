@@ -1,9 +1,6 @@
 package com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar
 
 sealed class ToolbarStateUpdate(val toolbarStateClass: ToolbarStateClass) {
-  object Uninitialized : ToolbarStateUpdate(ToolbarStateClass.Uninitialized) {
-    override fun toString(): String = "Uninitialized"
-  }
 
   sealed class Catalog : ToolbarStateUpdate(ToolbarStateClass.Catalog) {
     object PreSlideProgressUpdates : Catalog()
@@ -28,8 +25,12 @@ sealed class ToolbarStateUpdate(val toolbarStateClass: ToolbarStateClass) {
     data class Query(val query: String?) : Search()
     data class FoundItems(val currentItemIndex: Int, val items: List<Any>) : Search()
   }
+}
 
-  class Selection : ToolbarStateUpdate(ToolbarStateClass.Selection)
+enum class KurobaToolbarType {
+  Uninitialized,
+  Catalog,
+  Thread
 }
 
 enum class ToolbarStateClass(val canBeInitialState: Boolean) {

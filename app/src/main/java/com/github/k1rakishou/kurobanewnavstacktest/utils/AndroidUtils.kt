@@ -16,6 +16,10 @@ object AndroidUtils {
   fun getBoolRes(@BoolRes id: Int): Boolean = getResources().getBoolean(id)
   fun isTablet(): Boolean = getBoolRes(R.bool.isTablet)
 
+  fun Context.isLandscapeOrientation(): Boolean {
+    return resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+  }
+
   fun isAndroid11(): Boolean {
     return Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
   }

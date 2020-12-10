@@ -17,6 +17,7 @@ import timber.log.Timber
 @SuppressLint("ViewConstructor")
 class KurobaSearchToolbar(
   context: Context,
+  private val toolbarType: KurobaToolbarType,
   private val kurobaToolbarViewModel: KurobaToolbarViewModel,
   private val kurobaToolbarCallbacks: KurobaToolbarCallbacks
 ) : ConstraintLayout(context), KurobaToolbarDelegateContract<KurobaSearchToolbarState> {
@@ -26,6 +27,8 @@ class KurobaSearchToolbar(
   private val searchResults: MaterialTextView
   private val textWatcher: TextWatcher
 
+  override val parentToolbarType: KurobaToolbarType
+    get() = toolbarType
   override val toolbarStateClass: ToolbarStateClass
     get() = ToolbarStateClass.Search
 
@@ -37,13 +40,14 @@ class KurobaSearchToolbar(
       searchResults = findViewById(R.id.search_results)
 
       textWatcher = searchInput.doOnTextChanged { text, start, before, count ->
-        kurobaToolbarViewModel.getToolbarState<KurobaSearchToolbarState>(toolbarStateClass)
+        kurobaToolbarViewModel.getToolbarState<KurobaSearchToolbarState>(toolbarType, toolbarStateClass)
           .updateQuery(text?.toString())
 
         kurobaToolbarViewModel.fireAction(ToolbarAction.Search.QueryUpdated(text?.toString()))
       }
 
       closeSearchButton.setOnThrottlingClickListener {
+        searchInput.text = null
         kurobaToolbarCallbacks.popCurrentToolbarStateClass()
       }
       clearSearchInputButton.setOnThrottlingClickListener {
@@ -54,7 +58,7 @@ class KurobaSearchToolbar(
 
   @SuppressLint("SetTextI18n")
   override fun applyStateToUi(toolbarState: KurobaSearchToolbarState) {
-    Timber.tag(TAG).d("applyStateToUi() toolbarState=$toolbarState")
+    Timber.tag(TAG).d("applyStateToUi() toolbarType=$toolbarType, toolbarState=$toolbarState")
 
     toolbarState.query?.let { query ->
       if (searchInput.text?.toString() == query) {

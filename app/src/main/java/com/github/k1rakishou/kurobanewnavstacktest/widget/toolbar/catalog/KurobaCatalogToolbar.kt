@@ -16,6 +16,7 @@ import timber.log.Timber
 @SuppressLint("ViewConstructor")
 class KurobaCatalogToolbar(
   context: Context,
+  private val toolbarType: KurobaToolbarType,
   private val kurobaToolbarViewModel: KurobaToolbarViewModel,
   private val kurobaToolbarCallbacks: KurobaToolbarCallbacks
 ) : ConstraintLayout(context), KurobaToolbarDelegateContract<KurobaCatalogToolbarState> {
@@ -28,6 +29,9 @@ class KurobaCatalogToolbar(
   private val openSearchButton: AppCompatImageView
   private val refreshCatalogButton: AppCompatImageView
   private val openSubMenuButton: AppCompatImageView
+
+  override val parentToolbarType: KurobaToolbarType
+    get() = toolbarType
 
   override val toolbarStateClass: ToolbarStateClass
     get() = ToolbarStateClass.Catalog
@@ -51,7 +55,7 @@ class KurobaCatalogToolbar(
         kurobaToolbarViewModel.fireAction(ToolbarAction.Catalog.BoardSelectionMenuButtonClicked)
       }
       openSearchButton.setOnThrottlingClickListener {
-        kurobaToolbarCallbacks.pushNewToolbarStateClass(ToolbarStateClass.Search)
+        kurobaToolbarCallbacks.pushNewToolbarStateClass(toolbarType, ToolbarStateClass.Search)
       }
       refreshCatalogButton.setOnThrottlingClickListener {
         kurobaToolbarViewModel.fireAction(ToolbarAction.Catalog.RefreshCatalogButtonClicked)
@@ -63,8 +67,6 @@ class KurobaCatalogToolbar(
   }
 
   override fun applyStateToUi(toolbarState: KurobaCatalogToolbarState) {
-    Timber.tag(TAG).d("applyStateToUi() toolbarState=$toolbarState")
-
     toolbarState.slideProgress?.let { slideProgress ->
       if (slideProgress != arrowMenuDrawable.progress) {
         arrowMenuDrawable.progress = 1f - slideProgress

@@ -13,6 +13,10 @@ import androidx.core.view.updateLayoutParams
 import com.airbnb.epoxy.AsyncEpoxyController
 import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyRecyclerView
+import com.bluelinelabs.conductor.Controller
+import com.bluelinelabs.conductor.Router
+import com.github.k1rakishou.kurobanewnavstacktest.base.BaseController
+import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
 import java.util.*
 
 val Int.dp: Int
@@ -153,4 +157,30 @@ fun EditText.doIgnoringTextWatcher(textWatcher: TextWatcher, func: EditText.() -
   removeTextChangedListener(textWatcher)
   func(this)
   addTextChangedListener(textWatcher)
+}
+
+fun Router.findRouterWithControllerByTag(controllerTag: ControllerTag): Pair<Router, BaseController>? {
+  return findRouterWithControllerByTagInternal(this, controllerTag)
+}
+
+private fun findRouterWithControllerByTagInternal(
+  router: Router,
+  controllerTag: ControllerTag
+): Pair<Router, BaseController>? {
+  for (routerTransaction in router.backstack) {
+    val controller = routerTransaction.controller
+
+    if ((controller as? BaseController)?.getControllerTag() == controllerTag) {
+      return Pair(router, controller)
+    }
+
+    for (childRouter in routerTransaction.controller.childRouters) {
+      val result = findRouterWithControllerByTagInternal(childRouter, controllerTag)
+      if (result != null) {
+        return result
+      }
+    }
+  }
+
+  return null
 }

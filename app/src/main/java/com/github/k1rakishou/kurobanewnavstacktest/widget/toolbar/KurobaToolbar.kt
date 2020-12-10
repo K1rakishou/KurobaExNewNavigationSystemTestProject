@@ -31,11 +31,11 @@ class KurobaToolbar @JvmOverloads constructor(
 
   private val kurobaToolbarViewContainer: FrameLayout
 
-  val toolbarViewModel by lazy {
+  private val toolbarViewModel by lazy {
     (context as ComponentActivity).viewModelStorage(KurobaToolbarViewModel::class).value
   }
 
-  private var initialToolbarStateClass: ToolbarStateClass = ToolbarStateClass.Uninitialized
+  private var kurobaToolbarType: KurobaToolbarType = KurobaToolbarType.Uninitialized
   private var initialized = false
 
   init {
@@ -44,39 +44,54 @@ class KurobaToolbar @JvmOverloads constructor(
     }
   }
 
-  fun init(initialToolbarStateClass: ToolbarStateClass) {
-    check(!this.initialized) { "Double initialization!" }
-    check(initialToolbarStateClass.canBeInitialState) {
-      "Unexpected ToolbarStateClass: ${initialToolbarStateClass}"
+  fun init(newKurobaToolbarType: KurobaToolbarType) {
+    check(!initialized) { "Double initialization!" }
+    check(newKurobaToolbarType != KurobaToolbarType.Uninitialized) {
+      "Unexpected kurobaToolbarType: ${newKurobaToolbarType}"
     }
 
-    this.initialToolbarStateClass = initialToolbarStateClass
+    this.kurobaToolbarType = newKurobaToolbarType
     this.initialized = true
 
-    toolbarViewModel.initStateStackForToolbar(initialToolbarStateClass)
+    ensureInitialized()
+    toolbarViewModel.initStateStackForToolbar(kurobaToolbarType)
 
     toolbarScope.launch {
       toolbarViewModel.listenForToolbarStateChanges()
-        .filter { toolbarStateClass -> filterToolbarStateClassIfNeeded(toolbarStateClass) }
-        .collect { toolbarStateClass ->
+        .filter { (toolbarType, _) -> toolbarType == kurobaToolbarType }
+        .collect { (toolbarType, toolbarStateClass) ->
           onToolbarStateChanged(
             newToolbarStateClass = toolbarStateClass,
-            type = ToolbarStateChangeType.Update
+            toolbarStateChangeType = ToolbarStateChangeType.Update
           )
         }
     }
 
-    ensureInitialized()
-
-    val prevPrevToolbarStateClass = toolbarViewModel.getToolbarStateStack(initialToolbarStateClass)
+    val prevPrevToolbarStateClass = toolbarViewModel.getToolbarStateStack(kurobaToolbarType)
       .getPrevToolbarStateClass()
 
     if (prevPrevToolbarStateClass != ToolbarStateClass.Uninitialized) {
-      pushNewToolbarStateClass(prevPrevToolbarStateClass)
+      Timber.tag(TAG).d("Restoring from previous state kurobaToolbarType=$kurobaToolbarType, " +
+        "prevPrevToolbarStateClass=$prevPrevToolbarStateClass")
+
+      pushNewToolbarStateClass(kurobaToolbarType, prevPrevToolbarStateClass)
       return
     }
 
-    pushNewToolbarStateClass(initialToolbarStateClass)
+    val initialToolbarStateClass = when (kurobaToolbarType) {
+      KurobaToolbarType.Uninitialized -> throw IllegalStateException("Bad kurobaToolbarType: $kurobaToolbarType")
+      KurobaToolbarType.Catalog -> ToolbarStateClass.Catalog
+      KurobaToolbarType.Thread -> ToolbarStateClass.Thread
+    }
+
+    Timber.tag(TAG).d("Fresh initialization kurobaToolbarType=$kurobaToolbarType, " +
+      "prevPrevToolbarStateClass=$prevPrevToolbarStateClass")
+
+    pushNewToolbarStateClass(kurobaToolbarType, initialToolbarStateClass)
+  }
+
+  fun newState(toolbarStateUpdate: ToolbarStateUpdate) {
+    toolbarViewModel.newState(kurobaToolbarType, toolbarStateUpdate)
   }
 
   override fun onDetachedFromWindow() {
@@ -85,50 +100,39 @@ class KurobaToolbar @JvmOverloads constructor(
     job.cancelChildren()
   }
 
-  /**
-   * If toolbarStateClass is either [ToolbarStateClass.Thread] or [ToolbarStateClass.Catalog] then
-   * we only want to allow toolbarStateClass of the same class as initialToolbarStateClass. Basically,
-   * we don't want to consume state of catalog toolbar in thread toolbar and vice versa. It is okay
-   * to consume other state classes (like SimpleTitle/Selection etc) in catalog/thread toolbars.
-   * */
-  private fun filterToolbarStateClassIfNeeded(toolbarStateClass: ToolbarStateClass): Boolean {
-    if (!toolbarStateClass.canBeInitialState) {
-      return true
-    }
-
-    return toolbarStateClass == initialToolbarStateClass
-  }
-
   override fun popCurrentToolbarStateClass() {
-    val toolbarStateClass = toolbarViewModel.getToolbarStateStack(initialToolbarStateClass).pop()
+    val toolbarStateClass = toolbarViewModel.getToolbarStateStack(kurobaToolbarType).pop()
       ?: return
 
     onToolbarStateChanged(
       newToolbarStateClass = toolbarStateClass,
-      type = ToolbarStateChangeType.Pop
+      toolbarStateChangeType = ToolbarStateChangeType.Pop
     )
   }
 
-  override fun pushNewToolbarStateClass(toolbarStateClass: ToolbarStateClass) {
-    toolbarViewModel.getToolbarStateStack(initialToolbarStateClass)
+  override fun pushNewToolbarStateClass(
+    kurobaToolbarType: KurobaToolbarType,
+    toolbarStateClass: ToolbarStateClass
+  ) {
+    toolbarViewModel.getToolbarStateStack(kurobaToolbarType)
       .pushToolbarStateClass(toolbarStateClass)
 
     onToolbarStateChanged(
       newToolbarStateClass = toolbarStateClass,
-      type = ToolbarStateChangeType.Push
+      toolbarStateChangeType = ToolbarStateChangeType.Push
     )
   }
 
   fun onBackPressed(): Boolean {
     ensureInitialized()
 
-    val toolbarStateClass = toolbarViewModel.getToolbarStateStack(initialToolbarStateClass)
+    val toolbarStateClass = toolbarViewModel.getToolbarStateStack(kurobaToolbarType)
       .popCurrentStateIfPossibleOrNull()
       ?: return false
 
     onToolbarStateChanged(
       newToolbarStateClass = toolbarStateClass,
-      type = ToolbarStateChangeType.Pop
+      toolbarStateChangeType = ToolbarStateChangeType.Pop
     )
 
     return true
@@ -136,27 +140,27 @@ class KurobaToolbar @JvmOverloads constructor(
 
   private fun onToolbarStateChanged(
     newToolbarStateClass: ToolbarStateClass,
-    type: ToolbarStateChangeType
+    toolbarStateChangeType: ToolbarStateChangeType
   ) {
     BackgroundUtils.ensureMainThread()
     ensureInitialized()
-
-    Timber.tag(TAG).d("($initialToolbarStateClass) onToolbarStateChanged() " +
-      "newToolbarStateClass=$newToolbarStateClass")
 
     if (newToolbarStateClass == ToolbarStateClass.Uninitialized) {
       return
     }
 
-    val needAddOrReplaceToolbarView = type == ToolbarStateChangeType.Push
-      || type == ToolbarStateChangeType.Pop
+    val needAddOrReplaceToolbarView = toolbarStateChangeType == ToolbarStateChangeType.Push
+      || toolbarStateChangeType == ToolbarStateChangeType.Pop
       || kurobaToolbarViewContainer.childCount < 1
 
     if (needAddOrReplaceToolbarView) {
-      Timber.tag(TAG).d("($initialToolbarStateClass) onToolbarStateChanged() " +
+      Timber.tag(TAG).d("($kurobaToolbarType) onToolbarStateChanged() " +
         "newToolbarStateClass ($newToolbarStateClass)")
 
-      addOrReplaceToolbarView(newToolbarStateClass = newToolbarStateClass, type = type)
+      addOrReplaceToolbarView(
+        newToolbarStateClass = newToolbarStateClass,
+        toolbarStateChangeType = toolbarStateChangeType
+      )
     }
 
     // TODO(KurobaEx): animations and stuff
@@ -171,7 +175,7 @@ class KurobaToolbar @JvmOverloads constructor(
 
     when (newToolbarStateClass) {
       ToolbarStateClass.Uninitialized -> {
-        throw IllegalStateException("($initialToolbarStateClass) Must not be called")
+        throw IllegalStateException("($kurobaToolbarType) Must not be called")
       }
       ToolbarStateClass.Catalog -> {
         val child = kurobaToolbarViewContainer.getChildAt(0)
@@ -201,8 +205,14 @@ class KurobaToolbar @JvmOverloads constructor(
     newToolbarStateClass: ToolbarStateClass
   ) {
     val toolbarContract = (currentToolbarView as KurobaToolbarDelegateContract<T>)
-    if (toolbarContract.toolbarStateClass == newToolbarStateClass) {
-      val toolbarState = toolbarViewModel.getToolbarState<T>(newToolbarStateClass)
+    val isSuitableState = toolbarContract.toolbarStateClass == newToolbarStateClass
+      && toolbarContract.parentToolbarType == kurobaToolbarType
+
+    if (isSuitableState) {
+      val toolbarState = toolbarViewModel.getToolbarState<T>(
+        kurobaToolbarType,
+        newToolbarStateClass
+      )
 
       toolbarContract.applyStateToUi(toolbarState)
     }
@@ -210,15 +220,16 @@ class KurobaToolbar @JvmOverloads constructor(
 
   private fun addOrReplaceToolbarView(
     newToolbarStateClass: ToolbarStateClass,
-    type: ToolbarStateChangeType
+    toolbarStateChangeType: ToolbarStateChangeType
   ) {
     val newView = when (newToolbarStateClass) {
       ToolbarStateClass.Uninitialized -> {
-        throw IllegalStateException("($initialToolbarStateClass) Must not be called")
+        throw IllegalStateException("($toolbarStateChangeType) Must not be called")
       }
       ToolbarStateClass.Catalog -> {
         KurobaCatalogToolbar(
           context = context,
+          toolbarType = kurobaToolbarType,
           kurobaToolbarViewModel = toolbarViewModel,
           kurobaToolbarCallbacks = this
         )
@@ -226,6 +237,7 @@ class KurobaToolbar @JvmOverloads constructor(
       ToolbarStateClass.Thread -> {
         KurobaThreadToolbar(
           context = context,
+          toolbarType = kurobaToolbarType,
           kurobaToolbarViewModel = toolbarViewModel,
           kurobaToolbarCallbacks = this
         )
@@ -233,6 +245,7 @@ class KurobaToolbar @JvmOverloads constructor(
       ToolbarStateClass.Search -> {
         KurobaSearchToolbar(
           context = context,
+          toolbarType = kurobaToolbarType,
           kurobaToolbarViewModel = toolbarViewModel,
           kurobaToolbarCallbacks = this
         )
@@ -242,40 +255,36 @@ class KurobaToolbar @JvmOverloads constructor(
     }
 
     check(kurobaToolbarViewContainer.childCount <= 1) {
-      "($initialToolbarStateClass) Bad child count: ${kurobaToolbarViewContainer.childCount}"
+      "($kurobaToolbarType) Bad child count: ${kurobaToolbarViewContainer.childCount}"
     }
 
     if (kurobaToolbarViewContainer.childCount > 0) {
       val currentToolbar = kurobaToolbarViewContainer.getChildAt(0)
 
-      Timber.tag(TAG).d("($initialToolbarStateClass) replaceStateView() oldView=" +
+      Timber.tag(TAG).d("($kurobaToolbarType) replaceStateView() oldView=" +
         currentToolbar.javaClass.simpleName
       )
 
-      if (type == ToolbarStateChangeType.Pop) {
+      if (toolbarStateChangeType == ToolbarStateChangeType.Pop) {
         val contract = (currentToolbar as KurobaToolbarDelegateContract<*>)
-        toolbarViewModel.resetState(contract.toolbarStateClass)
+        toolbarViewModel.resetState(contract.parentToolbarType, contract.toolbarStateClass)
       }
 
       kurobaToolbarViewContainer.removeAllViews()
     }
 
-    Timber.tag(TAG).d("($initialToolbarStateClass) replaceStateView() " +
+    Timber.tag(TAG).d("($kurobaToolbarType) replaceStateView() " +
       "newView = ${newView.javaClass.simpleName}")
     kurobaToolbarViewContainer.addView(newView)
 
     check(kurobaToolbarViewContainer.childCount <= 1) {
-      "($initialToolbarStateClass) Bad child count: ${kurobaToolbarViewContainer.childCount}"
+      "($kurobaToolbarType) Bad child count: ${kurobaToolbarViewContainer.childCount}"
     }
   }
 
   private fun ensureInitialized() {
-    check(initialized) {
-      "($initialToolbarStateClass) Must initialize first!"
-    }
-    check(initialToolbarStateClass != ToolbarStateClass.Uninitialized) {
-      "initialToolbarStateClass is Uninitialized!"
-    }
+    check(initialized) { "($kurobaToolbarType) Must initialize first!" }
+    check(kurobaToolbarType != KurobaToolbarType.Uninitialized) { "kurobaToolbarType is Uninitialized!" }
   }
 
   enum class ToolbarStateChangeType {

@@ -10,39 +10,33 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filter
+import java.lang.IllegalStateException
 
 class KurobaToolbarViewModel : ViewModel() {
-  private val stateMap = mutableMapOf<ToolbarStateClass, ToolbarStateContract>()
+  private val stateMap = mutableMapOf<KurobaToolbarType, MutableMap<ToolbarStateClass, ToolbarStateContract>>()
+  private val toolbarStateStackMap = mutableMapOf<KurobaToolbarType, KurobaToolbarStateStack>()
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  private val toolbarStateChangeFlow = BroadcastChannel<ToolbarStateClass>(capacity = 128)
+  private val toolbarStateChangeFlow = BroadcastChannel<NewToolbarStateUpdate>(capacity = 128)
   @OptIn(ExperimentalCoroutinesApi::class)
   private val toolbarActionFlow = BroadcastChannel<ToolbarAction>(capacity = 128)
 
-  private val toolbarStateStackMap = mutableMapOf<ToolbarStateClass, KurobaToolbarStateStack>()
-
-  init {
-    stateMap[ToolbarStateClass.Thread] = KurobaThreadToolbarState()
-    stateMap[ToolbarStateClass.Catalog] = KurobaCatalogToolbarState()
-    stateMap[ToolbarStateClass.Search] = KurobaSearchToolbarState()
-  }
-
-  fun initStateStackForToolbar(toolbarStateClass: ToolbarStateClass) {
-    if (toolbarStateStackMap.containsKey(toolbarStateClass)) {
+  fun initStateStackForToolbar(kurobaToolbarType: KurobaToolbarType) {
+    if (toolbarStateStackMap.containsKey(kurobaToolbarType)) {
       return
     }
 
-    toolbarStateStackMap.put(toolbarStateClass, KurobaToolbarStateStack())
+    toolbarStateStackMap.put(kurobaToolbarType, KurobaToolbarStateStack())
   }
 
-  fun getToolbarStateStack(toolbarStateClass: ToolbarStateClass): KurobaToolbarStateStack {
-    return requireNotNull(toolbarStateStackMap[toolbarStateClass]) {
-      "KurobaToolbarStateStack not initialized for toolbarStateClass=$toolbarStateClass"
+  fun getToolbarStateStack(kurobaToolbarType: KurobaToolbarType): KurobaToolbarStateStack {
+    return requireNotNull(toolbarStateStackMap[kurobaToolbarType]) {
+      "KurobaToolbarStateStack not initialized for kurobaToolbarType=$kurobaToolbarType"
     }
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  fun listenForToolbarStateChanges(): Flow<ToolbarStateClass> {
+  fun listenForToolbarStateChanges(): Flow<NewToolbarStateUpdate> {
     return toolbarStateChangeFlow.asFlow()
   }
 
@@ -57,29 +51,68 @@ class KurobaToolbarViewModel : ViewModel() {
     toolbarActionFlow.offer(toolbarAction)
   }
 
-  fun newState(newStateUpdate: ToolbarStateUpdate) {
+  fun newState(toolbarType: KurobaToolbarType, newStateUpdate: ToolbarStateUpdate) {
     val toolbarStateClass = newStateUpdate.toolbarStateClass
+    createDefaultState(toolbarType, toolbarStateClass)
 
-    val toolbarStateContract = requireNotNull(stateMap[toolbarStateClass]) {
-      "State was not initialized for toolbarStateClass=$toolbarStateClass"
-    }
-
+    val toolbarStateContract = stateMap[toolbarType]!![toolbarStateClass]!!
     toolbarStateContract.updateState(newStateUpdate)
-    toolbarStateChangeFlow.offer(newStateUpdate.toolbarStateClass)
+
+    val newToolbarStateUpdate = NewToolbarStateUpdate(
+      toolbarType,
+      newStateUpdate.toolbarStateClass
+    )
+
+    toolbarStateChangeFlow.offer(newToolbarStateUpdate)
   }
 
-  fun resetState(toolbarStateClass: ToolbarStateClass) {
-    val toolbarStateContract = requireNotNull(stateMap[toolbarStateClass]) {
-      "State was not initialized for toolbarStateClass=$toolbarStateClass"
+  fun resetState(toolbarType: KurobaToolbarType, toolbarStateClass: ToolbarStateClass) {
+    val toolbarStateContract = requireNotNull(stateMap[toolbarType]?.get(toolbarStateClass)) {
+      "State was not initialized for toolbarType=$toolbarType and toolbarStateClass=$toolbarStateClass"
     }
 
     toolbarStateContract.reset()
   }
 
-  fun <T : ToolbarStateContract> getToolbarState(toolbarStateClass: ToolbarStateClass): T {
-    return requireNotNull(stateMap[toolbarStateClass]) {
-      "State was not initialized for toolbarStateClass=$toolbarStateClass"
+  fun <T : ToolbarStateContract> getToolbarState(
+    toolbarType: KurobaToolbarType,
+    toolbarStateClass: ToolbarStateClass
+  ): T {
+    createDefaultState(toolbarType, toolbarStateClass)
+
+    return requireNotNull(stateMap[toolbarType]?.get(toolbarStateClass)) {
+      "State was not initialized for toolbarType=$toolbarType and toolbarStateClass=$toolbarStateClass"
     } as T
   }
+
+  private fun createDefaultState(toolbarType: KurobaToolbarType, toolbarStateClass: ToolbarStateClass) {
+    var innerMap = stateMap[toolbarType]
+    if (innerMap == null) {
+      innerMap = mutableMapOf()
+      stateMap[toolbarType] = innerMap
+    }
+
+    var toolbarStateContract = stateMap[toolbarType]!![toolbarStateClass]
+    if (toolbarStateContract == null) {
+      toolbarStateContract = createDefaultStateForStateClass(toolbarStateClass)
+      stateMap[toolbarType]!![toolbarStateClass] = toolbarStateContract
+    }
+  }
+
+  private fun createDefaultStateForStateClass(toolbarStateClass: ToolbarStateClass): ToolbarStateContract {
+    return when (toolbarStateClass) {
+      ToolbarStateClass.Thread -> KurobaThreadToolbarState()
+      ToolbarStateClass.Catalog -> KurobaCatalogToolbarState()
+      ToolbarStateClass.Search -> KurobaSearchToolbarState()
+      ToolbarStateClass.SimpleTitle -> TODO()
+      ToolbarStateClass.Selection -> TODO()
+      ToolbarStateClass.Uninitialized -> throw IllegalStateException("Must not be called")
+    }
+  }
+
+  data class NewToolbarStateUpdate(
+    val kurobaToolbarType: KurobaToolbarType,
+    val toolbarStateClass: ToolbarStateClass
+  )
 
 }

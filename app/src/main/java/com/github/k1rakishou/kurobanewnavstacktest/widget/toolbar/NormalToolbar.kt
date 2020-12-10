@@ -43,12 +43,12 @@ class NormalToolbar @JvmOverloads constructor(
     this.initialized = true
     this.controllerType = controllerType
 
-    val initialToolbarStateClass = when (controllerType) {
-      ControllerType.Catalog -> ToolbarStateClass.Catalog
-      ControllerType.Thread -> ToolbarStateClass.Thread
+    val kurobaToolbarType = when (controllerType) {
+      ControllerType.Catalog -> KurobaToolbarType.Catalog
+      ControllerType.Thread -> KurobaToolbarType.Thread
     }
 
-    actualToolbar.init(initialToolbarStateClass)
+    actualToolbar.init(kurobaToolbarType)
   }
 
   override fun onBackPressed(): Boolean {
@@ -66,10 +66,10 @@ class NormalToolbar @JvmOverloads constructor(
 
     when (controllerType) {
       ControllerType.Catalog -> {
-        actualToolbar.toolbarViewModel.newState(ToolbarStateUpdate.Catalog.UpdateTitle(title))
+        actualToolbar.newState(ToolbarStateUpdate.Catalog.UpdateTitle(title))
       }
       ControllerType.Thread -> {
-        actualToolbar.toolbarViewModel.newState(ToolbarStateUpdate.Thread.UpdateTitle(title))
+        actualToolbar.newState(ToolbarStateUpdate.Thread.UpdateTitle(title))
       }
     }
   }
@@ -79,7 +79,7 @@ class NormalToolbar @JvmOverloads constructor(
       return
     }
 
-    actualToolbar.toolbarViewModel.newState(ToolbarStateUpdate.Catalog.UpdateSubTitle(subtitle))
+    actualToolbar.newState(ToolbarStateUpdate.Catalog.UpdateSubTitle(subtitle))
   }
 
   override fun setToolbarVisibility(visibility: Int) {

@@ -48,8 +48,8 @@ class SlideToolbar @JvmOverloads constructor(
     check(!this.initialized) { "Double initialization!" }
     this.initialized = true
 
-    actualCatalogToolbar.init(ToolbarStateClass.Catalog)
-    actualThreadToolbar.init(ToolbarStateClass.Thread)
+    actualCatalogToolbar.init(KurobaToolbarType.Catalog)
+    actualThreadToolbar.init(KurobaToolbarType.Thread)
   }
 
   override fun onBackPressed(): Boolean {
@@ -67,16 +67,16 @@ class SlideToolbar @JvmOverloads constructor(
   override fun setTitle(controllerType: ControllerType, title: String) {
     when (controllerType) {
       ControllerType.Catalog -> {
-        actualCatalogToolbar.toolbarViewModel.newState(ToolbarStateUpdate.Catalog.UpdateTitle(title))
+        actualCatalogToolbar.newState(ToolbarStateUpdate.Catalog.UpdateTitle(title))
       }
       ControllerType.Thread -> {
-        actualThreadToolbar.toolbarViewModel.newState(ToolbarStateUpdate.Thread.UpdateTitle(title))
+        actualThreadToolbar.newState(ToolbarStateUpdate.Thread.UpdateTitle(title))
       }
     }
   }
 
   override fun setSubTitle(subtitle: String) {
-    actualCatalogToolbar.toolbarViewModel.newState(ToolbarStateUpdate.Catalog.UpdateSubTitle(subtitle))
+    actualCatalogToolbar.newState(ToolbarStateUpdate.Catalog.UpdateSubTitle(subtitle))
   }
 
   override fun setToolbarVisibility(visibility: Int) {
@@ -111,12 +111,8 @@ class SlideToolbar @JvmOverloads constructor(
     actualCatalogToolbar.setAlphaFast(offset)
     actualThreadToolbar.setAlphaFast(1f - offset)
 
-    actualCatalogToolbar.toolbarViewModel.newState(
-      newStateUpdate = ToolbarStateUpdate.Catalog.UpdateSlideProgress(offset)
-    )
-    actualThreadToolbar.toolbarViewModel.newState(
-      newStateUpdate = ToolbarStateUpdate.Thread.UpdateSlideProgress(offset)
-    )
+    actualCatalogToolbar.newState(ToolbarStateUpdate.Catalog.UpdateSlideProgress(offset))
+    actualThreadToolbar.newState(ToolbarStateUpdate.Thread.UpdateSlideProgress(offset))
   }
 
   fun onAfterSliding(becameCatalogToolbar: Boolean) {

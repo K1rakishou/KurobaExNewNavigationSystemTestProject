@@ -15,6 +15,7 @@ import timber.log.Timber
 @SuppressLint("ViewConstructor")
 class KurobaThreadToolbar(
   context: Context,
+  private val toolbarType: KurobaToolbarType,
   private val kurobaToolbarViewModel: KurobaToolbarViewModel,
   private val kurobaToolbarCallbacks: KurobaToolbarCallbacks
 ) : ConstraintLayout(context), KurobaToolbarDelegateContract<KurobaThreadToolbarState> {
@@ -28,6 +29,8 @@ class KurobaThreadToolbar(
   private val bookmarkThreadButton: AppCompatImageView
   private val openSubmenuButton: AppCompatImageView
 
+  override val parentToolbarType: KurobaToolbarType
+    get() = toolbarType
   override val toolbarStateClass: ToolbarStateClass
     get() = ToolbarStateClass.Thread
 
@@ -46,7 +49,7 @@ class KurobaThreadToolbar(
       openSubmenuButton = findViewById(R.id.open_submenu_button)
 
       openSearchButton.setOnThrottlingClickListener {
-        kurobaToolbarCallbacks.pushNewToolbarStateClass(ToolbarStateClass.Search)
+        kurobaToolbarCallbacks.pushNewToolbarStateClass(toolbarType, ToolbarStateClass.Search)
       }
       openGalleryButton.setOnThrottlingClickListener {
         kurobaToolbarViewModel.fireAction(ToolbarAction.Thread.OpenGalleryButtonClicked)
@@ -61,8 +64,6 @@ class KurobaThreadToolbar(
   }
 
   override fun applyStateToUi(toolbarState: KurobaThreadToolbarState) {
-    Timber.tag(TAG).d("applyStateToUi() toolbarState=$toolbarState")
-
     toolbarState.slideProgress?.let { slideProgress ->
       if (slideProgress != arrowMenuDrawable.progress) {
         arrowMenuDrawable.progress = 1f - slideProgress
