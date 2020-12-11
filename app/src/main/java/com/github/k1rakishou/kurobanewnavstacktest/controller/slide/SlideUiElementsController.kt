@@ -14,7 +14,6 @@ import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
 import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.controller.RecyclerViewProvider
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.*
-import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ControllerToolbarContract
 import com.github.k1rakishou.kurobanewnavstacktest.core.CollapsingViewsHolder
 import com.github.k1rakishou.kurobanewnavstacktest.data.BoardDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
@@ -22,6 +21,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.utils.ChanSettings
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.*
 import com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaFloatingActionButton
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.SlideToolbar
+import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarContract
 import timber.log.Timber
 
 @SuppressLint("TimberTagLength")
@@ -32,8 +32,7 @@ class SlideUiElementsController(
   SlideNavController.SlideCatalogUiElementsControllerCallbacks,
   SlideModeFabClickListener,
   RecyclerViewProvider,
-  ChanNavigationContract,
-  ControllerToolbarContract {
+  ChanNavigationContract {
   private lateinit var createThreadButton: KurobaFloatingActionButton
   private lateinit var slideModeFabViewController: SlideModeFabViewController
   private lateinit var slideNavControllerContainer: FrameLayout
@@ -68,7 +67,7 @@ class SlideUiElementsController(
           slideCatalogUiElementsControllerCallbacks = this,
           recyclerViewProvider = this,
           slideModeFabViewControllerCallbacks = slideModeFabViewController,
-          controllerToolbarContract = this
+          toolbarContract = toolbarContract
         )
       )
     )
@@ -165,14 +164,6 @@ class SlideUiElementsController(
     collapsingViewsHolder.detach(recyclerView, bottomNavView)
   }
 
-  override fun setToolbarTitle(controllerType: ControllerType, title: String) {
-    toolbarContract.setTitle(controllerType, title)
-  }
-
-  override fun setCatalogToolbarSubTitle(subtitle: String) {
-    toolbarContract.setSubTitle(subtitle)
-  }
-
   override fun onBeforeSliding(transitioningIntoCatalogToolbar: Boolean) {
     (toolbarContract.collapsableView() as SlideToolbar).onBeforeSliding(transitioningIntoCatalogToolbar)
   }
@@ -213,7 +204,7 @@ class SlideUiElementsController(
           slideCatalogUiElementsControllerCallbacks = this,
           recyclerViewProvider = this,
           slideModeFabViewControllerCallbacks = slideModeFabViewController,
-          controllerToolbarContract = this
+          toolbarContract = toolbarContract
         )
       }
       R.id.action_settings -> createSettingsController(uiElementsControllerCallbacks)
@@ -226,14 +217,14 @@ class SlideUiElementsController(
     slideCatalogUiElementsControllerCallbacks: SlideNavController.SlideCatalogUiElementsControllerCallbacks,
     recyclerViewProvider: RecyclerViewProvider,
     slideModeFabViewControllerCallbacks: SlideModeFabViewControllerCallbacks,
-    controllerToolbarContract: ControllerToolbarContract
+    toolbarContract: ToolbarContract
   ): SlideNavController {
     return SlideNavController().apply {
       setUiElementsControllerCallbacks(uiElementsControllerCallbacks)
       setSlideCatalogUiElementsControllerCallbacks(slideCatalogUiElementsControllerCallbacks)
       recyclerViewProvider(recyclerViewProvider)
       slideModeFabViewControllerCallbacks(slideModeFabViewControllerCallbacks)
-      controllerToolbarContract(controllerToolbarContract)
+      toolbarContract(toolbarContract)
     }
   }
 

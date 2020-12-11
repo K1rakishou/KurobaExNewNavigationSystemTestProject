@@ -12,9 +12,9 @@ import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.base.BaseController
 import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
 import com.github.k1rakishou.kurobanewnavstacktest.controller.BookmarksController
-import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.controller.SettingsController
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndDoRequest
+import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.KurobaToolbarType
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.NormalToolbar
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.SlideToolbar
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarContract
@@ -38,7 +38,7 @@ abstract class BaseUiElementsController(
   private fun setupToolbar() {
     if (isSplitLayout()) {
       val toolbarView = NormalToolbar(currentContext())
-      toolbarView.init(ControllerType.Catalog)
+      toolbarView.init(KurobaToolbarType.Catalog)
       toolbarContainer.addView(toolbarView)
 
       toolbarContract = toolbarView
@@ -95,6 +95,7 @@ abstract class BaseUiElementsController(
   ): SettingsController {
     return SettingsController().apply {
       setUiElementsControllerCallbacks(uiElementsControllerCallbacks)
+      toolbarContract(toolbarContract)
     }
   }
 
@@ -103,6 +104,7 @@ abstract class BaseUiElementsController(
   ): BookmarksController {
     return BookmarksController().apply {
       setUiElementsControllerCallbacks(uiElementsControllerCallbacks)
+      toolbarContract(toolbarContract)
     }
   }
 

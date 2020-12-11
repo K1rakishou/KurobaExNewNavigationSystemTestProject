@@ -3,6 +3,7 @@ package com.github.k1rakishou.kurobanewnavstacktest
 import android.annotation.SuppressLint
 import android.app.Application
 import android.util.Log
+import com.github.k1rakishou.kurobanewnavstacktest.core.test.TestHelpers
 import com.github.k1rakishou.kurobanewnavstacktest.utils.AndroidUtils
 import timber.log.Timber
 

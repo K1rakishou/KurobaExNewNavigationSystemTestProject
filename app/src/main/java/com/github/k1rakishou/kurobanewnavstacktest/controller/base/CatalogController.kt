@@ -9,15 +9,20 @@ import androidx.core.view.updatePadding
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.activity.ImageViewerActivity
+import com.github.k1rakishou.kurobanewnavstacktest.activity.MainActivity
 import com.github.k1rakishou.kurobanewnavstacktest.base.BaseController
 import com.github.k1rakishou.kurobanewnavstacktest.data.*
 import com.github.k1rakishou.kurobanewnavstacktest.epoxy.catalogThreadView
 import com.github.k1rakishou.kurobanewnavstacktest.epoxy.epoxyTextView
 import com.github.k1rakishou.kurobanewnavstacktest.epoxy.loadingView
 import com.github.k1rakishou.kurobanewnavstacktest.repository.ChanRepository
+import com.github.k1rakishou.kurobanewnavstacktest.utils.BackgroundUtils
+import com.github.k1rakishou.kurobanewnavstacktest.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.kurobanewnavstacktest.utils.errorMessageOrClassName
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndDoRequest
 import com.github.k1rakishou.kurobanewnavstacktest.viewstate.ViewStateConstants
+import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.KurobaToolbarType
+import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarContract
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import timber.log.Timber
@@ -28,15 +33,21 @@ abstract class CatalogController(
   CatalogNavigationContract {
 
   private val chanRepository = ChanRepository
+  private val testHelpers by lazy { (activity as MainActivity).testHelpers }
 
   protected lateinit var recyclerView: EpoxyRecyclerView
 
+  private var toolbarContract: ToolbarContract? = null
   private var threadNavigationContract: ThreadNavigationContract? = null
   private var boundBoardDescriptor: BoardDescriptor? = null
   private var job: Job? = null
 
   fun threadNavigationContract(threadNavigationContract: ThreadNavigationContract) {
     this.threadNavigationContract = threadNavigationContract
+  }
+
+  fun toolbarContract(toolbarContract: ToolbarContract) {
+    this.toolbarContract = toolbarContract
   }
 
   final override fun instantiateView(
@@ -115,11 +126,18 @@ abstract class CatalogController(
     }
 
     rebuildCatalog(CatalogData.Loading)
+
     chanRepository.loadBoard(descriptor)
   }
 
   private fun rebuildCatalog(catalogData: CatalogData) {
+    BackgroundUtils.ensureMainThread()
+
     recyclerView.withModels {
+      addOneshotModelBuildListener {
+        toolbarContract?.showDefaultToolbar(KurobaToolbarType.Catalog)
+      }
+
       if (catalogData is CatalogData.Empty) {
         epoxyTextView {
           id("catalog_empty_view")
@@ -146,8 +164,13 @@ abstract class CatalogController(
       }
 
       catalogData as CatalogData.Data
-      setToolbarTitle(catalogData.toCatalogTitleString())
-      setCatalogToolbarSubTitle(currentContext().getString(R.string.lorem_ipsum))
+
+      toolbarContract?.setTitle(KurobaToolbarType.Catalog, catalogData.toCatalogTitleString())
+      toolbarContract?.setSubTitle(currentContext().getString(R.string.lorem_ipsum))
+
+      addOneshotModelBuildListener {
+        testHelpers.catalogLoadedLatch.countDown()
+      }
 
       val error = catalogData.error
       if (error != null) {
@@ -179,9 +202,6 @@ abstract class CatalogController(
 
     startActivity(intent)
   }
-
-  protected abstract fun setToolbarTitle(title: String)
-  protected abstract fun setCatalogToolbarSubTitle(subtitle: String)
 
   companion object {
     private const val TAG = "CatalogController"

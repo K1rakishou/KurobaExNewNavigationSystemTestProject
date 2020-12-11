@@ -8,6 +8,11 @@ interface ToolbarContract {
   fun setToolbarVisibility(visibility: Int)
   fun onBackPressed(): Boolean
 
-  fun setTitle(controllerType: ControllerType, title: String)
+  fun showDefaultToolbar(toolbarType: KurobaToolbarType)
+
+  fun showSearchToolbar(toolbarType: KurobaToolbarType)
+  fun closeSearchToolbar(toolbarType: KurobaToolbarType)
+
+  fun setTitle(toolbarType: KurobaToolbarType, title: String)
   fun setSubTitle(subtitle: String)
 }

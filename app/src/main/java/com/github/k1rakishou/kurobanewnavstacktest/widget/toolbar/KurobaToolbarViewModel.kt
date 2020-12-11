@@ -1,5 +1,6 @@
 package com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar
 
+import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.catalog.KurobaCatalogToolbarState
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.search.KurobaSearchToolbarState
@@ -21,12 +22,17 @@ class KurobaToolbarViewModel : ViewModel() {
   @OptIn(ExperimentalCoroutinesApi::class)
   private val toolbarActionFlow = BroadcastChannel<ToolbarAction>(capacity = 128)
 
+  @VisibleForTesting
+  fun getStateMap() = stateMap
+  @VisibleForTesting
+  fun getToolbarStateStackMap() = stateMap
+
   fun initStateStackForToolbar(kurobaToolbarType: KurobaToolbarType) {
     if (toolbarStateStackMap.containsKey(kurobaToolbarType)) {
       return
     }
 
-    toolbarStateStackMap.put(kurobaToolbarType, KurobaToolbarStateStack())
+    toolbarStateStackMap.put(kurobaToolbarType, KurobaToolbarStateStack(kurobaToolbarType))
   }
 
   fun getToolbarStateStack(kurobaToolbarType: KurobaToolbarType): KurobaToolbarStateStack {

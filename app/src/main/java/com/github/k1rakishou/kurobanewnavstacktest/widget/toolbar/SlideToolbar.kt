@@ -4,10 +4,12 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout
+import androidx.annotation.VisibleForTesting
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
+import com.github.k1rakishou.kurobanewnavstacktest.utils.exhaustive
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setAlphaFast
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndDoRequest
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setVisibilityFast
@@ -22,11 +24,12 @@ class SlideToolbar @JvmOverloads constructor(
 
   private var transitioningIntoCatalogToolbar: Boolean? = null
   private var initialToolbarShown = false
-  private var catalogToolbarVisible: Boolean = false
+  private var catalogToolbarVisible: Boolean? = false
   private var initialized: Boolean = false
 
   init {
     inflate(context, R.layout.widget_slide_toolbar, this)
+    id = R.id.slide_toolbar_id
 
     val slideToolbarRoot = findViewById<FrameLayout>(R.id.slide_toolbar_root)
     actualCatalogToolbar = findViewById(R.id.catalog_toolbar)
@@ -44,6 +47,14 @@ class SlideToolbar @JvmOverloads constructor(
     }
   }
 
+  fun getCatalogToolbar(): KurobaToolbar {
+    return actualCatalogToolbar
+  }
+
+  fun getThreadToolbar(): KurobaToolbar {
+    return actualThreadToolbar
+  }
+
   fun init() {
     check(!this.initialized) { "Double initialization!" }
     this.initialized = true
@@ -52,8 +63,15 @@ class SlideToolbar @JvmOverloads constructor(
     actualThreadToolbar.init(KurobaToolbarType.Thread)
   }
 
+  @Suppress("FoldInitializerAndIfToElvis")
   override fun onBackPressed(): Boolean {
-    if (catalogToolbarVisible) {
+    val catalogVisible = catalogToolbarVisible
+    if (catalogVisible == null) {
+      // Consume backpresses and do nothing while the sliding pane layout is sliding
+      return true
+    }
+
+    if (catalogVisible) {
       return actualCatalogToolbar.onBackPressed()
     }
 
@@ -64,15 +82,48 @@ class SlideToolbar @JvmOverloads constructor(
     return this
   }
 
-  override fun setTitle(controllerType: ControllerType, title: String) {
-    when (controllerType) {
-      ControllerType.Catalog -> {
+  override fun showSearchToolbar(toolbarType: KurobaToolbarType) {
+    when (toolbarType) {
+      KurobaToolbarType.Catalog -> {
+        actualCatalogToolbar.pushNewToolbarStateClass(toolbarType, ToolbarStateClass.Search)
+      }
+      KurobaToolbarType.Thread -> {
+        actualThreadToolbar.pushNewToolbarStateClass(toolbarType, ToolbarStateClass.Search)
+      }
+    }.exhaustive
+  }
+
+  override fun closeSearchToolbar(toolbarType: KurobaToolbarType) {
+    when (toolbarType) {
+      KurobaToolbarType.Catalog -> {
+        actualCatalogToolbar.popToolbarStateClass(toolbarType, ToolbarStateClass.Search)
+      }
+      KurobaToolbarType.Thread -> {
+        actualThreadToolbar.popToolbarStateClass(toolbarType, ToolbarStateClass.Search)
+      }
+    }.exhaustive
+  }
+
+  override fun showDefaultToolbar(toolbarType: KurobaToolbarType) {
+    when (toolbarType) {
+      KurobaToolbarType.Catalog -> {
+        actualCatalogToolbar.pushNewToolbarStateClass(ToolbarStateClass.Catalog)
+      }
+      KurobaToolbarType.Thread -> {
+        actualThreadToolbar.pushNewToolbarStateClass(ToolbarStateClass.Thread)
+      }
+    }.exhaustive
+  }
+
+  override fun setTitle(toolbarType: KurobaToolbarType, title: String) {
+    when (toolbarType) {
+      KurobaToolbarType.Catalog -> {
         actualCatalogToolbar.newState(ToolbarStateUpdate.Catalog.UpdateTitle(title))
       }
-      ControllerType.Thread -> {
+      KurobaToolbarType.Thread -> {
         actualThreadToolbar.newState(ToolbarStateUpdate.Thread.UpdateTitle(title))
       }
-    }
+    }.exhaustive
   }
 
   override fun setSubTitle(subtitle: String) {
@@ -88,6 +139,7 @@ class SlideToolbar @JvmOverloads constructor(
   }
 
   fun onBeforeSliding(transitioningIntoCatalogToolbar: Boolean) {
+    checkNotNull(catalogToolbarVisible) { "The sliding is already in progress, wtf?" }
     check(this.transitioningIntoCatalogToolbar == null) { "transitioningIntoCatalogToolbar != null" }
     this.transitioningIntoCatalogToolbar = transitioningIntoCatalogToolbar
 
@@ -104,6 +156,8 @@ class SlideToolbar @JvmOverloads constructor(
   }
 
   fun onSliding(offset: Float) {
+    catalogToolbarVisible = null
+
     if (transitioningIntoCatalogToolbar == null) {
       return
     }
@@ -116,6 +170,8 @@ class SlideToolbar @JvmOverloads constructor(
   }
 
   fun onAfterSliding(becameCatalogToolbar: Boolean) {
+    catalogToolbarVisible = becameCatalogToolbar
+
     if (transitioningIntoCatalogToolbar == null) {
       return
     }
@@ -141,16 +197,12 @@ class SlideToolbar @JvmOverloads constructor(
     }
 
     if (becameCatalogToolbar) {
-      catalogToolbarVisible = true
-
       actualCatalogToolbar.setAlphaFast(1f)
       actualCatalogToolbar.setVisibilityFast(View.VISIBLE)
 
       actualThreadToolbar.setAlphaFast(0f)
       actualThreadToolbar.setVisibilityFast(View.GONE)
     } else {
-      catalogToolbarVisible = false
-
       actualCatalogToolbar.setAlphaFast(0f)
       actualCatalogToolbar.setVisibilityFast(View.GONE)
 

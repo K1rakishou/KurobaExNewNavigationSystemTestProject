@@ -8,10 +8,16 @@ import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.base.BaseController
 import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.UiElementsControllerCallbacks
+import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarContract
 
 // TODO(KurobaEx): title doesn't work
 class BookmarksController(args: Bundle? = null) : BaseController(args) {
   private var uiElementsControllerCallbacks: UiElementsControllerCallbacks? = null
+  private var toolbarContract: ToolbarContract? = null
+
+  fun toolbarContract(toolbarContract: ToolbarContract) {
+    this.toolbarContract = toolbarContract
+  }
 
   fun setUiElementsControllerCallbacks(callbacks: UiElementsControllerCallbacks) {
     uiElementsControllerCallbacks = callbacks
@@ -35,6 +41,7 @@ class BookmarksController(args: Bundle? = null) : BaseController(args) {
     super.onControllerDestroyed()
 
     uiElementsControllerCallbacks = null
+    toolbarContract = null
   }
 
   override fun getControllerTag(): ControllerTag = ControllerTag(CONTROLLER_TAG)

@@ -16,13 +16,17 @@ import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerPresenterDeleg
 import com.github.k1rakishou.kurobanewnavstacktest.controller.MainController
 import com.github.k1rakishou.kurobanewnavstacktest.controller.slide.SlideUiElementsController
 import com.github.k1rakishou.kurobanewnavstacktest.controller.split.SplitNavController
+import com.github.k1rakishou.kurobanewnavstacktest.core.test.TestHelpers
 import com.github.k1rakishou.kurobanewnavstacktest.utils.BackgroundUtils
 import com.github.k1rakishou.kurobanewnavstacktest.utils.ChanSettings.isSplitMode
 import com.github.k1rakishou.kurobanewnavstacktest.utils.findRouterWithControllerByTag
+import com.github.k1rakishou.kurobanewnavstacktest.viewstate.ViewStateConstants
 import com.github.k1rakishou.kurobanewnavstacktest.widget.TouchBlockingFrameLayout
 import dev.chrisbanes.insetter.Insetter
 
 class MainActivity : AppCompatActivity(), ControllerPresenterDelegate, ActivityContract {
+  lateinit var testHelpers: TestHelpers
+
   private lateinit var router: Router
   private lateinit var rootContainer: TouchBlockingFrameLayout
   private lateinit var controllerPresenterDelegate: ControllerPresenterDelegateImpl
@@ -30,6 +34,9 @@ class MainActivity : AppCompatActivity(), ControllerPresenterDelegate, ActivityC
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
+
+    testHelpers = TestHelpers()
+    testHelpers.init(intent.getBooleanExtra(ViewStateConstants.MainActivity.testModeKey, false))
 
     Insetter.setEdgeToEdgeSystemUiFlags(window.decorView, true)
     window.statusBarColor = Color.TRANSPARENT
@@ -50,9 +57,11 @@ class MainActivity : AppCompatActivity(), ControllerPresenterDelegate, ActivityC
   }
 
   override fun onBackPressed() {
-    if (!router.handleBack()) {
-      super.onBackPressed()
+    if (router.handleBack()) {
+      return
     }
+
+    super.onBackPressed()
   }
 
   override fun replaceTopControllerOrPushAsNew(transaction: RouterTransaction) {

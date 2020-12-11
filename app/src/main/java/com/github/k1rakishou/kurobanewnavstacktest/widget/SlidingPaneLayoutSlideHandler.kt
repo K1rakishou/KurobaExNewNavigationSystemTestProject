@@ -8,6 +8,7 @@ class SlidingPaneLayoutSlideHandler(
   private val listeners = mutableSetOf<SlidingPaneLayoutSlideListener>()
   private var sliding = false
   private var prevOffset: Float = -1f
+  private var currentlyOpen = initiallyOpen
 
   fun addListener(listener: SlidingPaneLayoutSlideListener) {
     listeners += listener
@@ -23,7 +24,7 @@ class SlidingPaneLayoutSlideHandler(
 
   override fun onPanelSlide(panel: View, slideOffset: Float) {
     if (!sliding) {
-      listeners.forEach { it.onSlidingStarted(initiallyOpen) }
+      listeners.forEach { it.onSlidingStarted(currentlyOpen) }
       sliding = true
     }
 
@@ -44,6 +45,7 @@ class SlidingPaneLayoutSlideHandler(
       listeners.forEach { it.onSliding(1f) }
     }
 
+    currentlyOpen = true
     sliding = false
     prevOffset = -1f
 
@@ -55,6 +57,7 @@ class SlidingPaneLayoutSlideHandler(
       listeners.forEach { it.onSliding(0f) }
     }
 
+    currentlyOpen = false
     sliding = false
     prevOffset = -1f
 

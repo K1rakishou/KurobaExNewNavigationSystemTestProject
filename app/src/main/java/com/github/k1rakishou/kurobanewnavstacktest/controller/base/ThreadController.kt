@@ -17,9 +17,12 @@ import com.github.k1rakishou.kurobanewnavstacktest.epoxy.epoxyTextView
 import com.github.k1rakishou.kurobanewnavstacktest.epoxy.loadingView
 import com.github.k1rakishou.kurobanewnavstacktest.epoxy.threadPostView
 import com.github.k1rakishou.kurobanewnavstacktest.repository.ChanRepository
+import com.github.k1rakishou.kurobanewnavstacktest.utils.BackgroundUtils
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndDoRequest
 import com.github.k1rakishou.kurobanewnavstacktest.viewstate.ViewStateConstants
 import com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaFloatingActionButton
+import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.KurobaToolbarType
+import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarContract
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import timber.log.Timber
@@ -32,9 +35,13 @@ abstract class ThreadController(
   private val chanRepository = ChanRepository
 
   protected lateinit var recyclerView: EpoxyRecyclerView
-
+  protected lateinit var toolbarContract: ToolbarContract
   private var boundThreadDescriptor: ThreadDescriptor? = null
   private var job: Job? = null
+
+  fun toolbarContract(toolbarContract: ToolbarContract) {
+    this.toolbarContract = toolbarContract
+  }
 
   override fun instantiateView(
     inflater: LayoutInflater,
@@ -105,10 +112,14 @@ abstract class ThreadController(
     }
 
     rebuildThread(ThreadData.Loading)
+
     chanRepository.loadThread(descriptor)
   }
 
   private fun rebuildThread(threadData: ThreadData) {
+    BackgroundUtils.ensureMainThread()
+    toolbarContract.showDefaultToolbar(KurobaToolbarType.Thread)
+
     recyclerView.withModels {
       if (threadData is ThreadData.Empty) {
         epoxyTextView {
@@ -136,7 +147,7 @@ abstract class ThreadController(
       }
 
       threadData as ThreadData.Data
-      setToolbarTitle(threadData.toThreadTitleString())
+      toolbarContract.setTitle(KurobaToolbarType.Thread, threadData.toThreadTitleString())
 
       // TODO(KurobaEx):
 //          scrollbarMarksChildDecoration.setPosts(threadData.thread)
@@ -163,8 +174,6 @@ abstract class ThreadController(
 
     startActivity(intent)
   }
-
-  protected abstract fun setToolbarTitle(title: String)
 
   companion object {
     private const val TAG = "ThreadController"

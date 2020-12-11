@@ -6,6 +6,7 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
+import androidx.annotation.VisibleForTesting
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.utils.BackgroundUtils
 import com.github.k1rakishou.kurobanewnavstacktest.utils.viewModelStorage
@@ -15,6 +16,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.search.KurobaS
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.search.KurobaSearchToolbarState
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.thread.KurobaThreadToolbar
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.thread.KurobaThreadToolbarState
+import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.uninitialized.KurobaUninitializedToolbar
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
@@ -35,7 +37,7 @@ class KurobaToolbar @JvmOverloads constructor(
     (context as ComponentActivity).viewModelStorage(KurobaToolbarViewModel::class).value
   }
 
-  private var kurobaToolbarType: KurobaToolbarType = KurobaToolbarType.Uninitialized
+  private lateinit var kurobaToolbarType: KurobaToolbarType
   private var initialized = false
 
   init {
@@ -45,10 +47,8 @@ class KurobaToolbar @JvmOverloads constructor(
   }
 
   fun init(newKurobaToolbarType: KurobaToolbarType) {
+    BackgroundUtils.ensureMainThread()
     check(!initialized) { "Double initialization!" }
-    check(newKurobaToolbarType != KurobaToolbarType.Uninitialized) {
-      "Unexpected kurobaToolbarType: ${newKurobaToolbarType}"
-    }
 
     this.kurobaToolbarType = newKurobaToolbarType
     this.initialized = true
@@ -78,19 +78,17 @@ class KurobaToolbar @JvmOverloads constructor(
       return
     }
 
-    val initialToolbarStateClass = when (kurobaToolbarType) {
-      KurobaToolbarType.Uninitialized -> throw IllegalStateException("Bad kurobaToolbarType: $kurobaToolbarType")
-      KurobaToolbarType.Catalog -> ToolbarStateClass.Catalog
-      KurobaToolbarType.Thread -> ToolbarStateClass.Thread
-    }
-
     Timber.tag(TAG).d("Fresh initialization kurobaToolbarType=$kurobaToolbarType, " +
       "prevPrevToolbarStateClass=$prevPrevToolbarStateClass")
 
-    pushNewToolbarStateClass(kurobaToolbarType, initialToolbarStateClass)
+    pushNewToolbarStateClass(kurobaToolbarType, ToolbarStateClass.Uninitialized)
   }
 
+  @VisibleForTesting
+  fun getViewModel(): KurobaToolbarViewModel = toolbarViewModel
+
   fun newState(toolbarStateUpdate: ToolbarStateUpdate) {
+    BackgroundUtils.ensureMainThread()
     toolbarViewModel.newState(kurobaToolbarType, toolbarStateUpdate)
   }
 
@@ -101,7 +99,10 @@ class KurobaToolbar @JvmOverloads constructor(
   }
 
   override fun popCurrentToolbarStateClass() {
-    val toolbarStateClass = toolbarViewModel.getToolbarStateStack(kurobaToolbarType).pop()
+    BackgroundUtils.ensureMainThread()
+
+    val toolbarStateClass = toolbarViewModel.getToolbarStateStack(kurobaToolbarType)
+      .popCurrentStateIfPossibleOrNull()
       ?: return
 
     onToolbarStateChanged(
@@ -110,17 +111,88 @@ class KurobaToolbar @JvmOverloads constructor(
     )
   }
 
+  fun pushNewToolbarStateClass(toolbarStateClass: ToolbarStateClass) {
+    BackgroundUtils.ensureMainThread()
+
+    pushNewToolbarStateClass(kurobaToolbarType, toolbarStateClass)
+  }
+
+  override fun popToolbarStateClass(
+    kurobaToolbarType: KurobaToolbarType,
+    toolbarStateClass: ToolbarStateClass
+  ) {
+    BackgroundUtils.ensureMainThread()
+
+    val newStateClass = toolbarViewModel.getToolbarStateStack(kurobaToolbarType)
+      .popIfStateOnTop(toolbarStateClass)
+
+    checkNotNull(newStateClass) { "Something went wrong: newStateClass==null" }
+
+    onToolbarStateChanged(
+      newToolbarStateClass = newStateClass,
+      toolbarStateChangeType = ToolbarStateChangeType.Pop
+    )
+  }
+
   override fun pushNewToolbarStateClass(
     kurobaToolbarType: KurobaToolbarType,
     toolbarStateClass: ToolbarStateClass
   ) {
-    toolbarViewModel.getToolbarStateStack(kurobaToolbarType)
-      .pushToolbarStateClass(toolbarStateClass)
+    BackgroundUtils.ensureMainThread()
+
+    check(this.kurobaToolbarType == kurobaToolbarType) {
+      "Bad kurobaToolbarType, current=${this.kurobaToolbarType}, input=$kurobaToolbarType"
+    }
+
+    val stateStack = toolbarViewModel.getToolbarStateStack(kurobaToolbarType)
+    val pushed = stateStack.pushToolbarStateClass(toolbarStateClass)
+
+    if (!pushed) {
+      if (!stateStack.isTop(toolbarStateClass)) {
+        // Already in stack and is not at the top, do nothing
+        return
+      }
+
+      ensureViewMatchesState(toolbarStateClass)
+    }
 
     onToolbarStateChanged(
       newToolbarStateClass = toolbarStateClass,
       toolbarStateChangeType = ToolbarStateChangeType.Push
     )
+  }
+
+  private fun ensureViewMatchesState(topToolbarStateClass: ToolbarStateClass) {
+    if (kurobaToolbarViewContainer.childCount != 1) {
+      throw IllegalStateException("Bad children count: ${kurobaToolbarViewContainer.childCount}")
+    }
+
+    val toolbarView = kurobaToolbarViewContainer.getChildAt(0)
+
+    when (topToolbarStateClass) {
+      ToolbarStateClass.Uninitialized -> {
+        check(toolbarView is KurobaUninitializedToolbar) {
+          "Unexpected toolbar view: ${toolbarView.javaClass.simpleName}"
+        }
+      }
+      ToolbarStateClass.Catalog -> {
+        check(toolbarView is KurobaCatalogToolbar) {
+          "Unexpected toolbar view: ${toolbarView.javaClass.simpleName}"
+        }
+      }
+      ToolbarStateClass.Thread -> {
+        check(toolbarView is KurobaThreadToolbar) {
+          "Unexpected toolbar view: ${toolbarView.javaClass.simpleName}"
+        }
+      }
+      ToolbarStateClass.Search -> {
+        check(toolbarView is KurobaSearchToolbar) {
+          "Unexpected toolbar view: ${toolbarView.javaClass.simpleName}"
+        }
+      }
+      ToolbarStateClass.SimpleTitle -> TODO()
+      ToolbarStateClass.Selection -> TODO()
+    }
   }
 
   fun onBackPressed(): Boolean {
@@ -144,10 +216,6 @@ class KurobaToolbar @JvmOverloads constructor(
   ) {
     BackgroundUtils.ensureMainThread()
     ensureInitialized()
-
-    if (newToolbarStateClass == ToolbarStateClass.Uninitialized) {
-      return
-    }
 
     val needAddOrReplaceToolbarView = toolbarStateChangeType == ToolbarStateChangeType.Push
       || toolbarStateChangeType == ToolbarStateChangeType.Pop
@@ -175,7 +243,7 @@ class KurobaToolbar @JvmOverloads constructor(
 
     when (newToolbarStateClass) {
       ToolbarStateClass.Uninitialized -> {
-        throw IllegalStateException("($kurobaToolbarType) Must not be called")
+        // no-op
       }
       ToolbarStateClass.Catalog -> {
         val child = kurobaToolbarViewContainer.getChildAt(0)
@@ -224,7 +292,10 @@ class KurobaToolbar @JvmOverloads constructor(
   ) {
     val newView = when (newToolbarStateClass) {
       ToolbarStateClass.Uninitialized -> {
-        throw IllegalStateException("($toolbarStateChangeType) Must not be called")
+        KurobaUninitializedToolbar(
+          context = context,
+          toolbarType = kurobaToolbarType
+        )
       }
       ToolbarStateClass.Catalog -> {
         KurobaCatalogToolbar(
@@ -284,7 +355,7 @@ class KurobaToolbar @JvmOverloads constructor(
 
   private fun ensureInitialized() {
     check(initialized) { "($kurobaToolbarType) Must initialize first!" }
-    check(kurobaToolbarType != KurobaToolbarType.Uninitialized) { "kurobaToolbarType is Uninitialized!" }
+    check(::kurobaToolbarType.isInitialized) { "kurobaToolbarType is not initialized!" }
   }
 
   enum class ToolbarStateChangeType {

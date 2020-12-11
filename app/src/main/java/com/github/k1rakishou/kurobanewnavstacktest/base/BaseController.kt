@@ -15,6 +15,7 @@ import androidx.savedstate.SavedStateRegistry
 import com.bluelinelabs.conductor.Controller
 import com.bluelinelabs.conductor.Router
 import com.bluelinelabs.conductor.RouterTransaction
+import com.github.k1rakishou.kurobanewnavstacktest.MyApplication
 import com.github.k1rakishou.kurobanewnavstacktest.activity.ActivityContract
 import com.github.k1rakishou.kurobanewnavstacktest.utils.viewModelStorage
 import com.github.k1rakishou.kurobanewnavstacktest.widget.CancellableToast
@@ -186,6 +187,10 @@ abstract class BaseController(
 
   protected fun savedStateRegistry(): SavedStateRegistry {
     return currentActivity().savedStateRegistry
+  }
+
+  protected fun app(): MyApplication {
+    return applicationContext!! as MyApplication
   }
 
   protected fun showToast(message: String, duration: Int = Toast.LENGTH_SHORT) {

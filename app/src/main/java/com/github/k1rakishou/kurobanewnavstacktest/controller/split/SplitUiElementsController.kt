@@ -32,22 +32,15 @@ class SplitUiElementsController(
 ) : BaseUiElementsController(args),
   UiElementsControllerCallbacks,
   ChanNavigationContract,
-  RecyclerViewProvider,
-  ControllerToolbarContract {
+  RecyclerViewProvider {
   private lateinit var catalogFab: KurobaFloatingActionButton
   private lateinit var splitControllerCatalogControllerContainer: FrameLayout
+  private lateinit var threadNavigationContract: ThreadNavigationContract
 
   private val collapsingViewsHolder = CollapsingViewsHolder()
 
-  private var threadNavigationContract: ThreadNavigationContract? = null
-  private var controllerToolbarContract: ControllerToolbarContract? = null
-
   fun threadNavigationContract(threadNavigationContract: ThreadNavigationContract) {
     this.threadNavigationContract = threadNavigationContract
-  }
-
-  fun controllerToolbarContract(controllerToolbarContract: ControllerToolbarContract) {
-    this.controllerToolbarContract = controllerToolbarContract
   }
 
   override fun instantiateView(
@@ -105,13 +98,6 @@ class SplitUiElementsController(
     catalogFab.getBehaviorExt<CatalogFabBehavior>()?.reset()
   }
 
-  override fun onControllerDestroyed() {
-    super.onControllerDestroyed()
-
-    threadNavigationContract = null
-    controllerToolbarContract = null
-  }
-
   override fun provideRecyclerView(recyclerView: RecyclerView, controllerType: ControllerType) {
     collapsingViewsHolder.attach(
       recyclerView = recyclerView,
@@ -136,14 +122,6 @@ class SplitUiElementsController(
   override fun withdrawRecyclerView(recyclerView: RecyclerView, controllerType: ControllerType) {
     collapsingViewsHolder.detach(recyclerView, toolbarContract.collapsableView())
     collapsingViewsHolder.detach(recyclerView, bottomNavView)
-  }
-
-  override fun setToolbarTitle(controllerType: ControllerType, title: String) {
-    toolbarContract.setTitle(controllerType, title)
-  }
-
-  override fun setCatalogToolbarSubTitle(subtitle: String) {
-    toolbarContract.setSubTitle(subtitle)
   }
 
   override fun showFab() {
@@ -174,7 +152,7 @@ class SplitUiElementsController(
   }
 
   override fun openThread(threadDescriptor: ThreadDescriptor) {
-    threadNavigationContract?.openThread(threadDescriptor)
+    threadNavigationContract.openThread(threadDescriptor)
   }
 
   private fun createControllerBySelectedItemId(
@@ -196,7 +174,7 @@ class SplitUiElementsController(
       uiElementsControllerCallbacks(uiElementsControllerCallbacks)
       recyclerViewProvider(this@SplitUiElementsController)
       threadNavigationContract(this@SplitUiElementsController)
-      controllerToolbarContract(this@SplitUiElementsController)
+      toolbarContract(toolbarContract)
     }
   }
 

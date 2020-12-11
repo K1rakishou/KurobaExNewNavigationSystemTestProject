@@ -6,18 +6,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.TextView
-import androidx.appcompat.widget.AppCompatEditText
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.updateLayoutParams
-import com.airbnb.epoxy.AsyncEpoxyController
-import com.airbnb.epoxy.EpoxyController
-import com.airbnb.epoxy.EpoxyRecyclerView
-import com.bluelinelabs.conductor.Controller
+import com.airbnb.epoxy.*
 import com.bluelinelabs.conductor.Router
 import com.github.k1rakishou.kurobanewnavstacktest.base.BaseController
 import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
-import java.util.*
 
 val Int.dp: Int
   get() = (this * Resources.getSystem().displayMetrics.density).toInt()
@@ -183,4 +178,14 @@ private fun findRouterWithControllerByTagInternal(
   }
 
   return null
+}
+
+fun EpoxyController.addOneshotModelBuildListener(callback: () -> Unit) {
+  addModelBuildListener(object : OnModelBuildFinishedListener {
+    override fun onModelBuildFinished(result: DiffResult) {
+      callback()
+
+      removeModelBuildListener(this)
+    }
+  })
 }

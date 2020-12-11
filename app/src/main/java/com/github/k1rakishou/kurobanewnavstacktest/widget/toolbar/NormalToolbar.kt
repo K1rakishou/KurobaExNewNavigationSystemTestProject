@@ -8,6 +8,8 @@ import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
+import com.github.k1rakishou.kurobanewnavstacktest.utils.exhaustive
+import java.lang.IllegalStateException
 import kotlin.reflect.KClass
 
 class NormalToolbar @JvmOverloads constructor(
@@ -16,7 +18,7 @@ class NormalToolbar @JvmOverloads constructor(
   attrDefStyle: Int = 0
 ) : FrameLayout(context, attributeSet, attrDefStyle), ToolbarContract {
   private val actualToolbar: KurobaToolbar
-  private lateinit var controllerType: ControllerType
+  private lateinit var toolbarType: KurobaToolbarType
   private var initialized = false
 
   init {
@@ -37,15 +39,15 @@ class NormalToolbar @JvmOverloads constructor(
   }
 
   @Suppress("UNCHECKED_CAST")
-  fun init(controllerType: ControllerType) {
+  fun init(toolbarType: KurobaToolbarType) {
     check(!this.initialized) { "Double initialization!" }
 
     this.initialized = true
-    this.controllerType = controllerType
+    this.toolbarType = toolbarType
 
-    val kurobaToolbarType = when (controllerType) {
-      ControllerType.Catalog -> KurobaToolbarType.Catalog
-      ControllerType.Thread -> KurobaToolbarType.Thread
+    val kurobaToolbarType = when (toolbarType) {
+      KurobaToolbarType.Catalog -> KurobaToolbarType.Catalog
+      KurobaToolbarType.Thread -> KurobaToolbarType.Thread
     }
 
     actualToolbar.init(kurobaToolbarType)
@@ -59,23 +61,40 @@ class NormalToolbar @JvmOverloads constructor(
     return this
   }
 
-  override fun setTitle(controllerType: ControllerType, title: String) {
-    if (this.controllerType != controllerType) {
+  override fun showSearchToolbar(toolbarType: KurobaToolbarType) {
+    actualToolbar.pushNewToolbarStateClass(toolbarType, ToolbarStateClass.Search)
+  }
+
+  override fun closeSearchToolbar(toolbarType: KurobaToolbarType) {
+    actualToolbar.popToolbarStateClass(toolbarType, ToolbarStateClass.Search)
+  }
+
+  override fun showDefaultToolbar(toolbarType: KurobaToolbarType) {
+    val initialToolbarClass = when (toolbarType) {
+      KurobaToolbarType.Catalog -> ToolbarStateClass.Catalog
+      KurobaToolbarType.Thread -> ToolbarStateClass.Thread
+    }
+
+    actualToolbar.pushNewToolbarStateClass(initialToolbarClass)
+  }
+
+  override fun setTitle(toolbarType: KurobaToolbarType, title: String) {
+    if (this.toolbarType != toolbarType) {
       return
     }
 
-    when (controllerType) {
-      ControllerType.Catalog -> {
+    when (toolbarType) {
+      KurobaToolbarType.Catalog -> {
         actualToolbar.newState(ToolbarStateUpdate.Catalog.UpdateTitle(title))
       }
-      ControllerType.Thread -> {
+      KurobaToolbarType.Thread -> {
         actualToolbar.newState(ToolbarStateUpdate.Thread.UpdateTitle(title))
       }
-    }
+    }.exhaustive
   }
 
   override fun setSubTitle(subtitle: String) {
-    if (controllerType != ControllerType.Catalog) {
+    if (toolbarType != KurobaToolbarType.Catalog) {
       return
     }
 

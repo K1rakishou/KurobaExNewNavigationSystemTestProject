@@ -13,7 +13,6 @@ import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
 import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.controller.RecyclerViewProvider
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.*
-import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ControllerToolbarContract
 import com.github.k1rakishou.kurobanewnavstacktest.data.BoardDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.utils.ChanSettings
@@ -21,43 +20,43 @@ import com.github.k1rakishou.kurobanewnavstacktest.utils.ScreenOrientationUtils
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.SlideModeFabViewControllerCallbacks
 import com.github.k1rakishou.kurobanewnavstacktest.widget.SlidingPaneLayoutEx
 import com.github.k1rakishou.kurobanewnavstacktest.widget.SlidingPaneLayoutSlideHandler
+import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarContract
 
 class SlideNavController(
   args: Bundle? = null
 ) : BaseController(args),
   RecyclerViewProvider,
   UiElementsControllerCallbacks,
-  ChanNavigationContract,
-  ControllerToolbarContract {
+  ChanNavigationContract {
   private lateinit var slidingPaneLayout: SlidingPaneLayoutEx
   private lateinit var catalogControllerContainer: FrameLayout
   private lateinit var threadControllerContainer: FrameLayout
   private lateinit var slidingPaneLayoutSlideHandler: SlidingPaneLayoutSlideHandler
 
-  private var uiElementsControllerCallbacks: UiElementsControllerCallbacks? = null
-  private var slideCatalogUiElementsControllerCallbacks: SlideCatalogUiElementsControllerCallbacks? = null
-  private var recyclerViewProvider: RecyclerViewProvider? = null
-  private var slideModeFabViewControllerCallbacks: SlideModeFabViewControllerCallbacks? = null
-  private var controllerToolbarContract: ControllerToolbarContract? = null
+  private lateinit var toolbarContract: ToolbarContract
+  private lateinit var uiElementsControllerCallbacks: UiElementsControllerCallbacks
+  private lateinit var slideCatalogUiElementsControllerCallbacks: SlideCatalogUiElementsControllerCallbacks
+  private lateinit var recyclerViewProvider: RecyclerViewProvider
+  private lateinit var slideModeFabViewControllerCallbacks: SlideModeFabViewControllerCallbacks
 
   private val slidingPaneLayoutSlideListener = object : SlidingPaneLayoutSlideHandler.SlidingPaneLayoutSlideListener {
     override fun onSlidingStarted(wasOpen: Boolean) {
       // Disable orientation change when sliding is in progress
       ScreenOrientationUtils.lockScreenOrientation(activityContract().activity())
 
-      slideModeFabViewControllerCallbacks?.onSlidingPaneSlidingStarted(wasOpen)
-      slideCatalogUiElementsControllerCallbacks?.onBeforeSliding(wasOpen.not())
+      slideModeFabViewControllerCallbacks.onSlidingPaneSlidingStarted(wasOpen)
+      slideCatalogUiElementsControllerCallbacks.onBeforeSliding(wasOpen.not())
     }
 
     override fun onSliding(offset: Float) {
-      slideModeFabViewControllerCallbacks?.onSlidingPaneSliding(offset)
-      slideCatalogUiElementsControllerCallbacks?.onSliding(offset)
+      slideModeFabViewControllerCallbacks.onSlidingPaneSliding(offset)
+      slideCatalogUiElementsControllerCallbacks.onSliding(offset)
     }
 
     override fun onSlidingEnded(becameOpen: Boolean) {
-      slideCatalogUiElementsControllerCallbacks?.onAfterSliding(becameOpen)
+      slideCatalogUiElementsControllerCallbacks.onAfterSliding(becameOpen)
 
-      slideModeFabViewControllerCallbacks?.onSlidingPaneSlidingEnded(becameOpen)
+      slideModeFabViewControllerCallbacks.onSlidingPaneSlidingEnded(becameOpen)
       fireSlidingPaneListeners(becameOpen)
 
       // Enable orientation change back after sliding is done
@@ -81,8 +80,17 @@ class SlideNavController(
     this.slideModeFabViewControllerCallbacks = slideModeFabViewControllerCallbacks
   }
 
-  fun controllerToolbarContract(controllerToolbarContract: ControllerToolbarContract) {
-    this.controllerToolbarContract = controllerToolbarContract
+  fun toolbarContract(toolbarContract: ToolbarContract) {
+    this.toolbarContract = toolbarContract
+  }
+
+  override fun handleBack(): Boolean {
+    if (::slidingPaneLayout.isInitialized && !slidingPaneLayout.isOpen) {
+      slidingPaneLayout.open()
+      return true
+    }
+
+    return super.handleBack()
   }
 
   override fun instantiateView(
@@ -111,7 +119,7 @@ class SlideNavController(
     slidingPaneLayout.setOverhangSize(ChanSettings.OVERHANG_SIZE)
     slidingPaneLayout.setSlidingPaneLayoutDefaultState()
 
-    slideModeFabViewControllerCallbacks?.onSlidingPaneInitialState(slidingPaneLayout.isOpen)
+    slideModeFabViewControllerCallbacks.onSlidingPaneInitialState(slidingPaneLayout.isOpen)
     slidingPaneLayoutSlideHandler = SlidingPaneLayoutSlideHandler(slidingPaneLayout.isOpen)
     slidingPaneLayoutSlideHandler.addListener(slidingPaneLayoutSlideListener)
 
@@ -128,35 +136,22 @@ class SlideNavController(
     if (::slidingPaneLayout.isInitialized) {
       slidingPaneLayout.setPanelSlideListener(null)
     }
-
-    uiElementsControllerCallbacks = null
-    slideCatalogUiElementsControllerCallbacks = null
-    recyclerViewProvider = null
-    slideModeFabViewControllerCallbacks = null
-  }
-
-  override fun setToolbarTitle(controllerType: ControllerType, title: String) {
-    controllerToolbarContract?.setToolbarTitle(controllerType, title)
-  }
-
-  override fun setCatalogToolbarSubTitle(subtitle: String) {
-    controllerToolbarContract?.setCatalogToolbarSubTitle(subtitle)
   }
 
   override fun showFab() {
-    uiElementsControllerCallbacks?.showFab()
+    uiElementsControllerCallbacks.showFab()
   }
 
   override fun hideFab() {
-    uiElementsControllerCallbacks?.hideFab()
+    uiElementsControllerCallbacks.hideFab()
   }
 
   override fun provideRecyclerView(recyclerView: RecyclerView, controllerType: ControllerType) {
-    recyclerViewProvider?.provideRecyclerView(recyclerView, controllerType)
+    recyclerViewProvider.provideRecyclerView(recyclerView, controllerType)
   }
 
   override fun withdrawRecyclerView(recyclerView: RecyclerView, controllerType: ControllerType) {
-    recyclerViewProvider?.withdrawRecyclerView(recyclerView, controllerType)
+    recyclerViewProvider.withdrawRecyclerView(recyclerView, controllerType)
   }
 
   override fun openBoard(boardDescriptor: BoardDescriptor) {
@@ -184,7 +179,7 @@ class SlideNavController(
   private fun createSlideThreadController(): SlideThreadController {
     return SlideThreadController().apply {
       recyclerViewProvider(this@SlideNavController)
-      controllerToolbarContract(this@SlideNavController)
+      toolbarContract(toolbarContract)
     }
   }
 
@@ -193,7 +188,7 @@ class SlideNavController(
       recyclerViewProvider(this@SlideNavController)
       uiElementsControllerCallbacks(this@SlideNavController)
       threadNavigationContract(this@SlideNavController)
-      controllerToolbarContract(this@SlideNavController)
+      toolbarContract(toolbarContract)
     }
   }
 
@@ -207,12 +202,12 @@ class SlideNavController(
       getThreadControllerOrNull()?.onLostFocus()
       getCatalogControllerOrNull()?.onGainedFocus()
 
-      slideCatalogUiElementsControllerCallbacks?.onControllerGainedFocus(isCatalogController = true)
+      slideCatalogUiElementsControllerCallbacks.onControllerGainedFocus(isCatalogController = true)
     } else {
       getCatalogControllerOrNull()?.onLostFocus()
       getThreadControllerOrNull()?.onGainedFocus()
 
-      slideCatalogUiElementsControllerCallbacks?.onControllerGainedFocus(isCatalogController = false)
+      slideCatalogUiElementsControllerCallbacks.onControllerGainedFocus(isCatalogController = false)
     }
   }
 
@@ -222,10 +217,6 @@ class SlideNavController(
 
   private fun getCatalogControllerOrNull(): SlideCatalogController? {
     return threadControllerContainer.getControllerByTag(SlideCatalogController.CONTROLLER_TAG)
-  }
-
-  private fun isCatalogControllerFocused(): Boolean {
-    return slidingPaneLayout.isOpen
   }
 
   override fun getControllerTag(): ControllerTag = CONTROLLER_TAG

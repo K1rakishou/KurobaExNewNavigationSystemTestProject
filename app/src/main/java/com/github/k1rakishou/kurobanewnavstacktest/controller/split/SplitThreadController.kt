@@ -14,15 +14,13 @@ import com.github.k1rakishou.kurobanewnavstacktest.utils.*
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.ViewScreenAttachSide
 import com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaFloatingActionButton
 import com.github.k1rakishou.kurobanewnavstacktest.widget.behavior.SplitThreadFabBehavior
+import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.KurobaToolbarType
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.NormalToolbar
-import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarContract
 
 class SplitThreadController(
   args: Bundle? = null
 ) : ThreadController(args) {
-
   private lateinit var threadFab: KurobaFloatingActionButton
-  private lateinit var toolbarContract: ToolbarContract
 
   private val collapsingViewsHolder = CollapsingViewsHolder()
 
@@ -37,14 +35,15 @@ class SplitThreadController(
       threadFab.setBehaviorExt(SplitThreadFabBehavior(currentContext(), null))
 
       val normalToolbar = findViewById<NormalToolbar>(R.id.thread_controller_toolbar)
-      normalToolbar.init(ControllerType.Thread)
+      normalToolbar.init(KurobaToolbarType.Thread)
       normalToolbar.visibility = View.VISIBLE
-      toolbarContract = normalToolbar
+
+      super.toolbarContract(normalToolbar)
     }
   }
 
   override fun handleBack(): Boolean {
-    if (::toolbarContract.isInitialized && toolbarContract.onBackPressed()) {
+    if (toolbarContract.onBackPressed()) {
       return true
     }
 
@@ -93,10 +92,6 @@ class SplitThreadController(
     super.onControllerHidden()
 
     collapsingViewsHolder.detach(recyclerView, toolbarContract.collapsableView())
-  }
-
-  override fun setToolbarTitle(title: String) {
-    toolbarContract.setTitle(ControllerType.Thread, title)
   }
 
   override fun getControllerTag(): ControllerTag = CONTROLLER_TAG

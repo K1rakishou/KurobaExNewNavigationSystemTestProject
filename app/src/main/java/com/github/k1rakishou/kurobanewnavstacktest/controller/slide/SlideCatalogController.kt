@@ -7,13 +7,11 @@ import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.controller.FocusableController
 import com.github.k1rakishou.kurobanewnavstacktest.controller.RecyclerViewProvider
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.CatalogController
-import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ControllerToolbarContract
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.UiElementsControllerCallbacks
 
 class SlideCatalogController(args: Bundle? = null) : CatalogController(args), FocusableController {
-  private var recyclerViewProvider: RecyclerViewProvider? = null
-  private var uiElementsControllerCallbacks: UiElementsControllerCallbacks? = null
-  private var controllerToolbarContract: ControllerToolbarContract? = null
+  private lateinit var recyclerViewProvider: RecyclerViewProvider
+  private lateinit var uiElementsControllerCallbacks: UiElementsControllerCallbacks
 
   fun recyclerViewProvider(recyclerViewProvider: RecyclerViewProvider) {
     this.recyclerViewProvider = recyclerViewProvider
@@ -23,22 +21,18 @@ class SlideCatalogController(args: Bundle? = null) : CatalogController(args), Fo
     this.uiElementsControllerCallbacks = uiElementsControllerCallbacks
   }
 
-  fun controllerToolbarContract(controllerToolbarContract: ControllerToolbarContract) {
-    this.controllerToolbarContract = controllerToolbarContract
-  }
-
   override fun onControllerShown() {
     super.onControllerShown()
 
     recyclerView.doOnPreDraw {
-      recyclerViewProvider?.provideRecyclerView(recyclerView, ControllerType.Catalog)
-      uiElementsControllerCallbacks?.showFab()
+      recyclerViewProvider.provideRecyclerView(recyclerView, ControllerType.Catalog)
+      uiElementsControllerCallbacks.showFab()
     }
   }
 
   override fun onControllerHidden() {
     super.onControllerHidden()
-    recyclerViewProvider?.withdrawRecyclerView(recyclerView, ControllerType.Catalog)
+    recyclerViewProvider.withdrawRecyclerView(recyclerView, ControllerType.Catalog)
   }
 
   override fun onLostFocus() {
@@ -47,22 +41,6 @@ class SlideCatalogController(args: Bundle? = null) : CatalogController(args), Fo
 
   override fun onGainedFocus() {
 
-  }
-
-  override fun onControllerDestroyed() {
-    super.onControllerDestroyed()
-
-    recyclerViewProvider = null
-    uiElementsControllerCallbacks = null
-    controllerToolbarContract = null
-  }
-
-  override fun setToolbarTitle(title: String) {
-    controllerToolbarContract?.setToolbarTitle(ControllerType.Catalog, title)
-  }
-
-  override fun setCatalogToolbarSubTitle(subtitle: String) {
-    controllerToolbarContract?.setCatalogToolbarSubTitle(subtitle)
   }
 
   override fun getControllerTag(): ControllerTag = CONTROLLER_TAG

@@ -35,7 +35,8 @@ class KurobaSearchToolbar(
   init {
     inflate(context, R.layout.kuroba_search_toolbar, this).apply {
       closeSearchButton = findViewById(R.id.close_search_button)
-      searchInput = findViewById(R.id.search_input)
+      searchInput = findViewById(R.id.search_toolbar_input)
+      searchInput.tag = toolbarType
       clearSearchInputButton = findViewById(R.id.clear_search_input_button)
       searchResults = findViewById(R.id.search_results)
 
