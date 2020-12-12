@@ -42,7 +42,7 @@
         android:elevation="4dp"
         app:menu="@menu/bottom_navigation_menu" />
 
-    <com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaFloatingActionButton
+    <com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
         android:id="@+id/split_controller_fab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

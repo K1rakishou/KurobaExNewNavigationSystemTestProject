@@ -18,14 +18,17 @@ import com.github.k1rakishou.kurobanewnavstacktest.epoxy.loadingView
 import com.github.k1rakishou.kurobanewnavstacktest.epoxy.threadPostView
 import com.github.k1rakishou.kurobanewnavstacktest.repository.ChanRepository
 import com.github.k1rakishou.kurobanewnavstacktest.utils.BackgroundUtils
+import com.github.k1rakishou.kurobanewnavstacktest.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndDoRequest
 import com.github.k1rakishou.kurobanewnavstacktest.viewstate.ViewStateConstants
-import com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaFloatingActionButton
+import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.KurobaToolbarType
+import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarAction
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarContract
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import timber.log.Timber
+import java.lang.IllegalStateException
 
 abstract class ThreadController(
   args: Bundle? = null
@@ -34,13 +37,24 @@ abstract class ThreadController(
 
   private val chanRepository = ChanRepository
 
-  protected lateinit var recyclerView: EpoxyRecyclerView
+  protected lateinit var threadRecyclerView: EpoxyRecyclerView
   protected lateinit var toolbarContract: ToolbarContract
+  protected lateinit var uiElementsControllerCallbacks: UiElementsControllerCallbacks
+
   private var boundThreadDescriptor: ThreadDescriptor? = null
   private var job: Job? = null
 
+  fun uiElementsControllerCallbacks(uiElementsControllerCallbacks: UiElementsControllerCallbacks) {
+    this.uiElementsControllerCallbacks = uiElementsControllerCallbacks
+  }
+
   fun toolbarContract(toolbarContract: ToolbarContract) {
     this.toolbarContract = toolbarContract
+
+    launch {
+      toolbarContract.listenForToolbarActions(KurobaToolbarType.Thread)
+        .collect { toolbarAction -> onToolbarAction(toolbarAction) }
+    }
   }
 
   override fun instantiateView(
@@ -49,7 +63,7 @@ abstract class ThreadController(
     savedViewState: Bundle?
   ): View {
     return inflater.inflateView(R.layout.controller_thread, container) {
-      recyclerView = findViewById(R.id.controller_thread_epoxy_recycler_view)
+      threadRecyclerView = findViewById(R.id.controller_thread_epoxy_recycler_view)
 
       findViewById<KurobaFloatingActionButton>(R.id.split_controller_thread_fab)!!.visibility = View.GONE
     }
@@ -85,12 +99,56 @@ abstract class ThreadController(
     launch { reloadThread() }
   }
 
+  private fun onToolbarAction(toolbarAction: ToolbarAction) {
+    check(toolbarAction.toolbarType == KurobaToolbarType.Thread) {
+      "Bad toolbarType: ${toolbarAction.toolbarType}"
+    }
+
+    when (toolbarAction) {
+      is ToolbarAction.Catalog -> {
+        throw IllegalStateException("ToolbarAction.Catalog does not belong to ThreadController")
+      }
+      is ToolbarAction.Thread -> {
+        // no-op
+      }
+      is ToolbarAction.Search -> {
+        val searchAction = toolbarAction as ToolbarAction.Search
+
+        when (searchAction) {
+          is ToolbarAction.Search.SearchShown -> {
+            Timber.tag(TAG).d("SearchShown")
+            uiElementsControllerCallbacks.lockUnlockCollapsableViews(
+              recyclerView = threadRecyclerView,
+              lock = true,
+              animate = true
+            )
+
+            onSearchToolbarShown()
+          }
+          is ToolbarAction.Search.SearchHidden -> {
+            Timber.tag(TAG).d("SearchHidden")
+            uiElementsControllerCallbacks.lockUnlockCollapsableViews(
+              recyclerView = threadRecyclerView,
+              lock = false,
+              animate = true
+            )
+
+            onSearchToolbarHidden()
+          }
+          is ToolbarAction.Search.QueryUpdated -> {
+            Timber.tag(TAG).d("QueryUpdated")
+          }
+        }
+      }
+    }
+  }
+
   private fun applyInsetsForRecyclerView() {
     val toolbarHeight = currentContext().resources.getDimension(R.dimen.toolbar_height).toInt()
     val bottomNavViewHeight =
       currentContext().resources.getDimension(R.dimen.bottom_nav_view_height).toInt()
 
-    recyclerView.setOnApplyWindowInsetsListenerAndDoRequest { v, insets ->
+    threadRecyclerView.setOnApplyWindowInsetsListenerAndDoRequest { v, insets ->
       v.updatePadding(
         top = toolbarHeight + insets.systemWindowInsetTop,
         bottom = bottomNavViewHeight + insets.systemWindowInsetBottom
@@ -118,9 +176,13 @@ abstract class ThreadController(
 
   private fun rebuildThread(threadData: ThreadData) {
     BackgroundUtils.ensureMainThread()
-    toolbarContract.showDefaultToolbar(KurobaToolbarType.Thread)
 
-    recyclerView.withModels {
+    threadRecyclerView.withModels {
+      addOneshotModelBuildListener {
+        toolbarContract.showDefaultToolbar(KurobaToolbarType.Thread)
+        onThreadStateChanged(threadData)
+      }
+
       if (threadData is ThreadData.Empty) {
         epoxyTextView {
           id("thread_empty_view")
@@ -173,6 +235,18 @@ abstract class ThreadController(
     intent.putExtras(bundle)
 
     startActivity(intent)
+  }
+
+  protected open fun onSearchToolbarShown() {
+
+  }
+
+  protected open fun onSearchToolbarHidden() {
+
+  }
+
+  protected open fun onThreadStateChanged(threadData: ThreadData) {
+
   }
 
   companion object {

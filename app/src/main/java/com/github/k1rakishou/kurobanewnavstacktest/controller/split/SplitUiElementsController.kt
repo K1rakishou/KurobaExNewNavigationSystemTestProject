@@ -18,11 +18,10 @@ import com.github.k1rakishou.kurobanewnavstacktest.controller.base.*
 import com.github.k1rakishou.kurobanewnavstacktest.core.CollapsingViewsHolder
 import com.github.k1rakishou.kurobanewnavstacktest.data.BoardDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
-import com.github.k1rakishou.kurobanewnavstacktest.utils.ChanSettings
 import com.github.k1rakishou.kurobanewnavstacktest.utils.getBehaviorExt
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setBehaviorExt
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.ViewScreenAttachSide
-import com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaFloatingActionButton
+import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
 import com.github.k1rakishou.kurobanewnavstacktest.widget.behavior.CatalogFabBehavior
 import timber.log.Timber
 
@@ -102,20 +101,13 @@ class SplitUiElementsController(
     collapsingViewsHolder.attach(
       recyclerView = recyclerView,
       collapsableView = toolbarContract.collapsableView(),
-      controllerType = controllerType,
       viewAttachSide = ViewScreenAttachSide.Top
     )
 
     collapsingViewsHolder.attach(
       recyclerView = recyclerView,
       collapsableView = bottomNavView,
-      controllerType = controllerType,
       viewAttachSide = ViewScreenAttachSide.Bottom
-    )
-
-    collapsingViewsHolder.lockUnlockCollapsableViews(
-      lock = ChanSettings.showLockCollapsableViews(currentContext()),
-      animate = true
     )
   }
 
@@ -124,12 +116,20 @@ class SplitUiElementsController(
     collapsingViewsHolder.detach(recyclerView, bottomNavView)
   }
 
-  override fun showFab() {
-    catalogFab.show()
+  override fun lockUnlockCollapsableViews(recyclerView: RecyclerView?, lock: Boolean, animate: Boolean) {
+    collapsingViewsHolder.lockUnlockCollapsableViews(
+      recyclerView = recyclerView,
+      lock = lock,
+      animate = animate
+    )
   }
 
-  override fun hideFab() {
-    catalogFab.hide()
+  override fun showFab(lock: Boolean?) {
+    catalogFab.showFab(lock)
+  }
+
+  override fun hideFab(lock: Boolean?) {
+    catalogFab.hideFab(lock)
   }
 
   override fun getControllerTag(): ControllerTag = CONTROLLER_TAG

@@ -17,9 +17,8 @@ import com.github.k1rakishou.kurobanewnavstacktest.controller.base.*
 import com.github.k1rakishou.kurobanewnavstacktest.core.CollapsingViewsHolder
 import com.github.k1rakishou.kurobanewnavstacktest.data.BoardDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
-import com.github.k1rakishou.kurobanewnavstacktest.utils.ChanSettings
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.*
-import com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaFloatingActionButton
+import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.SlideKurobaFloatingActionButton
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.SlideToolbar
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarContract
 import timber.log.Timber
@@ -33,11 +32,12 @@ class SlideUiElementsController(
   SlideModeFabClickListener,
   RecyclerViewProvider,
   ChanNavigationContract {
-  private lateinit var createThreadButton: KurobaFloatingActionButton
+  private lateinit var slideControllerFab: SlideKurobaFloatingActionButton
   private lateinit var slideModeFabViewController: SlideModeFabViewController
   private lateinit var slideNavControllerContainer: FrameLayout
 
   private val collapsingViewsHolder = CollapsingViewsHolder()
+  private val slideFabViewController by lazy { activityContract().mainActivityOrError().slideFabViewController }
 
   override fun instantiateView(
     inflater: LayoutInflater,
@@ -48,12 +48,14 @@ class SlideUiElementsController(
       slideNavControllerContainer = findViewById(R.id.slide_nav_controller_container)
       bottomNavView = findViewById(R.id.slide_controller_bottom_nav_view)
       toolbarContainer = findViewById(R.id.slide_controller_toolbar_container)
-      createThreadButton = findViewById(R.id.slide_controller_catalog_fab)
+      slideControllerFab = findViewById(R.id.slide_controller_fab)
 
       slideModeFabViewController = SlideModeFabViewController(
-        createThreadButton,
+        slideControllerFab,
         this@SlideUiElementsController
       )
+
+      slideFabViewController.init(slideControllerFab)
     }
   }
 
@@ -142,20 +144,13 @@ class SlideUiElementsController(
     collapsingViewsHolder.attach(
       recyclerView = recyclerView,
       collapsableView = toolbarContract.collapsableView(),
-      controllerType = controllerType,
       viewAttachSide = ViewScreenAttachSide.Top
     )
 
     collapsingViewsHolder.attach(
       recyclerView = recyclerView,
       collapsableView = bottomNavView,
-      controllerType = controllerType,
       viewAttachSide = ViewScreenAttachSide.Bottom
-    )
-
-    collapsingViewsHolder.lockUnlockCollapsableViews(
-      lock = ChanSettings.showLockCollapsableViews(currentContext()),
-      animate = true
     )
   }
 
@@ -180,12 +175,20 @@ class SlideUiElementsController(
     (toolbarContract.collapsableView() as SlideToolbar).onControllerGainedFocus(isCatalogController)
   }
 
-  override fun showFab() {
-    createThreadButton.show()
+  override fun lockUnlockCollapsableViews(recyclerView: RecyclerView?, lock: Boolean, animate: Boolean) {
+    collapsingViewsHolder.lockUnlockCollapsableViews(
+      recyclerView = recyclerView,
+      lock = lock,
+      animate = animate
+    )
   }
 
-  override fun hideFab() {
-    createThreadButton.hide()
+  override fun showFab(lock: Boolean?) {
+    slideControllerFab.showFab(lock)
+  }
+
+  override fun hideFab(lock: Boolean?) {
+    slideControllerFab.hideFab(lock)
   }
 
   override fun getControllerTag(): ControllerTag = CONTROLLER_TAG

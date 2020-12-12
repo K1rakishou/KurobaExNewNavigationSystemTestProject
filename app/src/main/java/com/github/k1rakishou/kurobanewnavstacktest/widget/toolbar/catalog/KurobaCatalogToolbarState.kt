@@ -36,7 +36,6 @@ data class KurobaCatalogToolbarState(
   }
 
   override fun reset() {
-    this.slideProgress = null
     this.title = null
     this.subtitle = null
     this.enableControls = null

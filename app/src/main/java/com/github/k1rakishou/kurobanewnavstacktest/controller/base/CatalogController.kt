@@ -22,10 +22,12 @@ import com.github.k1rakishou.kurobanewnavstacktest.utils.errorMessageOrClassName
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndDoRequest
 import com.github.k1rakishou.kurobanewnavstacktest.viewstate.ViewStateConstants
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.KurobaToolbarType
+import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarAction
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarContract
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import timber.log.Timber
+import java.lang.IllegalStateException
 
 abstract class CatalogController(
   args: Bundle? = null
@@ -35,12 +37,17 @@ abstract class CatalogController(
   private val chanRepository = ChanRepository
   private val testHelpers by lazy { (activity as MainActivity).testHelpers }
 
-  protected lateinit var recyclerView: EpoxyRecyclerView
+  protected lateinit var catalogRecyclerView: EpoxyRecyclerView
+  protected lateinit var uiElementsControllerCallbacks: UiElementsControllerCallbacks
 
-  private var toolbarContract: ToolbarContract? = null
+  private lateinit var toolbarContract: ToolbarContract
   private var threadNavigationContract: ThreadNavigationContract? = null
   private var boundBoardDescriptor: BoardDescriptor? = null
   private var job: Job? = null
+
+  fun uiElementsControllerCallbacks(uiElementsControllerCallbacks: UiElementsControllerCallbacks) {
+    this.uiElementsControllerCallbacks = uiElementsControllerCallbacks
+  }
 
   fun threadNavigationContract(threadNavigationContract: ThreadNavigationContract) {
     this.threadNavigationContract = threadNavigationContract
@@ -48,6 +55,11 @@ abstract class CatalogController(
 
   fun toolbarContract(toolbarContract: ToolbarContract) {
     this.toolbarContract = toolbarContract
+
+    launch {
+      toolbarContract.listenForToolbarActions(KurobaToolbarType.Catalog)
+        .collect { toolbarAction -> onToolbarAction(toolbarAction) }
+    }
   }
 
   final override fun instantiateView(
@@ -56,7 +68,7 @@ abstract class CatalogController(
     savedViewState: Bundle?
   ): View {
     return inflater.inflateView(R.layout.controller_catalog, container) {
-      recyclerView = findViewById(R.id.controller_catalog_epoxy_recycler_view)
+      catalogRecyclerView = findViewById(R.id.controller_catalog_epoxy_recycler_view)
     }
   }
 
@@ -80,12 +92,56 @@ abstract class CatalogController(
     job = null
   }
 
+  private fun onToolbarAction(toolbarAction: ToolbarAction) {
+    check(toolbarAction.toolbarType == KurobaToolbarType.Catalog) {
+      "Bad toolbarType: ${toolbarAction.toolbarType}"
+    }
+
+    when (toolbarAction) {
+      is ToolbarAction.Catalog -> {
+        // no-op
+      }
+      is ToolbarAction.Thread -> {
+        throw IllegalStateException("ToolbarAction.Thread does not belong to CatalogController")
+      }
+      is ToolbarAction.Search -> {
+        val searchAction = toolbarAction as ToolbarAction.Search
+
+        when (searchAction) {
+          is ToolbarAction.Search.SearchShown -> {
+            Timber.tag(TAG).d("SearchShown")
+            uiElementsControllerCallbacks.lockUnlockCollapsableViews(
+              recyclerView = catalogRecyclerView,
+              lock = true,
+              animate = true
+            )
+
+            onSearchToolbarShown()
+          }
+          is ToolbarAction.Search.SearchHidden -> {
+            Timber.tag(TAG).d("SearchHidden")
+            uiElementsControllerCallbacks.lockUnlockCollapsableViews(
+              recyclerView = catalogRecyclerView,
+              lock = false,
+              animate = true
+            )
+
+            onSearchToolbarHidden()
+          }
+          is ToolbarAction.Search.QueryUpdated -> {
+            Timber.tag(TAG).d("QueryUpdated")
+          }
+        }
+      }
+    }
+  }
+
   private fun applyInsetsForRecyclerView() {
     val toolbarHeight = currentContext().resources.getDimension(R.dimen.toolbar_height).toInt()
     val bottomNavViewHeight =
       currentContext().resources.getDimension(R.dimen.bottom_nav_view_height).toInt()
 
-    recyclerView.setOnApplyWindowInsetsListenerAndDoRequest { v, insets ->
+    catalogRecyclerView.setOnApplyWindowInsetsListenerAndDoRequest { v, insets ->
       v.updatePadding(
         top = toolbarHeight + insets.systemWindowInsetTop,
         bottom = bottomNavViewHeight + insets.systemWindowInsetBottom
@@ -133,9 +189,10 @@ abstract class CatalogController(
   private fun rebuildCatalog(catalogData: CatalogData) {
     BackgroundUtils.ensureMainThread()
 
-    recyclerView.withModels {
+    catalogRecyclerView.withModels {
       addOneshotModelBuildListener {
-        toolbarContract?.showDefaultToolbar(KurobaToolbarType.Catalog)
+        toolbarContract.showDefaultToolbar(KurobaToolbarType.Catalog)
+        onCatalogStateChanged(catalogData)
       }
 
       if (catalogData is CatalogData.Empty) {
@@ -165,8 +222,8 @@ abstract class CatalogController(
 
       catalogData as CatalogData.Data
 
-      toolbarContract?.setTitle(KurobaToolbarType.Catalog, catalogData.toCatalogTitleString())
-      toolbarContract?.setSubTitle(currentContext().getString(R.string.lorem_ipsum))
+      toolbarContract.setTitle(KurobaToolbarType.Catalog, catalogData.toCatalogTitleString())
+      toolbarContract.setSubTitle(currentContext().getString(R.string.lorem_ipsum))
 
       addOneshotModelBuildListener {
         testHelpers.catalogLoadedLatch.countDown()
@@ -201,6 +258,18 @@ abstract class CatalogController(
     intent.putExtras(bundle)
 
     startActivity(intent)
+  }
+
+  protected open fun onSearchToolbarShown() {
+
+  }
+
+  protected open fun onSearchToolbarHidden() {
+
+  }
+
+  protected open fun onCatalogStateChanged(catalogData: CatalogData) {
+
   }
 
   companion object {

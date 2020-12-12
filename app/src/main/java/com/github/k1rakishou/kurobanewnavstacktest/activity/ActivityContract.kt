@@ -4,4 +4,6 @@ import androidx.appcompat.app.AppCompatActivity
 
 interface ActivityContract {
     fun activity(): AppCompatActivity
+
+    fun mainActivityOrError(): MainActivity
 }

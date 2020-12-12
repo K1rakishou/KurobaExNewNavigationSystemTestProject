@@ -13,6 +13,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.utils.exhaustive
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setAlphaFast
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndDoRequest
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setVisibilityFast
+import kotlinx.coroutines.flow.Flow
 
 class SlideToolbar @JvmOverloads constructor(
   context: Context,
@@ -102,6 +103,13 @@ class SlideToolbar @JvmOverloads constructor(
         actualThreadToolbar.popToolbarStateClass(toolbarType, ToolbarStateClass.Search)
       }
     }.exhaustive
+  }
+
+  override fun listenForToolbarActions(toolbarType: KurobaToolbarType): Flow<ToolbarAction> {
+    return when (toolbarType) {
+      KurobaToolbarType.Catalog -> actualCatalogToolbar.listenForToolbarActions(toolbarType)
+      KurobaToolbarType.Thread -> actualThreadToolbar.listenForToolbarActions(toolbarType)
+    }
   }
 
   override fun showDefaultToolbar(toolbarType: KurobaToolbarType) {

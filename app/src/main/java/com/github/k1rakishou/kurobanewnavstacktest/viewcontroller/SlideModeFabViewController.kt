@@ -1,18 +1,21 @@
 package com.github.k1rakishou.kurobanewnavstacktest.viewcontroller
 
+import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.utils.ChanSettings
 import com.github.k1rakishou.kurobanewnavstacktest.utils.getBehaviorExt
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setBehaviorExt
-import com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaFloatingActionButton
+import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnThrottlingClickListener
+import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
+import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.SlideKurobaFloatingActionButton
 import com.github.k1rakishou.kurobanewnavstacktest.widget.behavior.CatalogFabBehavior
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class SlideModeFabViewController(
-    private val fab: KurobaFloatingActionButton,
-    private val slideModeFabClickListener: SlideModeFabClickListener
+  private val fab: SlideKurobaFloatingActionButton,
+  private val slideModeFabClickListener: SlideModeFabClickListener
 ) : SlideModeFabViewControllerCallbacks {
   private var initialHorizontalOffset: Float = KurobaFloatingActionButton.DEFAULT_MARGIN_RIGHT.toFloat()
-  private var isCatalogControllerOpened: Boolean = true
+  private var focusedControllerType: ControllerType? = null
   private var fabInitialized = false
 
   init {
@@ -23,6 +26,23 @@ class SlideModeFabViewController(
     fab.getBehaviorExt<CatalogFabBehavior>()?.init(laidOutBottomNavigationView)
   }
 
+  private fun updateFocusedControllerType(isOpened: Boolean? = null) {
+    if (isOpened == null) {
+      focusedControllerType = null
+      fab.onControllerFocused(null)
+      return
+    }
+
+    val controllerType = if (isOpened) {
+      ControllerType.Catalog
+    } else {
+      ControllerType.Thread
+    }
+
+    focusedControllerType = controllerType
+    fab.onControllerFocused(controllerType)
+  }
+
   fun reset() {
     fab.getBehaviorExt<CatalogFabBehavior>()?.reset()
 
@@ -31,8 +51,11 @@ class SlideModeFabViewController(
   }
 
   fun onAttach() {
-    fab.setOnClickListener {
-      if (isCatalogControllerOpened) {
+    fab.setOnThrottlingClickListener {
+      val controllerType = focusedControllerType
+        ?: return@setOnThrottlingClickListener
+
+      if (controllerType == ControllerType.Catalog) {
         slideModeFabClickListener.onFabClicked(FabType.CatalogFab)
       } else {
         slideModeFabClickListener.onFabClicked(FabType.ThreadFab)
@@ -41,19 +64,27 @@ class SlideModeFabViewController(
   }
 
   fun onDetach() {
-    fab.setOnClickListener(null)
+    fab.setOnThrottlingClickListener(null)
   }
 
-  override fun showFab() {
-    fab.show()
+  override fun showFab(lock: Boolean) {
+    if (focusedControllerType == null) {
+      return
+    }
+
+    fab.showFab(lock)
   }
 
-  override fun hideFab() {
-    fab.hide()
+  override fun hideFab(lock: Boolean) {
+    if (focusedControllerType == null) {
+      return
+    }
+
+    fab.hideFab(lock)
   }
 
   override fun onSlidingPaneInitialState(isOpened: Boolean) {
-    isCatalogControllerOpened = isOpened
+    updateFocusedControllerType(isOpened)
 
     if (!fabInitialized) {
       fabInitialized = true
@@ -72,14 +103,17 @@ class SlideModeFabViewController(
     fab.isEnabled = false
   }
 
-  override fun onSlidingPaneSlidingEnded(becameOpen: Boolean) {
-    fab.isEnabled = true
-    isCatalogControllerOpened = becameOpen
-  }
-
   override fun onSlidingPaneSliding(slideOffset: Float) {
+    updateFocusedControllerType(null)
+
     val translationDelta = ChanSettings.OVERHANG_SIZE * slideOffset
     fab.translationX = -(initialHorizontalOffset + translationDelta)
+  }
+
+  override fun onSlidingPaneSlidingEnded(becameOpen: Boolean) {
+    fab.isEnabled = true
+
+    updateFocusedControllerType(becameOpen)
   }
 
   enum class FabType {

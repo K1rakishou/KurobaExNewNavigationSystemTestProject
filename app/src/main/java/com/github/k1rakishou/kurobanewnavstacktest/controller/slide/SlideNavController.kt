@@ -26,7 +26,6 @@ class SlideNavController(
   args: Bundle? = null
 ) : BaseController(args),
   RecyclerViewProvider,
-  UiElementsControllerCallbacks,
   ChanNavigationContract {
   private lateinit var slidingPaneLayout: SlidingPaneLayoutEx
   private lateinit var catalogControllerContainer: FrameLayout
@@ -101,6 +100,7 @@ class SlideNavController(
     return inflater.inflateView(R.layout.controller_slide_navigation, container) {
       catalogControllerContainer = findViewById(R.id.catalog_controller_container)
       threadControllerContainer = findViewById(R.id.thread_controller_container)
+
       slidingPaneLayout = findViewById(R.id.sliding_pane_layout)
     }
   }
@@ -138,14 +138,6 @@ class SlideNavController(
     }
   }
 
-  override fun showFab() {
-    uiElementsControllerCallbacks.showFab()
-  }
-
-  override fun hideFab() {
-    uiElementsControllerCallbacks.hideFab()
-  }
-
   override fun provideRecyclerView(recyclerView: RecyclerView, controllerType: ControllerType) {
     recyclerViewProvider.provideRecyclerView(recyclerView, controllerType)
   }
@@ -179,6 +171,7 @@ class SlideNavController(
   private fun createSlideThreadController(): SlideThreadController {
     return SlideThreadController().apply {
       recyclerViewProvider(this@SlideNavController)
+      uiElementsControllerCallbacks(uiElementsControllerCallbacks)
       toolbarContract(toolbarContract)
     }
   }
@@ -186,14 +179,15 @@ class SlideNavController(
   private fun createSlideCatalogController(): SlideCatalogController {
     return SlideCatalogController().apply {
       recyclerViewProvider(this@SlideNavController)
-      uiElementsControllerCallbacks(this@SlideNavController)
+      uiElementsControllerCallbacks(uiElementsControllerCallbacks)
       threadNavigationContract(this@SlideNavController)
       toolbarContract(toolbarContract)
     }
   }
 
   private fun SlidingPaneLayoutEx.setSlidingPaneLayoutDefaultState() {
-    open()
+    check(openPane()) { "Failed to open pane" }
+
     fireSlidingPaneListeners(isOpen)
   }
 
@@ -216,7 +210,7 @@ class SlideNavController(
   }
 
   private fun getCatalogControllerOrNull(): SlideCatalogController? {
-    return threadControllerContainer.getControllerByTag(SlideCatalogController.CONTROLLER_TAG)
+    return catalogControllerContainer.getControllerByTag(SlideCatalogController.CONTROLLER_TAG)
   }
 
   override fun getControllerTag(): ControllerTag = CONTROLLER_TAG

@@ -7,32 +7,28 @@ import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.controller.FocusableController
 import com.github.k1rakishou.kurobanewnavstacktest.controller.RecyclerViewProvider
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.CatalogController
-import com.github.k1rakishou.kurobanewnavstacktest.controller.base.UiElementsControllerCallbacks
+import com.github.k1rakishou.kurobanewnavstacktest.data.CatalogData
 
 class SlideCatalogController(args: Bundle? = null) : CatalogController(args), FocusableController {
   private lateinit var recyclerViewProvider: RecyclerViewProvider
-  private lateinit var uiElementsControllerCallbacks: UiElementsControllerCallbacks
+  private val slideFabViewController by lazy { activityContract().mainActivityOrError().slideFabViewController }
 
   fun recyclerViewProvider(recyclerViewProvider: RecyclerViewProvider) {
     this.recyclerViewProvider = recyclerViewProvider
   }
 
-  fun uiElementsControllerCallbacks(uiElementsControllerCallbacks: UiElementsControllerCallbacks) {
-    this.uiElementsControllerCallbacks = uiElementsControllerCallbacks
-  }
-
   override fun onControllerShown() {
     super.onControllerShown()
 
-    recyclerView.doOnPreDraw {
-      recyclerViewProvider.provideRecyclerView(recyclerView, ControllerType.Catalog)
+    catalogRecyclerView.doOnPreDraw {
+      recyclerViewProvider.provideRecyclerView(catalogRecyclerView, CONTROLLER_TYPE)
       uiElementsControllerCallbacks.showFab()
     }
   }
 
   override fun onControllerHidden() {
     super.onControllerHidden()
-    recyclerViewProvider.withdrawRecyclerView(recyclerView, ControllerType.Catalog)
+    recyclerViewProvider.withdrawRecyclerView(catalogRecyclerView, CONTROLLER_TYPE)
   }
 
   override fun onLostFocus() {
@@ -40,13 +36,30 @@ class SlideCatalogController(args: Bundle? = null) : CatalogController(args), Fo
   }
 
   override fun onGainedFocus() {
+    slideFabViewController.onControllerFocused(CONTROLLER_TYPE)
+  }
 
+  override fun onSearchToolbarShown() {
+    slideFabViewController.onSearchToolbarShownOrHidden(CONTROLLER_TYPE, true)
+  }
+
+  override fun onSearchToolbarHidden() {
+    slideFabViewController.onSearchToolbarShownOrHidden(CONTROLLER_TYPE, false)
+  }
+
+  override fun onCatalogStateChanged(catalogData: CatalogData) {
+    slideFabViewController.onControllerStateChanged(
+      CONTROLLER_TYPE,
+      catalogData is CatalogData.Data
+    )
   }
 
   override fun getControllerTag(): ControllerTag = CONTROLLER_TAG
 
   companion object {
     val CONTROLLER_TAG = ControllerTag("SlideCatalogControllerTag")
+
+    private val CONTROLLER_TYPE = ControllerType.Catalog
   }
 
 }

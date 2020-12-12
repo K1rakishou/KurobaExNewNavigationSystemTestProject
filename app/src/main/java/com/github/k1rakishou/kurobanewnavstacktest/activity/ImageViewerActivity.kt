@@ -14,6 +14,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.utils.FullScreenUtils.setupFu
 import com.github.k1rakishou.kurobanewnavstacktest.viewstate.ViewStateConstants
 import com.github.k1rakishou.kurobanewnavstacktest.widget.TouchBlockingFrameLayout
 import dev.chrisbanes.insetter.Insetter
+import java.lang.RuntimeException
 
 
 class ImageViewerActivity : AppCompatActivity(), ActivityContract {
@@ -57,5 +58,9 @@ class ImageViewerActivity : AppCompatActivity(), ActivityContract {
 
   override fun activity(): AppCompatActivity {
     return this
+  }
+
+  override fun mainActivityOrError(): MainActivity {
+    throw RuntimeException("Not MainActivity")
   }
 }

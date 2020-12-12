@@ -2,18 +2,19 @@ package com.github.k1rakishou.kurobanewnavstacktest.viewcontroller
 
 import android.animation.AnimatorSet
 import android.animation.ValueAnimator
+import android.content.Context
 import android.view.View
 import androidx.core.animation.addListener
 import androidx.core.animation.doOnCancel
 import androidx.core.animation.doOnEnd
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.recyclerview.widget.RecyclerView
-import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
+import com.github.k1rakishou.kurobanewnavstacktest.utils.ChanSettings
 import com.github.k1rakishou.kurobanewnavstacktest.utils.dp
 import kotlin.math.abs
 
 class CollapsingViewController(
-  val controllerType: ControllerType,
+  val context: Context,
   private val viewScreenAttachSide: ViewScreenAttachSide
 ) {
   private var viewData: ViewData? = null
@@ -43,6 +44,10 @@ class CollapsingViewController(
     }
   }
 
+  init {
+    locked = ChanSettings.collapsibleViewsAlwaysLocked(context)
+  }
+
   fun lockUnlock(lock: Boolean, animate: Boolean) {
     if (lock) {
       viewData?.let { data ->
@@ -61,7 +66,9 @@ class CollapsingViewController(
       return
     }
 
-    locked = lock
+    if (!ChanSettings.collapsibleViewsAlwaysLocked(context)) {
+      locked = lock
+    }
   }
 
   fun show(animate: Boolean) {

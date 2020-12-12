@@ -6,12 +6,12 @@ import android.view.View
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.github.k1rakishou.kurobanewnavstacktest.utils.dp
 import com.github.k1rakishou.kurobanewnavstacktest.utils.findChildView
+import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 
 class CatalogFabBehavior(context: Context, attributeSet: AttributeSet?) :
-  CoordinatorLayout.Behavior<FloatingActionButton>(context, attributeSet) {
+  CoordinatorLayout.Behavior<KurobaFloatingActionButton>(context, attributeSet) {
   private var initialPositionY: Int? = null
   private var snackBarVisible = false
 
@@ -28,7 +28,7 @@ class CatalogFabBehavior(context: Context, attributeSet: AttributeSet?) :
 
   override fun layoutDependsOn(
     parent: CoordinatorLayout,
-    child: FloatingActionButton,
+    child: KurobaFloatingActionButton,
     dependency: View
   ): Boolean {
     if (dependency is BottomNavigationView) {
@@ -44,7 +44,7 @@ class CatalogFabBehavior(context: Context, attributeSet: AttributeSet?) :
 
   override fun onDependentViewChanged(
     parent: CoordinatorLayout,
-    child: FloatingActionButton,
+    child: KurobaFloatingActionButton,
     dependency: View
   ): Boolean {
     if (dependency is BottomNavigationView) {
@@ -58,7 +58,8 @@ class CatalogFabBehavior(context: Context, attributeSet: AttributeSet?) :
 
     if (dependency is Snackbar.SnackbarLayout) {
       snackBarVisible = true
-      child.hide()
+      child.hideFab()
+
       return false
     }
 
@@ -67,7 +68,7 @@ class CatalogFabBehavior(context: Context, attributeSet: AttributeSet?) :
 
   override fun onDependentViewRemoved(
     parent: CoordinatorLayout,
-    child: FloatingActionButton,
+    child: KurobaFloatingActionButton,
     dependency: View
   ) {
     super.onDependentViewRemoved(parent, child, dependency)
@@ -84,14 +85,14 @@ class CatalogFabBehavior(context: Context, attributeSet: AttributeSet?) :
       } as? BottomNavigationView ?: return
 
       if (bottomNavView.y.toInt() == initialPositionY) {
-        child.show()
+        child.showFab()
       }
     }
   }
 
   private fun resolveBottomNavigationView(
     parent: CoordinatorLayout,
-    child: FloatingActionButton,
+    child: KurobaFloatingActionButton,
     dependency: BottomNavigationView
   ) {
     if (snackBarVisible) {
@@ -102,7 +103,7 @@ class CatalogFabBehavior(context: Context, attributeSet: AttributeSet?) :
       ?: return
 
     if (dependency.y.toInt() == initialPosY && child.isOrWillBeHidden) {
-      child.show()
+      child.showFab()
     }
 
     child.y = (initialPosY - child.height - FAB_TO_VIEW_BOTTOM_MARGIN).toFloat()
@@ -112,9 +113,7 @@ class CatalogFabBehavior(context: Context, attributeSet: AttributeSet?) :
       return
     }
 
-    child.scaleX = scale
-    child.scaleY = scale
-
+    child.setScale(scale, scale)
     return
   }
 

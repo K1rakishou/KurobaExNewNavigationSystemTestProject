@@ -32,7 +32,6 @@ data class KurobaThreadToolbarState(
   }
 
   override fun reset() {
-    this.slideProgress = null
     this.threadTitle = null
     this.enableControls = null
   }

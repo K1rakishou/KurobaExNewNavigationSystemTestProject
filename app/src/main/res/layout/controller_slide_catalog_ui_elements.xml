@@ -40,8 +40,8 @@
         android:elevation="4dp"
         app:menu="@menu/bottom_navigation_menu" />
 
-    <com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaFloatingActionButton
-        android:id="@+id/slide_controller_catalog_fab"
+    <com.github.k1rakishou.kurobanewnavstacktest.widget.fab.SlideKurobaFloatingActionButton
+        android:id="@+id/slide_controller_fab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"

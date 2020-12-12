@@ -12,6 +12,7 @@ import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.github.k1rakishou.kurobanewnavstacktest.R
+import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnThrottlingClickListener
 import com.google.android.material.textview.MaterialTextView
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
@@ -57,18 +58,18 @@ class ThreadPostView @JvmOverloads constructor(
   @CallbackProp
   fun clickListener(func: (() -> Unit)?) {
     if (func == null) {
-      clickableView.setOnClickListener(null)
+      clickableView.setOnThrottlingClickListener(null)
     } else {
-      clickableView.setOnClickListener { func.invoke() }
+      clickableView.setOnThrottlingClickListener { func.invoke() }
     }
   }
 
   @CallbackProp
   fun imageClickListener(func: (() -> Unit)?) {
     if (func == null) {
-      imageView.setOnClickListener(null)
+      imageView.setOnThrottlingClickListener(null)
     } else {
-      imageView.setOnClickListener { func.invoke() }
+      imageView.setOnThrottlingClickListener { func.invoke() }
     }
   }
 

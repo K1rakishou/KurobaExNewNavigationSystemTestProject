@@ -52,16 +52,16 @@ class KurobaCatalogToolbar(
       openSubMenuButton = findViewById(R.id.open_submenu_button)
 
       boardSelectionMenuButton.setOnThrottlingClickListener {
-        kurobaToolbarViewModel.fireAction(ToolbarAction.Catalog.BoardSelectionMenuButtonClicked)
+        kurobaToolbarViewModel.fireAction(ToolbarAction.Catalog.BoardSelectionMenuButtonClicked(toolbarType))
       }
       openSearchButton.setOnThrottlingClickListener {
         kurobaToolbarCallbacks.pushNewToolbarStateClass(toolbarType, ToolbarStateClass.Search)
       }
       refreshCatalogButton.setOnThrottlingClickListener {
-        kurobaToolbarViewModel.fireAction(ToolbarAction.Catalog.RefreshCatalogButtonClicked)
+        kurobaToolbarViewModel.fireAction(ToolbarAction.Catalog.RefreshCatalogButtonClicked(toolbarType))
       }
       openSubMenuButton.setOnThrottlingClickListener {
-        kurobaToolbarViewModel.fireAction(ToolbarAction.Catalog.OpenSubMenuButtonClicked)
+        kurobaToolbarViewModel.fireAction(ToolbarAction.Catalog.OpenSubMenuButtonClicked(toolbarType))
       }
     }
   }

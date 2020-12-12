@@ -5,21 +5,22 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.doOnPreDraw
+import androidx.recyclerview.widget.RecyclerView
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
-import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ThreadController
+import com.github.k1rakishou.kurobanewnavstacktest.controller.base.UiElementsControllerCallbacks
 import com.github.k1rakishou.kurobanewnavstacktest.core.CollapsingViewsHolder
 import com.github.k1rakishou.kurobanewnavstacktest.utils.*
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.ViewScreenAttachSide
-import com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaFloatingActionButton
+import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
 import com.github.k1rakishou.kurobanewnavstacktest.widget.behavior.SplitThreadFabBehavior
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.KurobaToolbarType
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.NormalToolbar
 
 class SplitThreadController(
   args: Bundle? = null
-) : ThreadController(args) {
+) : ThreadController(args), UiElementsControllerCallbacks {
   private lateinit var threadFab: KurobaFloatingActionButton
 
   private val collapsingViewsHolder = CollapsingViewsHolder()
@@ -39,6 +40,7 @@ class SplitThreadController(
       normalToolbar.visibility = View.VISIBLE
 
       super.toolbarContract(normalToolbar)
+      super.uiElementsControllerCallbacks(this@SplitThreadController)
     }
   }
 
@@ -66,17 +68,11 @@ class SplitThreadController(
   override fun onControllerShown() {
     super.onControllerShown()
 
-    recyclerView.doOnPreDraw {
+    threadRecyclerView.doOnPreDraw {
       collapsingViewsHolder.attach(
-        recyclerView = recyclerView,
+        recyclerView = threadRecyclerView,
         collapsableView = toolbarContract.collapsableView(),
-        controllerType = ControllerType.Thread,
         viewAttachSide = ViewScreenAttachSide.Top
-      )
-
-      collapsingViewsHolder.lockUnlockCollapsableViews(
-        lock = ChanSettings.showLockCollapsableViews(currentContext()),
-        animate = true
       )
     }
 
@@ -91,7 +87,27 @@ class SplitThreadController(
   override fun onControllerHidden() {
     super.onControllerHidden()
 
-    collapsingViewsHolder.detach(recyclerView, toolbarContract.collapsableView())
+    collapsingViewsHolder.detach(threadRecyclerView, toolbarContract.collapsableView())
+  }
+
+  override fun lockUnlockCollapsableViews(
+    recyclerView: RecyclerView?,
+    lock: Boolean,
+    animate: Boolean
+  ) {
+    collapsingViewsHolder.lockUnlockCollapsableViews(
+      recyclerView = recyclerView,
+      lock = lock,
+      animate = animate
+    )
+  }
+
+  override fun showFab(lock: Boolean?) {
+    threadFab.showFab(lock)
+  }
+
+  override fun hideFab(lock: Boolean?) {
+    threadFab.hideFab(lock)
   }
 
   override fun getControllerTag(): ControllerTag = CONTROLLER_TAG

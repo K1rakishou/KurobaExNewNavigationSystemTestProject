@@ -6,15 +6,9 @@ import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
 import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.controller.RecyclerViewProvider
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.CatalogController
-import com.github.k1rakishou.kurobanewnavstacktest.controller.base.UiElementsControllerCallbacks
 
 class SplitCatalogController(args: Bundle? = null) : CatalogController(args) {
-  private var uiElementsControllerCallbacks: UiElementsControllerCallbacks? = null
-  private var recyclerViewProvider: RecyclerViewProvider? = null
-
-  fun uiElementsControllerCallbacks(uiElementsControllerCallbacks: UiElementsControllerCallbacks) {
-    this.uiElementsControllerCallbacks = uiElementsControllerCallbacks
-  }
+  private lateinit var recyclerViewProvider: RecyclerViewProvider
 
   fun recyclerViewProvider(recyclerViewProvider: RecyclerViewProvider) {
     this.recyclerViewProvider = recyclerViewProvider
@@ -23,23 +17,16 @@ class SplitCatalogController(args: Bundle? = null) : CatalogController(args) {
   override fun onControllerShown() {
     super.onControllerShown()
 
-    recyclerView.doOnPreDraw {
-      recyclerViewProvider?.provideRecyclerView(recyclerView, ControllerType.Catalog)
-      uiElementsControllerCallbacks?.showFab()
+    catalogRecyclerView.doOnPreDraw {
+      recyclerViewProvider.provideRecyclerView(catalogRecyclerView, ControllerType.Catalog)
+      uiElementsControllerCallbacks.showFab()
     }
   }
 
   override fun onControllerHidden() {
     super.onControllerHidden()
 
-    recyclerViewProvider?.withdrawRecyclerView(recyclerView, ControllerType.Catalog)
-  }
-
-  override fun onControllerDestroyed() {
-    super.onControllerDestroyed()
-
-    uiElementsControllerCallbacks = null
-    recyclerViewProvider = null
+    recyclerViewProvider.withdrawRecyclerView(catalogRecyclerView, ControllerType.Catalog)
   }
 
   override fun getControllerTag(): ControllerTag = CONTROLLER_TAG

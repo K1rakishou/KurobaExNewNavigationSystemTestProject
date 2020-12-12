@@ -20,12 +20,14 @@ import com.github.k1rakishou.kurobanewnavstacktest.core.test.TestHelpers
 import com.github.k1rakishou.kurobanewnavstacktest.utils.BackgroundUtils
 import com.github.k1rakishou.kurobanewnavstacktest.utils.ChanSettings.isSplitMode
 import com.github.k1rakishou.kurobanewnavstacktest.utils.findRouterWithControllerByTag
+import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.SlideFabViewController
 import com.github.k1rakishou.kurobanewnavstacktest.viewstate.ViewStateConstants
 import com.github.k1rakishou.kurobanewnavstacktest.widget.TouchBlockingFrameLayout
 import dev.chrisbanes.insetter.Insetter
 
 class MainActivity : AppCompatActivity(), ControllerPresenterDelegate, ActivityContract {
   lateinit var testHelpers: TestHelpers
+  lateinit var slideFabViewController: SlideFabViewController
 
   private lateinit var router: Router
   private lateinit var rootContainer: TouchBlockingFrameLayout
@@ -46,6 +48,8 @@ class MainActivity : AppCompatActivity(), ControllerPresenterDelegate, ActivityC
 //    router = attachRouterHacky(this, rootContainer, savedInstanceState)
     router = Conductor.attachRouter(this, rootContainer, savedInstanceState)
     controllerPresenterDelegate = ControllerPresenterDelegateImpl(router)
+
+    slideFabViewController = SlideFabViewController()
 
     if (!router.hasRootController()) {
       val controller = MainController()
@@ -85,6 +89,10 @@ class MainActivity : AppCompatActivity(), ControllerPresenterDelegate, ActivityC
   }
 
   override fun activity(): AppCompatActivity {
+    return this
+  }
+
+  override fun mainActivityOrError(): MainActivity {
     return this
   }
 

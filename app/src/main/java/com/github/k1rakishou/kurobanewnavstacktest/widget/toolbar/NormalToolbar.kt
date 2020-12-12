@@ -7,10 +7,8 @@ import android.widget.FrameLayout
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import com.github.k1rakishou.kurobanewnavstacktest.R
-import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.utils.exhaustive
-import java.lang.IllegalStateException
-import kotlin.reflect.KClass
+import kotlinx.coroutines.flow.Flow
 
 class NormalToolbar @JvmOverloads constructor(
   context: Context,
@@ -67,6 +65,10 @@ class NormalToolbar @JvmOverloads constructor(
 
   override fun closeSearchToolbar(toolbarType: KurobaToolbarType) {
     actualToolbar.popToolbarStateClass(toolbarType, ToolbarStateClass.Search)
+  }
+
+  override fun listenForToolbarActions(toolbarType: KurobaToolbarType): Flow<ToolbarAction> {
+    return actualToolbar.listenForToolbarActions(toolbarType)
   }
 
   override fun showDefaultToolbar(toolbarType: KurobaToolbarType) {

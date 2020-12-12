@@ -7,7 +7,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.utils.AndroidUtils.isTablet
 object ChanSettings {
   val OVERHANG_SIZE = 20.dp
 
-  fun showLockCollapsableViews(context: Context): Boolean {
+  fun collapsibleViewsAlwaysLocked(context: Context): Boolean {
     // TODO(KurobaEx): make this a separate setting when migrating this
     //  into the main project
     return isSplitMode(context) && isTablet()

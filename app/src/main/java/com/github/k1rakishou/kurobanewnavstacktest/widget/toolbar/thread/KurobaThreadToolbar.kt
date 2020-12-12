@@ -52,21 +52,22 @@ class KurobaThreadToolbar(
         kurobaToolbarCallbacks.pushNewToolbarStateClass(toolbarType, ToolbarStateClass.Search)
       }
       openGalleryButton.setOnThrottlingClickListener {
-        kurobaToolbarViewModel.fireAction(ToolbarAction.Thread.OpenGalleryButtonClicked)
+        kurobaToolbarViewModel.fireAction(ToolbarAction.Thread.OpenGalleryButtonClicked(toolbarType))
       }
       bookmarkThreadButton.setOnThrottlingClickListener {
-        kurobaToolbarViewModel.fireAction(ToolbarAction.Thread.BookmarkThreadButtonClicked)
+        kurobaToolbarViewModel.fireAction(ToolbarAction.Thread.BookmarkThreadButtonClicked(toolbarType))
       }
       openSubmenuButton.setOnThrottlingClickListener {
-        kurobaToolbarViewModel.fireAction(ToolbarAction.Thread.OpenSubmenuButtonClicked)
+        kurobaToolbarViewModel.fireAction(ToolbarAction.Thread.OpenSubmenuButtonClicked(toolbarType))
       }
     }
   }
 
   override fun applyStateToUi(toolbarState: KurobaThreadToolbarState) {
     toolbarState.slideProgress?.let { slideProgress ->
-      if (slideProgress != arrowMenuDrawable.progress) {
-        arrowMenuDrawable.progress = 1f - slideProgress
+      val progress = 1f - slideProgress
+      if (progress != arrowMenuDrawable.progress) {
+        arrowMenuDrawable.progress = progress
       }
     }
 

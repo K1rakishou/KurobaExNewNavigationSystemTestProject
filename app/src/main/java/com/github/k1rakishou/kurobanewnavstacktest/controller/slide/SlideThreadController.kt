@@ -7,12 +7,14 @@ import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.controller.FocusableController
 import com.github.k1rakishou.kurobanewnavstacktest.controller.RecyclerViewProvider
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ThreadController
+import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadData
 
 class SlideThreadController(
   args: Bundle? = null
 ) : ThreadController(args),
   FocusableController {
   private lateinit var recyclerViewProvider: RecyclerViewProvider
+  private val slideFabViewController by lazy { activityContract().mainActivityOrError().slideFabViewController }
 
   fun recyclerViewProvider(recyclerViewProvider: RecyclerViewProvider) {
     this.recyclerViewProvider = recyclerViewProvider
@@ -21,15 +23,15 @@ class SlideThreadController(
   override fun onControllerShown() {
     super.onControllerShown()
 
-    recyclerView.doOnPreDraw {
-      recyclerViewProvider.provideRecyclerView(recyclerView, ControllerType.Thread)
+    threadRecyclerView.doOnPreDraw {
+      recyclerViewProvider.provideRecyclerView(threadRecyclerView, CONTROLLER_TYPE)
     }
   }
 
   override fun onControllerHidden() {
     super.onControllerHidden()
 
-    recyclerViewProvider.withdrawRecyclerView(recyclerView, ControllerType.Thread)
+    recyclerViewProvider.withdrawRecyclerView(threadRecyclerView, CONTROLLER_TYPE)
   }
 
   override fun onLostFocus() {
@@ -37,12 +39,29 @@ class SlideThreadController(
   }
 
   override fun onGainedFocus() {
+    slideFabViewController.onControllerFocused(CONTROLLER_TYPE)
+  }
 
+  override fun onSearchToolbarShown() {
+    slideFabViewController.onSearchToolbarShownOrHidden(CONTROLLER_TYPE, true)
+  }
+
+  override fun onSearchToolbarHidden() {
+    slideFabViewController.onSearchToolbarShownOrHidden(CONTROLLER_TYPE, false)
+  }
+
+  override fun onThreadStateChanged(threadData: ThreadData) {
+    slideFabViewController.onControllerStateChanged(
+      CONTROLLER_TYPE,
+      threadData is ThreadData.Data
+    )
   }
 
   override fun getControllerTag(): ControllerTag = CONTROLLER_TAG
 
   companion object {
     val CONTROLLER_TAG = ControllerTag("SlideThreadControllerTag")
+
+    private val CONTROLLER_TYPE = ControllerType.Thread
   }
 }

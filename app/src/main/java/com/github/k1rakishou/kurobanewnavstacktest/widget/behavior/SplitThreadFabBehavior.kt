@@ -5,6 +5,7 @@ import android.util.AttributeSet
 import android.view.View
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.github.k1rakishou.kurobanewnavstacktest.utils.findChildView
+import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarContract
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
@@ -12,7 +13,7 @@ import com.google.android.material.snackbar.Snackbar
 class SplitThreadFabBehavior(
     context: Context,
     attributeSet: AttributeSet?
-) : CoordinatorLayout.Behavior<FloatingActionButton>(context, attributeSet) {
+) : CoordinatorLayout.Behavior<KurobaFloatingActionButton>(context, attributeSet) {
   private var initialPositionY: Int? = null
   private var snackBarVisible = false
 
@@ -29,7 +30,7 @@ class SplitThreadFabBehavior(
 
   override fun layoutDependsOn(
       parent: CoordinatorLayout,
-      child: FloatingActionButton,
+      child: KurobaFloatingActionButton,
       dependency: View
   ): Boolean {
     if (dependency is ToolbarContract) {
@@ -45,7 +46,7 @@ class SplitThreadFabBehavior(
 
   override fun onDependentViewChanged(
       parent: CoordinatorLayout,
-      child: FloatingActionButton,
+      child: KurobaFloatingActionButton,
       dependency: View
   ): Boolean {
     if (dependency is ToolbarContract) {
@@ -59,7 +60,8 @@ class SplitThreadFabBehavior(
 
     if (dependency is Snackbar.SnackbarLayout) {
       snackBarVisible = true
-      child.hide()
+      child.hideFab()
+
       return false
     }
 
@@ -68,7 +70,7 @@ class SplitThreadFabBehavior(
 
   override fun onDependentViewRemoved(
       parent: CoordinatorLayout,
-      child: FloatingActionButton,
+      child: KurobaFloatingActionButton,
       dependency: View
   ) {
     super.onDependentViewRemoved(parent, child, dependency)
@@ -86,14 +88,14 @@ class SplitThreadFabBehavior(
 
       val toolbarView = toolbarContract.collapsableView()
       if (toolbarView.translationY.toInt() == initialPositionY) {
-        child.show()
+        child.showFab()
       }
     }
   }
 
   private fun resolveMaterialToolbarView(
       parent: CoordinatorLayout,
-      child: FloatingActionButton,
+      child: KurobaFloatingActionButton,
       toolbarContract: ToolbarContract
   ) {
     if (snackBarVisible) {
@@ -105,12 +107,11 @@ class SplitThreadFabBehavior(
 
     val toolbarView = toolbarContract.collapsableView()
     if (toolbarView.translationY.toInt() == initialPositionY && child.isOrWillBeHidden) {
-      child.show()
+      child.showFab()
     }
 
     val scale = 1f - (Math.abs(toolbarView.translationY - initialPosY) / toolbarView.height)
-    child.scaleX = scale
-    child.scaleY = scale
+    child.setScale(scale, scale)
   }
 
 }

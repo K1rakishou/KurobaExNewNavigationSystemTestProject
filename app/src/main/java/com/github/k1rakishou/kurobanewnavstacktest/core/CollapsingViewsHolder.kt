@@ -21,7 +21,6 @@ class CollapsingViewsHolder {
   fun attach(
     recyclerView: RecyclerView,
     collapsableView: View,
-    controllerType: ControllerType,
     viewAttachSide: ViewScreenAttachSide
   ) {
     if (!collapsingViewControllerMap.containsKey(collapsableView)) {
@@ -30,7 +29,7 @@ class CollapsingViewsHolder {
 
     if (!collapsingViewControllerMap[collapsableView]!!.containsKey(recyclerView)) {
       collapsingViewControllerMap[collapsableView]!![recyclerView] = CollapsingViewController(
-        controllerType,
+        recyclerView.context,
         viewAttachSide
       )
     }
@@ -38,15 +37,16 @@ class CollapsingViewsHolder {
     collapsingViewControllerMap[collapsableView]!![recyclerView]!!.attach(collapsableView, recyclerView)
   }
 
-  fun lockUnlockCollapsableViews(lock: Boolean, animate: Boolean) {
-    collapsingViewControllerMap.values
-      .flatMap { innerMap -> innerMap.values }
-      .forEach { collapsingViewDelegate ->
-        collapsingViewDelegate.lockUnlock(
-          lock = lock,
-          animate = animate
-        )
+  fun lockUnlockCollapsableViews(recyclerView: RecyclerView?, lock: Boolean, animate: Boolean) {
+    for ((_, innerMap) in collapsingViewControllerMap.entries) {
+      for ((rv, collapsingViewController) in innerMap) {
+        if (recyclerView != null && recyclerView !== rv) {
+          continue
+        }
+
+        collapsingViewController.lockUnlock(lock = lock, animate = animate)
       }
+    }
   }
 
 }

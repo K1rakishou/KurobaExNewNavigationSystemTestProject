@@ -46,11 +46,11 @@ class KurobaToolbarViewModel : ViewModel() {
     return toolbarStateChangeFlow.asFlow()
   }
 
-  fun listenForToolbarActions(predicate: (ToolbarAction) -> Boolean): Flow<ToolbarAction> {
+  fun listenForToolbarActions(toolbarType: KurobaToolbarType): Flow<ToolbarAction> {
     return toolbarActionFlow
       .asFlow()
+      .filter { toolbarAction -> toolbarAction.toolbarType == toolbarType }
       .distinctUntilChangedBy { toolbarAction -> toolbarAction }
-      .filter { toolbarAction -> predicate(toolbarAction) }
   }
 
   fun fireAction(toolbarAction: ToolbarAction) {

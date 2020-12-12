@@ -18,6 +18,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.thread.KurobaT
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.thread.KurobaThreadToolbarState
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.uninitialized.KurobaUninitializedToolbar
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 import timber.log.Timber
@@ -145,9 +146,10 @@ class KurobaToolbar @JvmOverloads constructor(
     }
 
     val stateStack = toolbarViewModel.getToolbarStateStack(kurobaToolbarType)
-    val pushed = stateStack.pushToolbarStateClass(toolbarStateClass)
+    val addedToStack = stateStack.pushToolbarStateClass(toolbarStateClass)
 
-    if (!pushed) {
+    if (!addedToStack) {
+      // Already in stack
       if (!stateStack.isTop(toolbarStateClass)) {
         // Already in stack and is not at the top, do nothing
         return
@@ -290,7 +292,7 @@ class KurobaToolbar @JvmOverloads constructor(
     newToolbarStateClass: ToolbarStateClass,
     toolbarStateChangeType: ToolbarStateChangeType
   ) {
-    val newView = when (newToolbarStateClass) {
+    val newToolbar = when (newToolbarStateClass) {
       ToolbarStateClass.Uninitialized -> {
         KurobaUninitializedToolbar(
           context = context,
@@ -339,23 +341,60 @@ class KurobaToolbar @JvmOverloads constructor(
       if (toolbarStateChangeType == ToolbarStateChangeType.Pop) {
         val contract = (currentToolbar as KurobaToolbarDelegateContract<*>)
         toolbarViewModel.resetState(contract.parentToolbarType, contract.toolbarStateClass)
+
+        onToolbarDestroyed(contract.toolbarStateClass)
       }
 
       kurobaToolbarViewContainer.removeAllViews()
     }
 
-    Timber.tag(TAG).d("($kurobaToolbarType) replaceStateView() " +
-      "newView = ${newView.javaClass.simpleName}")
-    kurobaToolbarViewContainer.addView(newView)
+    Timber.tag(TAG).d("($kurobaToolbarType) replaceStateView() newToolbar=${newToolbar.javaClass.simpleName}")
+
+    kurobaToolbarViewContainer.addView(newToolbar)
+    onToolbarCreated(newToolbar.toolbarStateClass)
 
     check(kurobaToolbarViewContainer.childCount <= 1) {
       "($kurobaToolbarType) Bad child count: ${kurobaToolbarViewContainer.childCount}"
     }
   }
 
+  private fun onToolbarCreated(toolbarStateClass: ToolbarStateClass) {
+    when (toolbarStateClass) {
+      ToolbarStateClass.Search -> {
+        toolbarViewModel.fireAction(ToolbarAction.Search.SearchShown(kurobaToolbarType))
+      }
+      ToolbarStateClass.Uninitialized,
+      ToolbarStateClass.Catalog,
+      ToolbarStateClass.Thread,
+      ToolbarStateClass.SimpleTitle,
+      ToolbarStateClass.Selection -> {
+        // no-op
+      }
+    }
+  }
+
+  private fun onToolbarDestroyed(toolbarStateClass: ToolbarStateClass) {
+    when (toolbarStateClass) {
+      ToolbarStateClass.Search -> {
+        toolbarViewModel.fireAction(ToolbarAction.Search.SearchHidden(kurobaToolbarType))
+      }
+      ToolbarStateClass.Uninitialized,
+      ToolbarStateClass.Catalog,
+      ToolbarStateClass.Thread,
+      ToolbarStateClass.SimpleTitle,
+      ToolbarStateClass.Selection -> {
+        // no-op
+      }
+    }
+  }
+
   private fun ensureInitialized() {
     check(initialized) { "($kurobaToolbarType) Must initialize first!" }
     check(::kurobaToolbarType.isInitialized) { "kurobaToolbarType is not initialized!" }
+  }
+
+  fun listenForToolbarActions(toolbarType: KurobaToolbarType): Flow<ToolbarAction> {
+    return toolbarViewModel.listenForToolbarActions(toolbarType)
   }
 
   enum class ToolbarStateChangeType {

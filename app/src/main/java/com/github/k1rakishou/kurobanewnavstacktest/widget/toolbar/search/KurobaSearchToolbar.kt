@@ -40,11 +40,16 @@ class KurobaSearchToolbar(
       clearSearchInputButton = findViewById(R.id.clear_search_input_button)
       searchResults = findViewById(R.id.search_results)
 
-      textWatcher = searchInput.doOnTextChanged { text, start, before, count ->
+      textWatcher = searchInput.doOnTextChanged { text, _, _, _ ->
         kurobaToolbarViewModel.getToolbarState<KurobaSearchToolbarState>(toolbarType, toolbarStateClass)
           .updateQuery(text?.toString())
 
-        kurobaToolbarViewModel.fireAction(ToolbarAction.Search.QueryUpdated(text?.toString()))
+        val queryUpdated = ToolbarAction.Search.QueryUpdated(
+          toolbarType = toolbarType,
+          query = text?.toString() ?: ""
+        )
+
+        kurobaToolbarViewModel.fireAction(queryUpdated)
       }
 
       closeSearchButton.setOnThrottlingClickListener {
@@ -71,8 +76,12 @@ class KurobaSearchToolbar(
       }
     }
 
-    toolbarState.foundItems?.let { foundItems ->
-      searchResults.text = "${foundItems.currentItemIndex} / ${foundItems.items.size}"
+    toolbarState.foundItems.let { foundItems ->
+      if (foundItems == null) {
+        searchResults.text = "0 / ???"
+      } else {
+        searchResults.text = "${foundItems.currentItemIndex} / ${foundItems.items.size}"
+      }
     }
   }
 
