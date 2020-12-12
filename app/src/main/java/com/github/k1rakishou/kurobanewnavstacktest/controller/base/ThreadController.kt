@@ -44,7 +44,7 @@ abstract class ThreadController(
 
   protected val controllerType = ControllerType.Thread
 
-  private var boundThreadDescriptor: ThreadDescriptor? = null
+  protected var boundThreadDescriptor: ThreadDescriptor? = null
   private var job: Job? = null
 
   fun uiElementsControllerCallbacks(uiElementsControllerCallbacks: UiElementsControllerCallbacks) {
@@ -75,6 +75,7 @@ abstract class ThreadController(
   override fun onControllerCreated(savedViewState: Bundle?) {
     super.onControllerCreated(savedViewState)
 
+    launch { reloadThread() }
     applyInsetsForRecyclerView()
   }
 
@@ -83,6 +84,23 @@ abstract class ThreadController(
 
     job?.cancel()
     job = null
+  }
+
+  fun closeOpenedThread(): Boolean {
+    if (this.boundThreadDescriptor == null) {
+      return false
+    }
+
+    // TODO(KurobaEx): switch toolbar into Uninitialized state 
+
+    Timber.tag(TAG).d("showThreadEmptyState()")
+    this.boundThreadDescriptor = null
+
+    job?.cancel()
+    job = null
+
+    launch { reloadThread() }
+    return true
   }
 
   override fun openThread(threadDescriptor: ThreadDescriptor) {
@@ -173,7 +191,6 @@ abstract class ThreadController(
     }
 
     rebuildThread(ThreadData.Loading)
-
     chanRepository.loadThread(descriptor)
   }
 
@@ -182,7 +199,6 @@ abstract class ThreadController(
 
     threadRecyclerView.withModels {
       addOneshotModelBuildListener {
-        toolbarContract.showDefaultToolbar(KurobaToolbarType.Thread)
         onThreadStateChanged(threadData)
       }
 
@@ -199,6 +215,10 @@ abstract class ThreadController(
           id("thread_loading_view")
         }
         return@withModels
+      }
+
+      addOneshotModelBuildListener {
+        toolbarContract.showDefaultToolbar(KurobaToolbarType.Thread)
       }
 
       val noPosts = threadData is ThreadData.Data && threadData.threadPosts.isEmpty()

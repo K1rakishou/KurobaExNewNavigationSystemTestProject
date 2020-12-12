@@ -53,6 +53,10 @@ class SplitThreadController(
       return true
     }
 
+    if (closeOpenedThread()) {
+      return true
+    }
+
     return super.handleBack()
   }
 
