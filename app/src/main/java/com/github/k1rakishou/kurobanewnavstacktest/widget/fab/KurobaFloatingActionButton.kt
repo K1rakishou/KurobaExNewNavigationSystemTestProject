@@ -82,4 +82,9 @@ open class KurobaFloatingActionButton @JvmOverloads constructor(
     val superState = state.getParcelable<Parcelable>(SUPER_VIEW_STATE_KEY)
     super.onRestoreInstanceState(superState)
   }
+
+  companion object {
+    val DEFAULT_MARGIN_RIGHT = 16.dp
+  }
+
 }
