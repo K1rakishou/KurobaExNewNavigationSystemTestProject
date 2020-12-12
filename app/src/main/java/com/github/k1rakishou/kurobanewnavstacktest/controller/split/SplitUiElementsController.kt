@@ -36,6 +36,7 @@ class SplitUiElementsController(
   private lateinit var splitControllerCatalogControllerContainer: FrameLayout
   private lateinit var threadNavigationContract: ThreadNavigationContract
 
+  private val splitFabViewController by lazy { activityContract().mainActivityOrError().splitFabViewController }
   private val collapsingViewsHolder = CollapsingViewsHolder()
 
   fun threadNavigationContract(threadNavigationContract: ThreadNavigationContract) {
@@ -54,6 +55,8 @@ class SplitUiElementsController(
 
       catalogFab = findViewById(R.id.split_controller_fab)
       catalogFab.setBehaviorExt(CatalogFabBehavior(context, null))
+
+      splitFabViewController.initCatalogFab(catalogFab)
     }
   }
 

@@ -10,6 +10,7 @@ import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.activity.ImageViewerActivity
 import com.github.k1rakishou.kurobanewnavstacktest.base.BaseController
+import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.data.PostDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadData
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
@@ -40,6 +41,8 @@ abstract class ThreadController(
   protected lateinit var threadRecyclerView: EpoxyRecyclerView
   protected lateinit var toolbarContract: ToolbarContract
   protected lateinit var uiElementsControllerCallbacks: UiElementsControllerCallbacks
+
+  protected val controllerType = ControllerType.Thread
 
   private var boundThreadDescriptor: ThreadDescriptor? = null
   private var job: Job? = null

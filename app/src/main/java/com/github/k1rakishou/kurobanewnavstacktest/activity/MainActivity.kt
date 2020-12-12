@@ -20,14 +20,18 @@ import com.github.k1rakishou.kurobanewnavstacktest.core.test.TestHelpers
 import com.github.k1rakishou.kurobanewnavstacktest.utils.BackgroundUtils
 import com.github.k1rakishou.kurobanewnavstacktest.utils.ChanSettings.isSplitMode
 import com.github.k1rakishou.kurobanewnavstacktest.utils.findRouterWithControllerByTag
-import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.SlideFabViewController
+import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.fab.SlideFabViewController
+import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.fab.SplitFabViewController
 import com.github.k1rakishou.kurobanewnavstacktest.viewstate.ViewStateConstants
 import com.github.k1rakishou.kurobanewnavstacktest.widget.TouchBlockingFrameLayout
 import dev.chrisbanes.insetter.Insetter
 
 class MainActivity : AppCompatActivity(), ControllerPresenterDelegate, ActivityContract {
+  // TODO(KurobaEx): DI vvv
   lateinit var testHelpers: TestHelpers
   lateinit var slideFabViewController: SlideFabViewController
+  lateinit var splitFabViewController: SplitFabViewController
+  // TODO(KurobaEx): DI ^^^
 
   private lateinit var router: Router
   private lateinit var rootContainer: TouchBlockingFrameLayout
@@ -50,6 +54,7 @@ class MainActivity : AppCompatActivity(), ControllerPresenterDelegate, ActivityC
     controllerPresenterDelegate = ControllerPresenterDelegateImpl(router)
 
     slideFabViewController = SlideFabViewController()
+    splitFabViewController = SplitFabViewController()
 
     if (!router.hasRootController()) {
       val controller = MainController()

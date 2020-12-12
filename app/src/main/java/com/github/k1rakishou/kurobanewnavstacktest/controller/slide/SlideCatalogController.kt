@@ -21,14 +21,14 @@ class SlideCatalogController(args: Bundle? = null) : CatalogController(args), Fo
     super.onControllerShown()
 
     catalogRecyclerView.doOnPreDraw {
-      recyclerViewProvider.provideRecyclerView(catalogRecyclerView, CONTROLLER_TYPE)
+      recyclerViewProvider.provideRecyclerView(catalogRecyclerView, controllerType)
       uiElementsControllerCallbacks.showFab()
     }
   }
 
   override fun onControllerHidden() {
     super.onControllerHidden()
-    recyclerViewProvider.withdrawRecyclerView(catalogRecyclerView, CONTROLLER_TYPE)
+    recyclerViewProvider.withdrawRecyclerView(catalogRecyclerView, controllerType)
   }
 
   override fun onLostFocus() {
@@ -36,20 +36,20 @@ class SlideCatalogController(args: Bundle? = null) : CatalogController(args), Fo
   }
 
   override fun onGainedFocus() {
-    slideFabViewController.onControllerFocused(CONTROLLER_TYPE)
+    slideFabViewController.onControllerFocused(controllerType)
   }
 
   override fun onSearchToolbarShown() {
-    slideFabViewController.onSearchToolbarShownOrHidden(CONTROLLER_TYPE, true)
+    slideFabViewController.onSearchToolbarShownOrHidden(controllerType, true)
   }
 
   override fun onSearchToolbarHidden() {
-    slideFabViewController.onSearchToolbarShownOrHidden(CONTROLLER_TYPE, false)
+    slideFabViewController.onSearchToolbarShownOrHidden(controllerType, false)
   }
 
   override fun onCatalogStateChanged(catalogData: CatalogData) {
     slideFabViewController.onControllerStateChanged(
-      CONTROLLER_TYPE,
+      controllerType,
       catalogData is CatalogData.Data
     )
   }
@@ -58,8 +58,6 @@ class SlideCatalogController(args: Bundle? = null) : CatalogController(args), Fo
 
   companion object {
     val CONTROLLER_TAG = ControllerTag("SlideCatalogControllerTag")
-
-    private val CONTROLLER_TYPE = ControllerType.Catalog
   }
 
 }

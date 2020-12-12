@@ -11,10 +11,11 @@ import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ThreadController
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.UiElementsControllerCallbacks
 import com.github.k1rakishou.kurobanewnavstacktest.core.CollapsingViewsHolder
+import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadData
 import com.github.k1rakishou.kurobanewnavstacktest.utils.*
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.ViewScreenAttachSide
-import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
 import com.github.k1rakishou.kurobanewnavstacktest.widget.behavior.SplitThreadFabBehavior
+import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.KurobaToolbarType
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.NormalToolbar
 
@@ -24,6 +25,7 @@ class SplitThreadController(
   private lateinit var threadFab: KurobaFloatingActionButton
 
   private val collapsingViewsHolder = CollapsingViewsHolder()
+  private val splitFabViewController by lazy { activityContract().mainActivityOrError().splitFabViewController }
 
   override fun instantiateView(
     inflater: LayoutInflater,
@@ -41,6 +43,8 @@ class SplitThreadController(
 
       super.toolbarContract(normalToolbar)
       super.uiElementsControllerCallbacks(this@SplitThreadController)
+
+      splitFabViewController.initThreadFab(threadFab)
     }
   }
 
@@ -108,6 +112,21 @@ class SplitThreadController(
 
   override fun hideFab(lock: Boolean?) {
     threadFab.hideFab(lock)
+  }
+
+  override fun onSearchToolbarShown() {
+    splitFabViewController.onSearchToolbarShownOrHidden(controllerType, true)
+  }
+
+  override fun onSearchToolbarHidden() {
+    splitFabViewController.onSearchToolbarShownOrHidden(controllerType, false)
+  }
+
+  override fun onThreadStateChanged(threadData: ThreadData) {
+    splitFabViewController.onControllerStateChanged(
+      controllerType,
+      threadData is ThreadData.Data
+    )
   }
 
   override fun getControllerTag(): ControllerTag = CONTROLLER_TAG

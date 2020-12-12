@@ -1,10 +1,10 @@
-package com.github.k1rakishou.kurobanewnavstacktest.viewcontroller
+package com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.fab
 
 import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.utils.BackgroundUtils
 import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.SlideKurobaFloatingActionButton
 
-class SlideFabViewController {
+class SlideFabViewController : FabViewController {
   private lateinit var fab: SlideKurobaFloatingActionButton
   private var state = State()
 
@@ -20,7 +20,7 @@ class SlideFabViewController {
     this.fab = fab
   }
 
-  fun onControllerStateChanged(controllerType: ControllerType, fullyLoaded: Boolean) {
+  override fun onControllerStateChanged(controllerType: ControllerType, fullyLoaded: Boolean) {
     BackgroundUtils.ensureMainThread()
 
     val prev = state.controllerFullyLoaded[controllerType]
@@ -32,7 +32,7 @@ class SlideFabViewController {
     onStateChanged()
   }
 
-  fun onSearchToolbarShownOrHidden(controllerType: ControllerType, shown: Boolean) {
+  override fun onSearchToolbarShownOrHidden(controllerType: ControllerType, shown: Boolean) {
     BackgroundUtils.ensureMainThread()
 
     val prev = state.searchToolbarShown[controllerType]

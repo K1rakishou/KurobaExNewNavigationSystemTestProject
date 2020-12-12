@@ -11,6 +11,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.activity.ImageViewerActivity
 import com.github.k1rakishou.kurobanewnavstacktest.activity.MainActivity
 import com.github.k1rakishou.kurobanewnavstacktest.base.BaseController
+import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.data.*
 import com.github.k1rakishou.kurobanewnavstacktest.epoxy.catalogThreadView
 import com.github.k1rakishou.kurobanewnavstacktest.epoxy.epoxyTextView
@@ -39,6 +40,8 @@ abstract class CatalogController(
 
   protected lateinit var catalogRecyclerView: EpoxyRecyclerView
   protected lateinit var uiElementsControllerCallbacks: UiElementsControllerCallbacks
+
+  protected val controllerType = ControllerType.Catalog
 
   private lateinit var toolbarContract: ToolbarContract
   private var threadNavigationContract: ThreadNavigationContract? = null

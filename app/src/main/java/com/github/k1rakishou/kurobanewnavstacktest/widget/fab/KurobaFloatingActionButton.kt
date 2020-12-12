@@ -41,6 +41,7 @@ open class KurobaFloatingActionButton @JvmOverloads constructor(
     }
 
     fabState.shown = false
+    hide()
   }
 
   open fun showFab(lock: Boolean? = null) {

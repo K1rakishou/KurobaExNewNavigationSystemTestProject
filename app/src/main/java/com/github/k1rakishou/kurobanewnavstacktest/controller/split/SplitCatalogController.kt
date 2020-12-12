@@ -3,12 +3,13 @@ package com.github.k1rakishou.kurobanewnavstacktest.controller.split
 import android.os.Bundle
 import androidx.core.view.doOnPreDraw
 import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
-import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.controller.RecyclerViewProvider
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.CatalogController
+import com.github.k1rakishou.kurobanewnavstacktest.data.CatalogData
 
 class SplitCatalogController(args: Bundle? = null) : CatalogController(args) {
   private lateinit var recyclerViewProvider: RecyclerViewProvider
+  private val splitFabViewController by lazy { activityContract().mainActivityOrError().splitFabViewController }
 
   fun recyclerViewProvider(recyclerViewProvider: RecyclerViewProvider) {
     this.recyclerViewProvider = recyclerViewProvider
@@ -18,7 +19,7 @@ class SplitCatalogController(args: Bundle? = null) : CatalogController(args) {
     super.onControllerShown()
 
     catalogRecyclerView.doOnPreDraw {
-      recyclerViewProvider.provideRecyclerView(catalogRecyclerView, ControllerType.Catalog)
+      recyclerViewProvider.provideRecyclerView(catalogRecyclerView, controllerType)
       uiElementsControllerCallbacks.showFab()
     }
   }
@@ -26,7 +27,22 @@ class SplitCatalogController(args: Bundle? = null) : CatalogController(args) {
   override fun onControllerHidden() {
     super.onControllerHidden()
 
-    recyclerViewProvider.withdrawRecyclerView(catalogRecyclerView, ControllerType.Catalog)
+    recyclerViewProvider.withdrawRecyclerView(catalogRecyclerView, controllerType)
+  }
+
+  override fun onSearchToolbarShown() {
+    splitFabViewController.onSearchToolbarShownOrHidden(controllerType, true)
+  }
+
+  override fun onSearchToolbarHidden() {
+    splitFabViewController.onSearchToolbarShownOrHidden(controllerType, false)
+  }
+
+  override fun onCatalogStateChanged(catalogData: CatalogData) {
+    splitFabViewController.onControllerStateChanged(
+      controllerType,
+      catalogData is CatalogData.Data
+    )
   }
 
   override fun getControllerTag(): ControllerTag = CONTROLLER_TAG
