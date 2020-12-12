@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Bundle
 import android.os.Parcelable
 import android.util.AttributeSet
+import com.github.k1rakishou.kurobanewnavstacktest.utils.ChanSettings
 import com.github.k1rakishou.kurobanewnavstacktest.utils.dp
 import com.google.android.material.R
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -17,6 +18,10 @@ open class KurobaFloatingActionButton @JvmOverloads constructor(
 
   protected val SUPER_VIEW_STATE_KEY = "super_state"
   protected val SLIDE_FAB_STATE = "slide_fab_state"
+
+  init {
+    fabState.locked = ChanSettings.collapsibleViewsAlwaysLocked(context)
+  }
 
   open fun setScale(sx: Float, sy: Float) {
     if (fabState.locked) {
@@ -32,7 +37,7 @@ open class KurobaFloatingActionButton @JvmOverloads constructor(
       return
     }
 
-    if (lock != null) {
+    if (lock != null && canUnlock()) {
       fabState.locked = lock
     }
 
@@ -49,7 +54,7 @@ open class KurobaFloatingActionButton @JvmOverloads constructor(
       return
     }
 
-    if (lock != null) {
+    if (lock != null && canUnlock()) {
       fabState.locked = lock
     }
 
@@ -82,6 +87,10 @@ open class KurobaFloatingActionButton @JvmOverloads constructor(
 
     val superState = state.getParcelable<Parcelable>(SUPER_VIEW_STATE_KEY)
     super.onRestoreInstanceState(superState)
+  }
+
+  protected fun canUnlock(): Boolean {
+    return !ChanSettings.collapsibleViewsAlwaysLocked(context)
   }
 
   companion object {

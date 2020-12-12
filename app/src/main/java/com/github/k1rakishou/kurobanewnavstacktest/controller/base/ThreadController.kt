@@ -91,7 +91,7 @@ abstract class ThreadController(
       return false
     }
 
-    // TODO(KurobaEx): switch toolbar into Uninitialized state 
+    // TODO(KurobaEx): switch toolbar into Uninitialized state
 
     Timber.tag(TAG).d("showThreadEmptyState()")
     this.boundThreadDescriptor = null

@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.os.Parcelable
 import android.util.AttributeSet
 import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
+import com.github.k1rakishou.kurobanewnavstacktest.utils.ChanSettings
 
 class SlideKurobaFloatingActionButton @JvmOverloads constructor(
   context: Context,
@@ -15,6 +16,9 @@ class SlideKurobaFloatingActionButton @JvmOverloads constructor(
 
   init {
     stateArray = createDefaultState()
+
+    stateArray[0].locked = ChanSettings.collapsibleViewsAlwaysLocked(context)
+    stateArray[1].locked = ChanSettings.collapsibleViewsAlwaysLocked(context)
   }
 
   private fun createDefaultState() = arrayOf(
@@ -63,7 +67,7 @@ class SlideKurobaFloatingActionButton @JvmOverloads constructor(
       return
     }
 
-    if (lock != null) {
+    if (lock != null && canUnlock()) {
       state.locked = lock
     }
 
@@ -84,7 +88,7 @@ class SlideKurobaFloatingActionButton @JvmOverloads constructor(
       return
     }
 
-    if (lock != null) {
+    if (lock != null && canUnlock()) {
       state.locked = lock
     }
 
@@ -104,6 +108,7 @@ class SlideKurobaFloatingActionButton @JvmOverloads constructor(
     return bundle
   }
 
+  @Suppress("UNCHECKED_CAST")
   override fun onRestoreInstanceState(state: Parcelable?) {
     if (state !is Bundle) {
       super.onRestoreInstanceState(state)
