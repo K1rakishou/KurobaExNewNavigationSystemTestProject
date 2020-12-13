@@ -193,7 +193,11 @@ abstract class BaseController(
     return applicationContext!! as MyApplication
   }
 
-  protected fun showToast(message: String, duration: Int = Toast.LENGTH_SHORT) {
+  fun showToast(message: String) {
+    cancellableToast.showToast(currentContext(), message, Toast.LENGTH_SHORT)
+  }
+
+  fun showToast(message: String, duration: Int) {
     cancellableToast.showToast(currentContext(), message, duration)
   }
 

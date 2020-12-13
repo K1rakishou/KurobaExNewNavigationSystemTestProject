@@ -2,8 +2,8 @@ package com.github.k1rakishou.kurobanewnavstacktest.controller.slide
 
 import android.os.Bundle
 import androidx.core.view.doOnPreDraw
+import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
-import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.controller.FocusableController
 import com.github.k1rakishou.kurobanewnavstacktest.controller.RecyclerViewProvider
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.CatalogController
@@ -17,18 +17,15 @@ class SlideCatalogController(args: Bundle? = null) : CatalogController(args), Fo
     this.recyclerViewProvider = recyclerViewProvider
   }
 
-  override fun onControllerShown() {
-    super.onControllerShown()
-
-    catalogRecyclerView.doOnPreDraw {
-      recyclerViewProvider.provideRecyclerView(catalogRecyclerView, controllerType)
+  override fun provideRecyclerView(recyclerView: EpoxyRecyclerView) {
+    recyclerView.doOnPreDraw {
+      recyclerViewProvider.provideRecyclerView(recyclerView, controllerType)
       uiElementsControllerCallbacks.showFab()
     }
   }
 
-  override fun onControllerHidden() {
-    super.onControllerHidden()
-    recyclerViewProvider.withdrawRecyclerView(catalogRecyclerView, controllerType)
+  override fun withdrawRecyclerView(recyclerView: EpoxyRecyclerView) {
+    recyclerViewProvider.withdrawRecyclerView(recyclerView, controllerType)
   }
 
   override fun onLostFocus() {
