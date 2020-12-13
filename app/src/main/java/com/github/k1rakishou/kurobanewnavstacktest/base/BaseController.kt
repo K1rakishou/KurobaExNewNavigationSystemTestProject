@@ -32,7 +32,6 @@ abstract class BaseController(
   private var scope = CoroutineScope(job + Dispatchers.Main)
 
   private var attachCompletableDeferred = CompletableDeferred<Unit>(job)
-  private val activeViewModels = mutableMapOf<KClass<*>, BaseViewModel>()
   private val cancellableToast = CancellableToast()
 
   init {
@@ -109,9 +108,6 @@ abstract class BaseController(
 
   final override fun onDestroy() {
     super.onDestroy()
-
-    activeViewModels.forEach { (_, viewModel) -> viewModel.onDestroy() }
-    activeViewModels.clear()
 
     cancellableToast.cancel()
   }
@@ -202,12 +198,7 @@ abstract class BaseController(
   }
 
   protected fun <VM : ViewModel> viewModels(vmClass: KClass<VM>): Lazy<VM> {
-    return lazy {
-      val viewModel = (activity as ComponentActivity).viewModelStorage(vmClass).value
-      activeViewModels[vmClass] = viewModel as BaseViewModel
-
-      return@lazy viewModel
-    }
+    return lazy { (activity as ComponentActivity).viewModelStorage(vmClass).value }
   }
 
   protected fun isDead() = isDestroyed || isBeingDestroyed

@@ -6,9 +6,10 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.doOnPreDraw
 import androidx.recyclerview.widget.RecyclerView
+import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
-import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ThreadController
+import com.github.k1rakishou.kurobanewnavstacktest.feature.thread.ThreadController
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.UiElementsControllerCallbacks
 import com.github.k1rakishou.kurobanewnavstacktest.core.CollapsingViewsHolder
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadData
@@ -49,11 +50,7 @@ class SplitThreadController(
   }
 
   override fun handleBack(): Boolean {
-    if (toolbarContract?.onBackPressed() == true) {
-      return true
-    }
-
-    if (closeOpenedThread()) {
+    if (toolbarContract.onBackPressed()) {
       return true
     }
 
@@ -76,14 +73,6 @@ class SplitThreadController(
   override fun onControllerShown() {
     super.onControllerShown()
 
-    threadRecyclerView.doOnPreDraw {
-      collapsingViewsHolder.attach(
-        recyclerView = threadRecyclerView,
-        collapsableView = toolbarContract!!.collapsableView(),
-        viewAttachSide = ViewScreenAttachSide.Top
-      )
-    }
-
     threadFab.doOnPreDraw {
       threadFab.getBehaviorExt<SplitThreadFabBehavior>()?.apply {
         reset()
@@ -92,10 +81,18 @@ class SplitThreadController(
     }
   }
 
-  override fun onControllerHidden() {
-    super.onControllerHidden()
+  override fun provideRecyclerView(recyclerView: EpoxyRecyclerView) {
+    recyclerView.doOnPreDraw {
+      collapsingViewsHolder.attach(
+        recyclerView = recyclerView,
+        collapsableView = toolbarContract.collapsableView(),
+        viewAttachSide = ViewScreenAttachSide.Top
+      )
+    }
+  }
 
-    collapsingViewsHolder.detach(threadRecyclerView, toolbarContract!!.collapsableView())
+  override fun withdrawRecyclerView(recyclerView: EpoxyRecyclerView) {
+    collapsingViewsHolder.detach(recyclerView, toolbarContract.collapsableView())
   }
 
   override fun lockUnlockCollapsableViews(

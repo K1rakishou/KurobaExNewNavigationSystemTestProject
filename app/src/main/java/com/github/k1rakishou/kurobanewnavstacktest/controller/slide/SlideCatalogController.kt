@@ -6,7 +6,7 @@ import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
 import com.github.k1rakishou.kurobanewnavstacktest.controller.FocusableController
 import com.github.k1rakishou.kurobanewnavstacktest.controller.RecyclerViewProvider
-import com.github.k1rakishou.kurobanewnavstacktest.controller.base.CatalogController
+import com.github.k1rakishou.kurobanewnavstacktest.feature.catalog.CatalogController
 import com.github.k1rakishou.kurobanewnavstacktest.data.CatalogData
 
 class SlideCatalogController(args: Bundle? = null) : CatalogController(args), FocusableController {
@@ -18,10 +18,8 @@ class SlideCatalogController(args: Bundle? = null) : CatalogController(args), Fo
   }
 
   override fun provideRecyclerView(recyclerView: EpoxyRecyclerView) {
-    recyclerView.doOnPreDraw {
-      recyclerViewProvider.provideRecyclerView(recyclerView, controllerType)
-      uiElementsControllerCallbacks.showFab()
-    }
+    recyclerViewProvider.provideRecyclerView(recyclerView, controllerType)
+    uiElementsControllerCallbacks.showFab()
   }
 
   override fun withdrawRecyclerView(recyclerView: EpoxyRecyclerView) {

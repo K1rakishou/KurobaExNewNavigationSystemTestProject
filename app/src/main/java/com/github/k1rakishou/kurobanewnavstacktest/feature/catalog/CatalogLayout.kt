@@ -1,10 +1,11 @@
-package com.github.k1rakishou.kurobanewnavstacktest.feature
+package com.github.k1rakishou.kurobanewnavstacktest.feature.catalog
 
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.AttributeSet
-import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.doOnPreDraw
 import androidx.core.view.updatePadding
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.kurobanewnavstacktest.R
@@ -34,19 +35,18 @@ class CatalogLayout @JvmOverloads constructor(
   context: Context,
   attributeSet: AttributeSet? = null,
   attrDefStyle: Int = 0
-) : CoordinatorLayout(context, attributeSet, attrDefStyle) {
+) : ConstraintLayout(context, attributeSet, attrDefStyle) {
   private val catalogRecyclerView: EpoxyRecyclerView
   private val chanRepository = ChanRepository
   private val kurobaCoroutineScope = KurobaCoroutineScope()
 
+  private var job: Job? = null
   private var boundBoardDescriptor: BoardDescriptor? = null
   private var toolbarContract: ToolbarContract? = null
   private var catalogControllerCallbacks: CatalogControllerCallbacks? = null
   private var uiElementsControllerCallbacks: UiElementsControllerCallbacks? = null
-  private var job: Job? = null
-
-  private lateinit var testHelpers: TestHelpers
-  private lateinit var catalogViewModel: CatalogViewModel
+  private var testHelpers: TestHelpers? = null
+  private var catalogViewModel: CatalogViewModel? = null
 
   init {
     inflate(context, R.layout.controller_catalog, this).apply {
@@ -54,7 +54,7 @@ class CatalogLayout @JvmOverloads constructor(
     }
   }
 
-  fun onCreated(
+  fun onCreate(
     toolbarContract: ToolbarContract,
     uiElementsControllerCallbacks: UiElementsControllerCallbacks,
     catalogControllerCallbacks: CatalogControllerCallbacks,
@@ -72,9 +72,11 @@ class CatalogLayout @JvmOverloads constructor(
         .collect { toolbarAction -> onToolbarAction(toolbarAction) }
     }
 
-    catalogViewModel.onCreated()
     applyInsetsForRecyclerView()
-    catalogControllerCallbacks.provideRecyclerView(catalogRecyclerView)
+
+    catalogRecyclerView.doOnPreDraw {
+      catalogControllerCallbacks.provideRecyclerView(catalogRecyclerView)
+    }
 
     // TODO: remove me!!! vvv
     val boardDescriptor = BoardDescriptor(SiteDescriptor("4chan.org"), "g")
@@ -82,16 +84,27 @@ class CatalogLayout @JvmOverloads constructor(
     // TODO: remove me!!! ^^^
   }
 
-  fun onDestroyed() {
+  fun onDestroy() {
+    // TODO(KurobaEx): close catalog if boundBoardDescriptor != null
     catalogControllerCallbacks?.withdrawRecyclerView(catalogRecyclerView)
 
+    boundBoardDescriptor = null
     toolbarContract = null
     catalogControllerCallbacks = null
+    uiElementsControllerCallbacks = null
+    testHelpers = null
+    catalogViewModel = null
 
     catalogRecyclerView.swapAdapter(
       adapter = null,
       removeAndRecycleExistingViews = true
     )
+
+    kurobaCoroutineScope.cancelChildren()
+  }
+
+  fun onBackPressed(): Boolean {
+    return false
   }
 
   private fun onToolbarAction(toolbarAction: ToolbarAction) {
@@ -139,6 +152,7 @@ class CatalogLayout @JvmOverloads constructor(
   }
 
   fun openBoard(boardDescriptor: BoardDescriptor) {
+    Timber.tag(TAG).d("openBoard($boardDescriptor)")
     this.boundBoardDescriptor = boardDescriptor
 
     job?.cancel()
@@ -213,7 +227,7 @@ class CatalogLayout @JvmOverloads constructor(
       toolbarContract?.setSubTitle(context.getString(R.string.lorem_ipsum))
 
       addOneshotModelBuildListener {
-        testHelpers.catalogLoadedLatch.countDown()
+        testHelpers?.catalogLoadedLatch?.countDown()
       }
 
       val error = catalogData.error

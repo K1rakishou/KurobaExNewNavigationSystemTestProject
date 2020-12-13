@@ -1,12 +1,12 @@
 package com.github.k1rakishou.kurobanewnavstacktest.controller.slide
 
 import android.os.Bundle
-import androidx.core.view.doOnPreDraw
+import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
 import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.controller.FocusableController
 import com.github.k1rakishou.kurobanewnavstacktest.controller.RecyclerViewProvider
-import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ThreadController
+import com.github.k1rakishou.kurobanewnavstacktest.feature.thread.ThreadController
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadData
 
 class SlideThreadController(
@@ -20,18 +20,12 @@ class SlideThreadController(
     this.recyclerViewProvider = recyclerViewProvider
   }
 
-  override fun onControllerShown() {
-    super.onControllerShown()
-
-    threadRecyclerView.doOnPreDraw {
-      recyclerViewProvider.provideRecyclerView(threadRecyclerView, CONTROLLER_TYPE)
-    }
+  override fun provideRecyclerView(recyclerView: EpoxyRecyclerView) {
+    recyclerViewProvider.provideRecyclerView(recyclerView, CONTROLLER_TYPE)
   }
 
-  override fun onControllerHidden() {
-    super.onControllerHidden()
-
-    recyclerViewProvider.withdrawRecyclerView(threadRecyclerView, CONTROLLER_TYPE)
+  override fun withdrawRecyclerView(recyclerView: EpoxyRecyclerView) {
+    recyclerViewProvider.withdrawRecyclerView(recyclerView, CONTROLLER_TYPE)
   }
 
   override fun onLostFocus() {
