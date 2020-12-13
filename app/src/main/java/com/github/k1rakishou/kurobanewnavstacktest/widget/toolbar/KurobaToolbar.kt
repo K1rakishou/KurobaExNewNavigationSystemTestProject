@@ -75,14 +75,22 @@ class KurobaToolbar @JvmOverloads constructor(
       Timber.tag(TAG).d("Restoring from previous state kurobaToolbarType=$kurobaToolbarType, " +
         "prevPrevToolbarStateClass=$prevPrevToolbarStateClass")
 
-      pushNewToolbarStateClass(kurobaToolbarType, prevPrevToolbarStateClass)
+      pushNewToolbarStateClassInternal(
+        kurobaToolbarType = kurobaToolbarType,
+        toolbarStateClass = prevPrevToolbarStateClass,
+        isInitialization = true
+      )
       return
     }
 
     Timber.tag(TAG).d("Fresh initialization kurobaToolbarType=$kurobaToolbarType, " +
       "prevPrevToolbarStateClass=$prevPrevToolbarStateClass")
 
-    pushNewToolbarStateClass(kurobaToolbarType, ToolbarStateClass.Uninitialized)
+    pushNewToolbarStateClassInternal(
+      kurobaToolbarType = kurobaToolbarType,
+      toolbarStateClass = ToolbarStateClass.Uninitialized,
+      isInitialization = true
+    )
   }
 
   @VisibleForTesting
@@ -139,6 +147,18 @@ class KurobaToolbar @JvmOverloads constructor(
     kurobaToolbarType: KurobaToolbarType,
     toolbarStateClass: ToolbarStateClass
   ) {
+    pushNewToolbarStateClassInternal(
+      kurobaToolbarType = kurobaToolbarType,
+      toolbarStateClass = toolbarStateClass,
+      isInitialization = false
+    )
+  }
+
+  private fun pushNewToolbarStateClassInternal(
+    kurobaToolbarType: KurobaToolbarType,
+    toolbarStateClass: ToolbarStateClass,
+    isInitialization: Boolean
+  ) {
     BackgroundUtils.ensureMainThread()
 
     check(this.kurobaToolbarType == kurobaToolbarType) {
@@ -155,7 +175,9 @@ class KurobaToolbar @JvmOverloads constructor(
         return
       }
 
-      ensureViewMatchesState(toolbarStateClass)
+      if (!isInitialization) {
+        ensureViewMatchesState(toolbarStateClass)
+      }
     }
 
     onToolbarStateChanged(

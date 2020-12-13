@@ -16,8 +16,7 @@ open class KurobaFloatingActionButton @JvmOverloads constructor(
 ) : FloatingActionButton(context, attributeSet, defAttrStyle) {
   private val fabState = FabState()
 
-  protected val SUPER_VIEW_STATE_KEY = "super_state"
-  protected val SLIDE_FAB_STATE = "slide_fab_state"
+
 
   init {
     fabState.locked = ChanSettings.collapsibleViewsAlwaysLocked(context)
@@ -68,8 +67,8 @@ open class KurobaFloatingActionButton @JvmOverloads constructor(
 
   override fun onSaveInstanceState(): Parcelable {
     val bundle = Bundle()
-    bundle.putParcelable(SUPER_VIEW_STATE_KEY, super.onSaveInstanceState())
-    bundle.putParcelable(SLIDE_FAB_STATE, fabState)
+    bundle.putParcelable(SPLIT_SUPER_VIEW_STATE_KEY, super.onSaveInstanceState())
+    bundle.putParcelable(SPLIT_FAB_STATE, fabState)
 
     return bundle
   }
@@ -80,12 +79,16 @@ open class KurobaFloatingActionButton @JvmOverloads constructor(
       return
     }
 
-    val prevFabState = state.getParcelable<FabState>(SLIDE_FAB_STATE)
+    val prevFabState = state.getParcelable<FabState>(SPLIT_FAB_STATE)
     if (prevFabState != null) {
-      fabState.locked = prevFabState.locked
+      if (fabState.shown) {
+        showFab(fabState.locked)
+      } else {
+        hideFab(fabState.locked)
+      }
     }
 
-    val superState = state.getParcelable<Parcelable>(SUPER_VIEW_STATE_KEY)
+    val superState = state.getParcelable<Parcelable>(SPLIT_SUPER_VIEW_STATE_KEY)
     super.onRestoreInstanceState(superState)
   }
 
@@ -95,6 +98,9 @@ open class KurobaFloatingActionButton @JvmOverloads constructor(
 
   companion object {
     val DEFAULT_MARGIN_RIGHT = 16.dp
+
+    private val SPLIT_SUPER_VIEW_STATE_KEY = "split_super_state"
+    private val SPLIT_FAB_STATE = "split_fab_state"
   }
 
 }

@@ -42,7 +42,12 @@ class SlideToolbar @JvmOverloads constructor(
       v.updateLayoutParams<FrameLayout.LayoutParams> {
         height = toolbarHeight + insets.systemWindowInsetTop
       }
-      v.updatePadding(top = insets.systemWindowInsetTop)
+
+      v.updatePadding(
+        top = insets.systemWindowInsetTop,
+        left = insets.systemWindowInsetLeft,
+        right = insets.systemWindowInsetRight
+      )
 
       return@setOnApplyWindowInsetsListenerAndDoRequest insets
     }

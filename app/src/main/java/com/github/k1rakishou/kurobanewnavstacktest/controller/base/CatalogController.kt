@@ -43,7 +43,7 @@ abstract class CatalogController(
 
   protected val controllerType = ControllerType.Catalog
 
-  private lateinit var toolbarContract: ToolbarContract
+  private var toolbarContract: ToolbarContract? = null
   private var threadNavigationContract: ThreadNavigationContract? = null
   private var boundBoardDescriptor: BoardDescriptor? = null
   private var job: Job? = null
@@ -58,11 +58,6 @@ abstract class CatalogController(
 
   fun toolbarContract(toolbarContract: ToolbarContract) {
     this.toolbarContract = toolbarContract
-
-    launch {
-      toolbarContract.listenForToolbarActions(KurobaToolbarType.Catalog)
-        .collect { toolbarAction -> onToolbarAction(toolbarAction) }
-    }
   }
 
   final override fun instantiateView(
@@ -77,6 +72,12 @@ abstract class CatalogController(
 
   override fun onControllerCreated(savedViewState: Bundle?) {
     super.onControllerCreated(savedViewState)
+    checkNotNull(toolbarContract) { "toolbarContract is null" }
+
+    launch {
+      toolbarContract!!.listenForToolbarActions(KurobaToolbarType.Catalog)
+        .collect { toolbarAction -> onToolbarAction(toolbarAction) }
+    }
 
     applyInsetsForRecyclerView()
 
@@ -194,7 +195,7 @@ abstract class CatalogController(
 
     catalogRecyclerView.withModels {
       addOneshotModelBuildListener {
-        toolbarContract.showDefaultToolbar(KurobaToolbarType.Catalog)
+        toolbarContract!!.showDefaultToolbar(KurobaToolbarType.Catalog)
         onCatalogStateChanged(catalogData)
       }
 
@@ -225,8 +226,8 @@ abstract class CatalogController(
 
       catalogData as CatalogData.Data
 
-      toolbarContract.setTitle(KurobaToolbarType.Catalog, catalogData.toCatalogTitleString())
-      toolbarContract.setSubTitle(currentContext().getString(R.string.lorem_ipsum))
+      toolbarContract!!.setTitle(KurobaToolbarType.Catalog, catalogData.toCatalogTitleString())
+      toolbarContract!!.setSubTitle(currentContext().getString(R.string.lorem_ipsum))
 
       addOneshotModelBuildListener {
         testHelpers.catalogLoadedLatch.countDown()

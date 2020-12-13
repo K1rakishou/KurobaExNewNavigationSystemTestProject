@@ -16,24 +16,15 @@ class NormalToolbar @JvmOverloads constructor(
   attrDefStyle: Int = 0
 ) : FrameLayout(context, attributeSet, attrDefStyle), ToolbarContract {
   private val actualToolbar: KurobaToolbar
-  private lateinit var toolbarType: KurobaToolbarType
   private var initialized = false
+  private lateinit var toolbarType: KurobaToolbarType
+  private val normalToolbarRoot: FrameLayout
 
   init {
     inflate(context, R.layout.widget_normal_toolbar, this)
-    val toolbarHeight = context.resources.getDimension(R.dimen.toolbar_height).toInt()
 
-    val normalToolbarRoot = findViewById<FrameLayout>(R.id.normal_toolbar_root)
+    normalToolbarRoot = findViewById<FrameLayout>(R.id.normal_toolbar_root)
     actualToolbar = findViewById(R.id.normal_toolbar)
-
-    normalToolbarRoot.setOnApplyWindowInsetsListener { v, insets ->
-      v.updateLayoutParams<FrameLayout.LayoutParams> {
-        height = toolbarHeight + insets.systemWindowInsetTop
-      }
-      v.updatePadding(top = insets.systemWindowInsetTop)
-
-      return@setOnApplyWindowInsetsListener insets
-    }
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -46,6 +37,31 @@ class NormalToolbar @JvmOverloads constructor(
     val kurobaToolbarType = when (toolbarType) {
       KurobaToolbarType.Catalog -> KurobaToolbarType.Catalog
       KurobaToolbarType.Thread -> KurobaToolbarType.Thread
+    }
+
+    val toolbarHeight = context.resources.getDimension(R.dimen.toolbar_height).toInt()
+
+    normalToolbarRoot.setOnApplyWindowInsetsListener { v, insets ->
+      v.updateLayoutParams<FrameLayout.LayoutParams> {
+        height = toolbarHeight + insets.systemWindowInsetTop
+      }
+
+      var leftPadding = insets.systemWindowInsetLeft
+      var rightPadding = insets.systemWindowInsetRight
+
+      if (kurobaToolbarType == KurobaToolbarType.Catalog) {
+        rightPadding = 0
+      } else {
+        leftPadding = 0
+      }
+
+      v.updatePadding(
+        top = insets.systemWindowInsetTop,
+        left = leftPadding,
+        right = rightPadding
+      )
+
+      return@setOnApplyWindowInsetsListener insets
     }
 
     actualToolbar.init(kurobaToolbarType)

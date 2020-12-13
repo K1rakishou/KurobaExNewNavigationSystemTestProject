@@ -49,7 +49,7 @@ class SplitThreadController(
   }
 
   override fun handleBack(): Boolean {
-    if (toolbarContract.onBackPressed()) {
+    if (toolbarContract?.onBackPressed() == true) {
       return true
     }
 
@@ -79,7 +79,7 @@ class SplitThreadController(
     threadRecyclerView.doOnPreDraw {
       collapsingViewsHolder.attach(
         recyclerView = threadRecyclerView,
-        collapsableView = toolbarContract.collapsableView(),
+        collapsableView = toolbarContract!!.collapsableView(),
         viewAttachSide = ViewScreenAttachSide.Top
       )
     }
@@ -95,7 +95,7 @@ class SplitThreadController(
   override fun onControllerHidden() {
     super.onControllerHidden()
 
-    collapsingViewsHolder.detach(threadRecyclerView, toolbarContract.collapsableView())
+    collapsingViewsHolder.detach(threadRecyclerView, toolbarContract!!.collapsableView())
   }
 
   override fun lockUnlockCollapsableViews(

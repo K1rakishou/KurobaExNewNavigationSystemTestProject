@@ -39,12 +39,13 @@ abstract class ThreadController(
   private val chanRepository = ChanRepository
 
   protected lateinit var threadRecyclerView: EpoxyRecyclerView
-  protected lateinit var toolbarContract: ToolbarContract
   protected lateinit var uiElementsControllerCallbacks: UiElementsControllerCallbacks
 
   protected val controllerType = ControllerType.Thread
 
   protected var boundThreadDescriptor: ThreadDescriptor? = null
+  protected var toolbarContract: ToolbarContract? = null
+
   private var job: Job? = null
 
   fun uiElementsControllerCallbacks(uiElementsControllerCallbacks: UiElementsControllerCallbacks) {
@@ -53,11 +54,6 @@ abstract class ThreadController(
 
   fun toolbarContract(toolbarContract: ToolbarContract) {
     this.toolbarContract = toolbarContract
-
-    launch {
-      toolbarContract.listenForToolbarActions(KurobaToolbarType.Thread)
-        .collect { toolbarAction -> onToolbarAction(toolbarAction) }
-    }
   }
 
   override fun instantiateView(
@@ -68,7 +64,8 @@ abstract class ThreadController(
     return inflater.inflateView(R.layout.controller_thread, container) {
       threadRecyclerView = findViewById(R.id.controller_thread_epoxy_recycler_view)
 
-      findViewById<KurobaFloatingActionButton>(R.id.split_controller_thread_fab)!!.visibility = View.GONE
+      findViewById<KurobaFloatingActionButton>(R.id.split_controller_thread_fab)
+        ?.let { fab -> fab.visibility = View.GONE }
     }
   }
 
@@ -76,6 +73,12 @@ abstract class ThreadController(
     super.onControllerCreated(savedViewState)
 
     launch { reloadThread() }
+
+    launch {
+      toolbarContract!!.listenForToolbarActions(KurobaToolbarType.Thread)
+        .collect { toolbarAction -> onToolbarAction(toolbarAction) }
+    }
+
     applyInsetsForRecyclerView()
   }
 
@@ -218,7 +221,7 @@ abstract class ThreadController(
       }
 
       addOneshotModelBuildListener {
-        toolbarContract.showDefaultToolbar(KurobaToolbarType.Thread)
+        toolbarContract!!.showDefaultToolbar(KurobaToolbarType.Thread)
       }
 
       val noPosts = threadData is ThreadData.Data && threadData.threadPosts.isEmpty()
@@ -232,7 +235,7 @@ abstract class ThreadController(
       }
 
       threadData as ThreadData.Data
-      toolbarContract.setTitle(KurobaToolbarType.Thread, threadData.toThreadTitleString())
+      toolbarContract!!.setTitle(KurobaToolbarType.Thread, threadData.toThreadTitleString())
 
       // TODO(KurobaEx):
 //          scrollbarMarksChildDecoration.setPosts(threadData.thread)

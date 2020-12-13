@@ -102,7 +102,7 @@ class SlideKurobaFloatingActionButton @JvmOverloads constructor(
 
   override fun onSaveInstanceState(): Parcelable {
     val bundle = Bundle()
-    bundle.putParcelable(SUPER_VIEW_STATE_KEY, super.onSaveInstanceState())
+    bundle.putParcelable(SLIDE_SUPER_VIEW_STATE_KEY, super.onSaveInstanceState())
     bundle.putParcelableArray(SLIDE_FAB_STATE, stateArray)
 
     return bundle
@@ -115,10 +115,20 @@ class SlideKurobaFloatingActionButton @JvmOverloads constructor(
       return
     }
 
-    val superState = state.getParcelable<Parcelable>(SUPER_VIEW_STATE_KEY)
+    val superState = state.getParcelable<Parcelable>(SLIDE_SUPER_VIEW_STATE_KEY)
 
-    stateArray = state.getParcelableArray(SLIDE_FAB_STATE)
+    val oldState = state.getParcelableArray(SLIDE_FAB_STATE)
       as? Array<FabState>
+
+    oldState?.forEach { fabState ->
+      if (fabState.shown) {
+        showFab(fabState.locked)
+      } else {
+        hideFab(fabState.locked)
+      }
+    }
+
+    stateArray = oldState
       ?: createDefaultState()
 
     super.onRestoreInstanceState(superState)
@@ -131,4 +141,8 @@ class SlideKurobaFloatingActionButton @JvmOverloads constructor(
     }
   }
 
+  companion object {
+    private val SLIDE_SUPER_VIEW_STATE_KEY = "slide_super_state"
+    private val SLIDE_FAB_STATE = "slide_fab_state"
+  }
 }
