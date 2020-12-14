@@ -15,15 +15,22 @@ open class KurobaFloatingActionButton @JvmOverloads constructor(
   defAttrStyle: Int = R.attr.floatingActionButtonStyle
 ) : FloatingActionButton(context, attributeSet, defAttrStyle) {
   private val fabState = FabState()
-
-
+  protected var initialized = false
 
   init {
     fabState.locked = ChanSettings.collapsibleViewsAlwaysLocked(context)
   }
 
+  fun initialized() {
+    this.initialized = true
+  }
+
   open fun setScale(sx: Float, sy: Float) {
     if (fabState.locked) {
+      return
+    }
+
+    if (!initialized) {
       return
     }
 
@@ -40,7 +47,7 @@ open class KurobaFloatingActionButton @JvmOverloads constructor(
       fabState.locked = lock
     }
 
-    if (isOrWillBeHidden) {
+    if (!initialized) {
       return
     }
 
@@ -57,7 +64,7 @@ open class KurobaFloatingActionButton @JvmOverloads constructor(
       fabState.locked = lock
     }
 
-    if (isOrWillBeShown) {
+    if (!initialized) {
       return
     }
 

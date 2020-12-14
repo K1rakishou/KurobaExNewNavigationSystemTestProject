@@ -54,8 +54,15 @@ class SplitUiElementsController(
 
       catalogFab = findViewById(R.id.split_controller_fab)
       catalogFab.setBehaviorExt(CatalogFabBehavior(context, null))
+      catalogFab.hide()
 
       splitFabViewController.initCatalogFab(catalogFab)
+
+      bottomPanel.onBottomPanelInitialized {
+        splitFabViewController.onBottomPanelInitialized(ControllerType.Catalog)
+        catalogFab.initialized()
+      }
+      bottomPanel.attachFab(catalogFab)
     }
   }
 

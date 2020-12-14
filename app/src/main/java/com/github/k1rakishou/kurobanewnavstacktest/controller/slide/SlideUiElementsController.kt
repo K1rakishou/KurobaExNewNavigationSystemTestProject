@@ -49,6 +49,7 @@ class SlideUiElementsController(
       bottomPanel = findViewById(R.id.slide_controller_bottom_panel)
       toolbarContainer = findViewById(R.id.slide_controller_toolbar_container)
       slideControllerFab = findViewById(R.id.slide_controller_fab)
+      slideControllerFab.hide()
 
       slideModeFabViewController = SlideModeFabViewController(
         slideControllerFab,
@@ -56,6 +57,13 @@ class SlideUiElementsController(
       )
 
       slideFabViewController.init(slideControllerFab)
+
+      bottomPanel.onBottomPanelInitialized {
+        // Doesn't matter what we use here since Slide layout has only one bottom panel
+        slideFabViewController.onBottomPanelInitialized(ControllerType.Catalog)
+        slideControllerFab.initialized()
+      }
+      bottomPanel.attachFab(slideControllerFab)
     }
   }
 

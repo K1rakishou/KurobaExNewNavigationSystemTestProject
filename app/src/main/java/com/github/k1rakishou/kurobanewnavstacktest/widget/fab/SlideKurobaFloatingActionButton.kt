@@ -33,6 +33,10 @@ class SlideKurobaFloatingActionButton @JvmOverloads constructor(
       return
     }
 
+    if (!initialized) {
+      return
+    }
+
     val state = getState(focusedControllerType)
     if (state.shown) {
       showFab()
@@ -54,6 +58,10 @@ class SlideKurobaFloatingActionButton @JvmOverloads constructor(
       return
     }
 
+    if (!initialized) {
+      return
+    }
+
     scaleX = sx
     scaleY = sy
   }
@@ -71,7 +79,7 @@ class SlideKurobaFloatingActionButton @JvmOverloads constructor(
       state.locked = lock
     }
 
-    if (isOrWillBeHidden) {
+    if (!initialized) {
       return
     }
 
@@ -92,7 +100,7 @@ class SlideKurobaFloatingActionButton @JvmOverloads constructor(
       state.locked = lock
     }
 
-    if (isOrWillBeShown) {
+    if (!initialized) {
       return
     }
 

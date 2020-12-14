@@ -20,6 +20,17 @@ class SlideFabViewController : FabViewController {
     this.fab = fab
   }
 
+  override fun onBottomPanelInitialized(controllerType: ControllerType) {
+    BackgroundUtils.ensureMainThread()
+
+    if (state.bottomPanelInitialized) {
+      return
+    }
+
+    state.bottomPanelInitialized = true
+    onStateChanged()
+  }
+
   override fun onControllerStateChanged(controllerType: ControllerType, fullyLoaded: Boolean) {
     BackgroundUtils.ensureMainThread()
 
@@ -61,6 +72,10 @@ class SlideFabViewController : FabViewController {
     val currentControllerType = state.currentControllerType
       ?: return
 
+    if (!state.bottomPanelInitialized) {
+      return
+    }
+
     val searchToolbarShown = state.searchToolbarShown[currentControllerType]
       ?: false
 
@@ -75,7 +90,8 @@ class SlideFabViewController : FabViewController {
   class State(
     var searchToolbarShown: MutableMap<ControllerType, Boolean> = mutableMapOf(),
     var controllerFullyLoaded: MutableMap<ControllerType, Boolean> = mutableMapOf(),
-    var currentControllerType: ControllerType? = null
+    var currentControllerType: ControllerType? = null,
+    var bottomPanelInitialized: Boolean = false
   )
 
 }

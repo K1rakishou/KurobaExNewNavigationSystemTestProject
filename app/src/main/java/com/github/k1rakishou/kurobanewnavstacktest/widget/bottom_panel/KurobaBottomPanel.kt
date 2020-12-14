@@ -17,6 +17,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.controller.base.CollapsableVi
 import com.github.k1rakishou.kurobanewnavstacktest.utils.awaitLayout
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndDoRequest
 import com.github.k1rakishou.kurobanewnavstacktest.widget.TouchBlockingFrameLayout
+import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
@@ -32,6 +33,9 @@ class KurobaBottomPanel @JvmOverloads constructor(
 
   private var state = State.Uninitialized
   private var animatorSet: AnimatorSet? = null
+  private val bottomPanelInitializationListener = mutableListOf<() -> Unit>()
+
+  private val awaitableFab = CompletableDeferred<KurobaFloatingActionButton>()
 
   init {
     inflate(context, R.layout.kuroba_bottom_panel, this).apply {
@@ -57,6 +61,18 @@ class KurobaBottomPanel @JvmOverloads constructor(
 
   override fun translationY(newTranslationY: Float) {
     translationY = newTranslationY
+
+    if (height <= 0) {
+      return
+    }
+
+    if (awaitableFab.isCompleted && state == State.BottomNavPanel) {
+      val scale = 1f - (newTranslationY / height)
+      val fab = awaitableFab.getCompleted()
+
+      fab.setScale(scale, scale)
+      fab.translationY = -height.toFloat()
+    }
   }
 
   override fun height(): Float {
@@ -69,10 +85,28 @@ class KurobaBottomPanel @JvmOverloads constructor(
 
   override fun onFinishInflate() {
     super.onFinishInflate()
-    scope.launch { switchInto(State.BottomNavPanel) }
+    scope.launch { initState(State.BottomNavPanel) }
+  }
+
+  fun attachFab(fab: KurobaFloatingActionButton) {
+    check(!awaitableFab.isCompleted) { "Already attached" }
+    check(fab.isOrWillBeHidden) { "FAB must be hidden" }
+
+    this.awaitableFab.complete(fab)
+  }
+
+  fun onBottomPanelInitialized(func: () -> Unit) {
+    if (state != State.Uninitialized) {
+      func()
+      return
+    }
+
+    bottomPanelInitializationListener += func
   }
 
   suspend fun switchInto(newState: State) {
+    check(state != State.Uninitialized) { "Not initialized yet" }
+
     if (state == newState) {
       return
     }
@@ -90,10 +124,46 @@ class KurobaBottomPanel @JvmOverloads constructor(
     updateContainerPaddings(container, insetBottom)
 
     y = (container.height + container.paddingBottom).toFloat()
-    revealAnimation(this, translationY, 0f)
+
+    val attachedFab = awaitableFab.getCompleted()
+    if (newState == State.BottomNavPanel) {
+      attachedFab.showFab()
+    } else {
+      attachedFab.hideFab()
+    }
   }
 
-  private suspend fun revealAnimation(view: View, fromY: Float, toY: Float) {
+  private suspend fun initState(initialState: State) {
+    check(state == State.Uninitialized) { "Already initialized?!" }
+    container.removeAllViews()
+
+    val kurobaBottomNavPanel = KurobaBottomNavPanel(context)
+    container.addView(kurobaBottomNavPanel)
+    kurobaBottomNavPanel.select(KurobaBottomNavPanel.SelectedItem.Browse)
+
+    container.requestLayout()
+    container.awaitLayout()
+
+    val insetBottom = insetBottomDeferred.await()
+    val attachedFab = awaitableFab.await()
+
+    updateContainerPaddings(container, insetBottom)
+    val fullHeight = (container.height + container.paddingBottom).toFloat()
+    y = fullHeight
+
+    attachedFab.setScale(0f, 0f)
+    attachedFab.visibility = View.VISIBLE
+    attachedFab.translationY = -fullHeight
+
+    revealAnimation(this, translationY, 0f)
+
+    state = initialState
+
+    bottomPanelInitializationListener.forEach { func -> func() }
+    bottomPanelInitializationListener.clear()
+  }
+
+  private suspend fun revealAnimation(panel: KurobaBottomPanel, fromY: Float, toY: Float) {
     if (animatorSet != null) {
       animatorSet?.end()
       animatorSet = null
@@ -101,11 +171,11 @@ class KurobaBottomPanel @JvmOverloads constructor(
 
     suspendCancellableCoroutine<Unit> { continuation ->
       val translationAnimation = ValueAnimator.ofFloat(fromY, toY).apply {
-        addUpdateListener { animator -> view.translationY = animator.animatedValue as Float }
+        addUpdateListener { animator -> panel.translationY(animator.animatedValue as Float) }
       }
 
       val alphaAnimation = ValueAnimator.ofFloat(0f, 1f).apply {
-        addUpdateListener { animator -> view.alpha = animator.animatedValue as Float }
+        addUpdateListener { animator -> panel.alpha = animator.animatedValue as Float }
       }
 
       animatorSet = AnimatorSet().apply {
@@ -113,8 +183,8 @@ class KurobaBottomPanel @JvmOverloads constructor(
         duration = 250
         interpolator = INTERPOLATOR
         doOnStart {
-          view.visibility = View.VISIBLE
-          view.alpha = 0f
+          panel.visibility = View.VISIBLE
+          panel.alpha = 0f
         }
         doOnCancel { continuation.resume(Unit) }
         doOnEnd { continuation.resume(Unit) }

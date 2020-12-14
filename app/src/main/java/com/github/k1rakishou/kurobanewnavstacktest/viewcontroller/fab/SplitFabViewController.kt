@@ -17,6 +17,18 @@ class SplitFabViewController : FabViewController {
     this.threadFab = fab
   }
 
+  override fun onBottomPanelInitialized(controllerType: ControllerType) {
+    BackgroundUtils.ensureMainThread()
+
+    val prev = state.bottomPanelInitialized[controllerType] ?: false
+    if (prev) {
+      return
+    }
+
+    state.bottomPanelInitialized[controllerType] = true
+    onStateChanged(controllerType)
+  }
+
   override fun onControllerStateChanged(controllerType: ControllerType, fullyLoaded: Boolean) {
     BackgroundUtils.ensureMainThread()
 
@@ -44,13 +56,20 @@ class SplitFabViewController : FabViewController {
   private fun onStateChanged(controllerType: ControllerType) {
     BackgroundUtils.ensureMainThread()
 
-    val searchToolbarShown = state.searchToolbarShown[controllerType]
+    val bottomPanelInitialized = state.bottomPanelInitialized[controllerType]
       ?: false
+
+    if (!bottomPanelInitialized) {
+      return
+    }
 
     val fab = when (controllerType) {
       ControllerType.Catalog -> catalogFab
       ControllerType.Thread -> threadFab
     }
+
+    val searchToolbarShown = state.searchToolbarShown[controllerType]
+      ?: false
 
     if (searchToolbarShown) {
       fab.hideFab(lock = true)
@@ -61,7 +80,8 @@ class SplitFabViewController : FabViewController {
   }
 
   class State(
-    var searchToolbarShown: MutableMap<ControllerType, Boolean> = mutableMapOf(),
-    var controllerFullyLoaded: MutableMap<ControllerType, Boolean> = mutableMapOf()
+    val searchToolbarShown: MutableMap<ControllerType, Boolean> = mutableMapOf(),
+    val controllerFullyLoaded: MutableMap<ControllerType, Boolean> = mutableMapOf(),
+    val bottomPanelInitialized: MutableMap<ControllerType, Boolean> = mutableMapOf()
   )
 }
