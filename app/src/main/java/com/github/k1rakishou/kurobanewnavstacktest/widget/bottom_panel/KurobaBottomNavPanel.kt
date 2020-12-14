@@ -1,20 +1,21 @@
 package com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Parcel
 import android.os.Parcelable
-import android.util.AttributeSet
+import android.view.View
 import android.widget.LinearLayout
 import androidx.customview.view.AbsSavedState
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setAlphaFast
 import com.github.k1rakishou.kurobanewnavstacktest.widget.TouchBlockingFrameLayout
 
-class KurobaBottomNavPanel @JvmOverloads constructor(
+@SuppressLint("ViewConstructor")
+class KurobaBottomNavPanel (
   context: Context,
-  attributeSet: AttributeSet? = null,
-  attrDefStyle: Int = 0
-) : TouchBlockingFrameLayout(context, attributeSet, attrDefStyle) {
+  private val callbacks: KurobaBottomPanelCallbacks
+) : TouchBlockingFrameLayout(context, null, 0), View.OnClickListener {
   private var selectedItem = SelectedItem.Uninitialized
 
   private val searchItemHolder: LinearLayout
@@ -41,6 +42,8 @@ class KurobaBottomNavPanel @JvmOverloads constructor(
       browseItemHolder,
       settingsItemHolder,
     )
+
+    itemsArray.forEach { item -> item.setOnClickListener(this) }
   }
 
   override fun onFinishInflate() {
@@ -49,11 +52,31 @@ class KurobaBottomNavPanel @JvmOverloads constructor(
     select(SelectedItem.Browse)
   }
 
-  fun select(newSelectedItem: SelectedItem) {
+  override fun onClick(v: View?) {
+    val selectedItem = when {
+      v === searchItemHolder -> SelectedItem.Search
+      v === bookmarksItemHolder -> SelectedItem.Bookmarks
+      v === browseItemHolder -> SelectedItem.Browse
+      v === settingsItemHolder -> SelectedItem.Settings
+      else -> SelectedItem.Uninitialized
+    }
+
+    if (selectedItem == SelectedItem.Uninitialized) {
+      return
+    }
+
+    if (!select(selectedItem)) {
+      return
+    }
+
+    callbacks.onItemSelected(selectedItem)
+  }
+
+  fun select(newSelectedItem: SelectedItem): Boolean {
     require(newSelectedItem != SelectedItem.Uninitialized) { "Bad newSelectedItem: $newSelectedItem" }
 
     if (selectedItem == newSelectedItem) {
-      return
+      return false
     }
 
     // TODO(KurobaEx): animations
@@ -64,6 +87,8 @@ class KurobaBottomNavPanel @JvmOverloads constructor(
         item.setAlphaFast(.3f)
       }
     }
+
+    return true
   }
 
   override fun onSaveInstanceState(): Parcelable? {
@@ -88,6 +113,10 @@ class KurobaBottomNavPanel @JvmOverloads constructor(
     }
 
     select(state.selectedItem!!)
+  }
+
+  fun getCurrentHeight(): Int {
+    return context.resources.getDimension(R.dimen.bottom_nav_panel_height).toInt()
   }
 
   enum class SelectedItem(val value: Int) {
@@ -124,6 +153,10 @@ class KurobaBottomNavPanel @JvmOverloads constructor(
       selectedItem?.let { item -> dest.writeInt(item.value) }
     }
 
+  }
+
+  interface KurobaBottomPanelCallbacks {
+    fun onItemSelected(selectedItem: SelectedItem)
   }
 
 }

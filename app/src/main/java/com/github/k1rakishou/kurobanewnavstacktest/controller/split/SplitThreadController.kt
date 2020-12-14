@@ -49,12 +49,12 @@ class SplitThreadController(
     }
   }
 
-  override fun handleBack(): Boolean {
+  override fun myHandleBack(): Boolean {
     if (toolbarContract.onBackPressed()) {
       return true
     }
 
-    return super.handleBack()
+    return super.myHandleBack()
   }
 
   override fun onControllerCreated(savedViewState: Bundle?) {

@@ -46,6 +46,26 @@ class SplitNavController(
     )
   }
 
+  override fun handleBack(): Boolean {
+    val splitThreadController = getChildRouter(rightControllerContainer).getControllerWithTag(
+      SplitThreadController.CONTROLLER_TAG.tag
+    ) as SplitThreadController
+
+    if (splitThreadController.myHandleBack()) {
+      return true
+    }
+
+    val splitCatalogUiElementsController = getChildRouter(leftControllerContainer).getControllerWithTag(
+      SplitUiElementsController.CONTROLLER_TAG.tag
+    ) as SplitUiElementsController
+
+    if (splitCatalogUiElementsController.myHandleBack()) {
+      return true
+    }
+
+    return false
+  }
+
   @SuppressLint("BinaryOperationInTimber")
   override fun openBoard(boardDescriptor: BoardDescriptor) {
     val splitCatalogUiElementsController = getChildRouter(leftControllerContainer).getControllerWithTag(

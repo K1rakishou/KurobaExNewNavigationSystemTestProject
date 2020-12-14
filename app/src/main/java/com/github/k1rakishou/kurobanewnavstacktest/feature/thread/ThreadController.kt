@@ -59,12 +59,12 @@ abstract class ThreadController(
     threadLayout.onDestroy()
   }
 
-  override fun handleBack(): Boolean {
+  open fun myHandleBack(): Boolean {
     if (threadLayout.onBackPressed()) {
       return true
     }
 
-    return super.handleBack()
+    return false
   }
 
   override fun openThread(threadDescriptor: ThreadDescriptor) {

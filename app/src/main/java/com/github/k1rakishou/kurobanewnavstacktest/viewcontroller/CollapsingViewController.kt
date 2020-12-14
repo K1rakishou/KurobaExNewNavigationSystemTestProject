@@ -141,23 +141,27 @@ class CollapsingViewController(
       animationState = ANIMATION_WANT_SHOW
     }
 
-    if (viewScreenAttachSide == ViewScreenAttachSide.Bottom) {
-      view.translationY(view.translationY() + dy)
+    var newTranslationY = 0f
 
-      if (view.translationY() < 0f) {
-        view.translationY(0f)
-      } else if (view.translationY() > view.height()) {
-        view.translationY(view.height())
+    if (viewScreenAttachSide == ViewScreenAttachSide.Bottom) {
+      newTranslationY = view.translationY() + dy
+
+      if (newTranslationY < 0f) {
+        newTranslationY = 0f
+      } else if (newTranslationY > view.height()) {
+        newTranslationY = view.height()
       }
     } else {
-      view.translationY(view.translationY() - dy)
+      newTranslationY = view.translationY() - dy
 
-      if (view.translationY() < -view.height()) {
-        view.translationY(-view.height())
-      } else if (view.translationY() > 0f) {
-        view.translationY(0f)
+      if (newTranslationY < -view.height()) {
+        newTranslationY = -view.height()
+      } else if (newTranslationY > 0f) {
+        newTranslationY = 0f
       }
     }
+
+    view.translationY(newTranslationY)
   }
 
   private fun runScrollAnimation() {

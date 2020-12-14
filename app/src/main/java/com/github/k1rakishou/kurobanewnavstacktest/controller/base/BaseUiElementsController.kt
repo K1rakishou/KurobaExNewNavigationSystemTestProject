@@ -45,12 +45,12 @@ abstract class BaseUiElementsController(
     }
   }
 
-  override fun handleBack(): Boolean {
+  open fun myHandleBack(): Boolean {
     if (::toolbarContract.isInitialized && toolbarContract.onBackPressed()) {
       return true
     }
 
-    return super.handleBack()
+    return false
   }
 
   protected fun ViewGroup.switchTo(controller: BaseController) {

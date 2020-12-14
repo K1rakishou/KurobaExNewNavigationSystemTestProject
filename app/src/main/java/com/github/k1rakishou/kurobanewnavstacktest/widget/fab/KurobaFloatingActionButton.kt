@@ -25,6 +25,15 @@ open class KurobaFloatingActionButton @JvmOverloads constructor(
     this.initialized = true
   }
 
+  fun setScalePreInitialized(sx: Float, sy: Float) {
+    if (fabState.locked) {
+      return
+    }
+
+    scaleX = sx
+    scaleY = sy
+  }
+
   open fun setScale(sx: Float, sy: Float) {
     if (fabState.locked) {
       return

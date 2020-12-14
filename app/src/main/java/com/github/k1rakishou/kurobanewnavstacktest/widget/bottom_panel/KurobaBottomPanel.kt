@@ -20,20 +20,25 @@ import com.github.k1rakishou.kurobanewnavstacktest.widget.TouchBlockingFrameLayo
 import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.suspendCancellableCoroutine
+import java.lang.IllegalStateException
 import kotlin.coroutines.resume
 
 class KurobaBottomPanel @JvmOverloads constructor(
   context: Context,
   attributeSet: AttributeSet? = null,
   attrDefStyle: Int = 0
-) : TouchBlockingFrameLayout(context, attributeSet, attrDefStyle), CollapsableView {
+) : TouchBlockingFrameLayout(context, attributeSet, attrDefStyle),
+  CollapsableView,
+  KurobaBottomNavPanel.KurobaBottomPanelCallbacks {
+
   private val scope = KurobaCoroutineScope()
   private val insetBottomDeferred = CompletableDeferred<Int>()
   private val container: FrameLayout
 
   private var state = State.Uninitialized
   private var animatorSet: AnimatorSet? = null
-  private val bottomPanelInitializationListener = mutableListOf<() -> Unit>()
+  private val bottomPanelInitializationListeners = mutableListOf<() -> Unit>()
+  private val bottomNavPanelSelectedItemListeners = mutableListOf<(KurobaBottomNavPanel.SelectedItem) -> Unit>()
 
   private val awaitableFab = CompletableDeferred<KurobaFloatingActionButton>()
 
@@ -54,7 +59,7 @@ class KurobaBottomPanel @JvmOverloads constructor(
 
   private fun updateContainerPaddings(v: View, insetBottom: Int) {
     v.updateLayoutParams<FrameLayout.LayoutParams> {
-      height = container.height + insetBottom
+      height = getCurrentChildHeight() + insetBottom
     }
     v.updatePadding(bottom = insetBottom)
   }
@@ -62,17 +67,27 @@ class KurobaBottomPanel @JvmOverloads constructor(
   override fun translationY(newTranslationY: Float) {
     translationY = newTranslationY
 
-    if (height <= 0) {
-      return
-    }
+    if (canUpdateFab()) {
+      var scaleTranslationY = newTranslationY
 
-    if (awaitableFab.isCompleted && state == State.BottomNavPanel) {
-      val scale = 1f - (newTranslationY / height)
+      if (scaleTranslationY > height) {
+        scaleTranslationY = height.toFloat()
+      } else if (scaleTranslationY < 0) {
+        scaleTranslationY = 0f
+      }
+
+      val scale = 1f - (scaleTranslationY / height)
       val fab = awaitableFab.getCompleted()
 
-      fab.setScale(scale, scale)
+      fab.setScalePreInitialized(scale, scale)
       fab.translationY = -height.toFloat()
     }
+  }
+
+  private fun canUpdateFab(): Boolean {
+    return height > 0
+      && awaitableFab.isCompleted
+      && (state == State.BottomNavPanel || state == State.Uninitialized)
   }
 
   override fun height(): Float {
@@ -88,6 +103,10 @@ class KurobaBottomPanel @JvmOverloads constructor(
     scope.launch { initState(State.BottomNavPanel) }
   }
 
+  override fun onItemSelected(selectedItem: KurobaBottomNavPanel.SelectedItem) {
+    bottomNavPanelSelectedItemListeners.forEach { listener -> listener(selectedItem) }
+  }
+
   fun attachFab(fab: KurobaFloatingActionButton) {
     check(!awaitableFab.isCompleted) { "Already attached" }
     check(fab.isOrWillBeHidden) { "FAB must be hidden" }
@@ -101,43 +120,47 @@ class KurobaBottomPanel @JvmOverloads constructor(
       return
     }
 
-    bottomPanelInitializationListener += func
+    bottomPanelInitializationListeners += func
+  }
+
+  fun setOnBottomNavPanelItemSelectedListener(listener: (KurobaBottomNavPanel.SelectedItem) -> Unit) {
+    bottomNavPanelSelectedItemListeners += listener
   }
 
   suspend fun switchInto(newState: State) {
     check(state != State.Uninitialized) { "Not initialized yet" }
 
-    if (state == newState) {
-      return
-    }
-
-    container.removeAllViews()
-
-    val kurobaBottomNavPanel = KurobaBottomNavPanel(context)
-    container.addView(kurobaBottomNavPanel)
-    kurobaBottomNavPanel.select(KurobaBottomNavPanel.SelectedItem.Browse)
-
-    container.requestLayout()
-    container.awaitLayout()
-
-    val insetBottom = insetBottomDeferred.await()
-    updateContainerPaddings(container, insetBottom)
-
-    y = (container.height + container.paddingBottom).toFloat()
-
-    val attachedFab = awaitableFab.getCompleted()
-    if (newState == State.BottomNavPanel) {
-      attachedFab.showFab()
-    } else {
-      attachedFab.hideFab()
-    }
+//    if (state == newState) {
+//      return
+//    }
+//
+//    container.removeAllViews()
+//
+//    val kurobaBottomNavPanel = KurobaBottomNavPanel(context)
+//    container.addView(kurobaBottomNavPanel)
+//    kurobaBottomNavPanel.select(KurobaBottomNavPanel.SelectedItem.Browse)
+//
+//    container.requestLayout()
+//    container.awaitLayout()
+//
+//    val insetBottom = insetBottomDeferred.await()
+//    updateContainerPaddings(container, insetBottom)
+//
+//    y = (container.height + container.paddingBottom).toFloat()
+//
+//    val attachedFab = awaitableFab.getCompleted()
+//    if (newState == State.BottomNavPanel) {
+//      attachedFab.showFab()
+//    } else {
+//      attachedFab.hideFab()
+//    }
   }
 
   private suspend fun initState(initialState: State) {
     check(state == State.Uninitialized) { "Already initialized?!" }
     container.removeAllViews()
 
-    val kurobaBottomNavPanel = KurobaBottomNavPanel(context)
+    val kurobaBottomNavPanel = KurobaBottomNavPanel(context, this)
     container.addView(kurobaBottomNavPanel)
     kurobaBottomNavPanel.select(KurobaBottomNavPanel.SelectedItem.Browse)
 
@@ -149,7 +172,7 @@ class KurobaBottomPanel @JvmOverloads constructor(
 
     updateContainerPaddings(container, insetBottom)
     val fullHeight = (container.height + container.paddingBottom).toFloat()
-    y = fullHeight
+    translationY(fullHeight)
 
     attachedFab.setScale(0f, 0f)
     attachedFab.visibility = View.VISIBLE
@@ -159,8 +182,8 @@ class KurobaBottomPanel @JvmOverloads constructor(
 
     state = initialState
 
-    bottomPanelInitializationListener.forEach { func -> func() }
-    bottomPanelInitializationListener.clear()
+    bottomPanelInitializationListeners.forEach { func -> func() }
+    bottomPanelInitializationListeners.clear()
   }
 
   private suspend fun revealAnimation(panel: KurobaBottomPanel, fromY: Float, toY: Float) {
@@ -180,7 +203,7 @@ class KurobaBottomPanel @JvmOverloads constructor(
 
       animatorSet = AnimatorSet().apply {
         playTogether(translationAnimation, alphaAnimation)
-        duration = 250
+        duration = ANIMATION_DURATION
         interpolator = INTERPOLATOR
         doOnStart {
           panel.visibility = View.VISIBLE
@@ -201,6 +224,17 @@ class KurobaBottomPanel @JvmOverloads constructor(
     }
   }
 
+  private fun getCurrentChildHeight(): Int {
+    if (container.childCount <= 0) {
+      return 0
+    }
+
+    return when (val child = container.getChildAt(0)) {
+      is KurobaBottomNavPanel -> child.getCurrentHeight()
+      else -> throw IllegalStateException("Unknown view: ${container.javaClass.simpleName}")
+    }
+  }
+
   enum class State {
     Uninitialized,
     BottomNavPanel,
@@ -210,6 +244,7 @@ class KurobaBottomPanel @JvmOverloads constructor(
 
   companion object {
     private val INTERPOLATOR = FastOutSlowInInterpolator()
+    private const val ANIMATION_DURATION = 250L
   }
 
 }

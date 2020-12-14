@@ -21,6 +21,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.utils.getBehaviorExt
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setBehaviorExt
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.ViewScreenAttachSide
 import com.github.k1rakishou.kurobanewnavstacktest.widget.behavior.CatalogFabBehavior
+import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomNavPanel
 import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
 import timber.log.Timber
 
@@ -61,6 +62,14 @@ class SplitUiElementsController(
       bottomPanel.onBottomPanelInitialized {
         splitFabViewController.onBottomPanelInitialized(ControllerType.Catalog)
         catalogFab.initialized()
+      }
+      bottomPanel.setOnBottomNavPanelItemSelectedListener { selectedItem ->
+        splitControllerCatalogControllerContainer.switchTo(
+          controller = createControllerBySelectedItemId(
+            selectedItem = selectedItem,
+            uiElementsControllerCallbacks = this@SplitUiElementsController
+          )
+        )
       }
       bottomPanel.attachFab(catalogFab)
     }
@@ -141,14 +150,15 @@ class SplitUiElementsController(
   }
 
   private fun createControllerBySelectedItemId(
-    itemId: Int,
+    selectedItem: KurobaBottomNavPanel.SelectedItem,
     uiElementsControllerCallbacks: UiElementsControllerCallbacks
   ): BaseController {
-    return when (itemId) {
-      R.id.action_bookmarks -> createBookmarksController(uiElementsControllerCallbacks)
-      R.id.action_browse -> createSplitCatalogController(uiElementsControllerCallbacks)
-      R.id.action_settings -> createSettingsController(uiElementsControllerCallbacks)
-      else -> throw IllegalStateException("Unknown itemId: $itemId")
+    return when (selectedItem) {
+      KurobaBottomNavPanel.SelectedItem.Search -> TODO()
+      KurobaBottomNavPanel.SelectedItem.Bookmarks -> createBookmarksController(uiElementsControllerCallbacks)
+      KurobaBottomNavPanel.SelectedItem.Browse -> createSplitCatalogController(uiElementsControllerCallbacks)
+      KurobaBottomNavPanel.SelectedItem.Settings -> createSettingsController(uiElementsControllerCallbacks)
+      else -> throw IllegalStateException("Unknown itemId: $selectedItem")
     }
   }
 

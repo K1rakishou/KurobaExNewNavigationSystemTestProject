@@ -18,6 +18,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.core.CollapsingViewsHolder
 import com.github.k1rakishou.kurobanewnavstacktest.data.BoardDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.*
+import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomNavPanel
 import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.SlideKurobaFloatingActionButton
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.SlideToolbar
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarContract
@@ -57,13 +58,6 @@ class SlideUiElementsController(
       )
 
       slideFabViewController.init(slideControllerFab)
-
-      bottomPanel.onBottomPanelInitialized {
-        // Doesn't matter what we use here since Slide layout has only one bottom panel
-        slideFabViewController.onBottomPanelInitialized(ControllerType.Catalog)
-        slideControllerFab.initialized()
-      }
-      bottomPanel.attachFab(slideControllerFab)
     }
   }
 
@@ -82,7 +76,20 @@ class SlideUiElementsController(
       )
     )
 
-    // TODO(KurobaEx): bottom nav view select items listener
+    bottomPanel.onBottomPanelInitialized {
+      // Doesn't matter what we use here since Slide layout has only one bottom panel
+      slideFabViewController.onBottomPanelInitialized(ControllerType.Catalog)
+      slideControllerFab.initialized()
+    }
+    bottomPanel.setOnBottomNavPanelItemSelectedListener { selectedItem ->
+      slideNavControllerContainer.switchTo(
+        controller = createControllerBySelectedItemId(
+          selectedItem = selectedItem,
+          uiElementsControllerCallbacks = this
+        )
+      )
+    }
+    bottomPanel.attachFab(slideControllerFab)
   }
 
   override fun onControllerShown() {
@@ -188,12 +195,13 @@ class SlideUiElementsController(
   override fun isSplitLayout(): Boolean = false
 
   private fun createControllerBySelectedItemId(
-    itemId: Int,
+    selectedItem: KurobaBottomNavPanel.SelectedItem,
     uiElementsControllerCallbacks: UiElementsControllerCallbacks
   ): BaseController {
-    return when (itemId) {
-      R.id.action_bookmarks -> createBookmarksController(uiElementsControllerCallbacks)
-      R.id.action_browse -> {
+    return when (selectedItem) {
+      KurobaBottomNavPanel.SelectedItem.Search -> TODO()
+      KurobaBottomNavPanel.SelectedItem.Bookmarks -> createBookmarksController(uiElementsControllerCallbacks)
+      KurobaBottomNavPanel.SelectedItem.Browse -> {
         createSlideNavController(
           uiElementsControllerCallbacks = uiElementsControllerCallbacks,
           slideCatalogUiElementsControllerCallbacks = this,
@@ -202,8 +210,8 @@ class SlideUiElementsController(
           toolbarContract = toolbarContract
         )
       }
-      R.id.action_settings -> createSettingsController(uiElementsControllerCallbacks)
-      else -> throw IllegalStateException("Unknown itemId: $itemId")
+      KurobaBottomNavPanel.SelectedItem.Settings -> createSettingsController(uiElementsControllerCallbacks)
+      else -> throw IllegalStateException("Unknown itemId: $selectedItem")
     }
   }
 

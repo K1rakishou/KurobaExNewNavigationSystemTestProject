@@ -84,6 +84,10 @@ class SlideNavController(
   }
 
   override fun handleBack(): Boolean {
+    if (toolbarContract.onBackPressed()) {
+      return true
+    }
+
     if (::slidingPaneLayout.isInitialized && !slidingPaneLayout.isOpen) {
       slidingPaneLayout.open()
       return true
