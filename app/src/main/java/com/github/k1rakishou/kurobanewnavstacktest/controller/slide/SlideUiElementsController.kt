@@ -46,7 +46,7 @@ class SlideUiElementsController(
   ): View {
     return inflater.inflateView(R.layout.controller_slide_catalog_ui_elements, container) {
       slideNavControllerContainer = findViewById(R.id.slide_nav_controller_container)
-      bottomNavView = findViewById(R.id.slide_controller_bottom_nav_view)
+      bottomPanel = findViewById(R.id.slide_controller_bottom_panel)
       toolbarContainer = findViewById(R.id.slide_controller_toolbar_container)
       slideControllerFab = findViewById(R.id.slide_controller_fab)
 
@@ -74,22 +74,7 @@ class SlideUiElementsController(
       )
     )
 
-    bottomNavView.selectedItemId = R.id.action_browse
-
-    bottomNavView.setOnNavigationItemSelectedListener { item ->
-      if (bottomNavView.selectedItemId == item.itemId) {
-        return@setOnNavigationItemSelectedListener true
-      }
-
-      slideNavControllerContainer.switchTo(
-        controller = createControllerBySelectedItemId(
-          itemId = item.itemId,
-          uiElementsControllerCallbacks = this
-        )
-      )
-
-      return@setOnNavigationItemSelectedListener true
-    }
+    // TODO(KurobaEx): bottom nav view select items listener
   }
 
   override fun onControllerShown() {
@@ -139,7 +124,6 @@ class SlideUiElementsController(
 
   override fun provideRecyclerView(recyclerView: RecyclerView, controllerType: ControllerType) {
     slideModeFabViewController.reset()
-    slideModeFabViewController.init(bottomNavView)
 
     collapsingViewsHolder.attach(
       recyclerView = recyclerView,
@@ -149,14 +133,14 @@ class SlideUiElementsController(
 
     collapsingViewsHolder.attach(
       recyclerView = recyclerView,
-      collapsableView = bottomNavView,
+      collapsableView = bottomPanel,
       viewAttachSide = ViewScreenAttachSide.Bottom
     )
   }
 
   override fun withdrawRecyclerView(recyclerView: RecyclerView, controllerType: ControllerType) {
     collapsingViewsHolder.detach(recyclerView, toolbarContract.collapsableView())
-    collapsingViewsHolder.detach(recyclerView, bottomNavView)
+    collapsingViewsHolder.detach(recyclerView, bottomPanel)
   }
 
   override fun onBeforeSliding(transitioningIntoCatalogToolbar: Boolean) {

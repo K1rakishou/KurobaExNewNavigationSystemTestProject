@@ -3,35 +3,29 @@ package com.github.k1rakishou.kurobanewnavstacktest.controller.base
 import android.os.Bundle
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import androidx.coordinatorlayout.widget.CoordinatorLayout
-import androidx.core.view.updateLayoutParams
-import androidx.core.view.updatePadding
 import com.bluelinelabs.conductor.RouterTransaction
 import com.bluelinelabs.conductor.changehandler.FadeChangeHandler
-import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.base.BaseController
 import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
 import com.github.k1rakishou.kurobanewnavstacktest.controller.BookmarksController
 import com.github.k1rakishou.kurobanewnavstacktest.controller.SettingsController
-import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndDoRequest
+import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomPanel
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.KurobaToolbarType
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.NormalToolbar
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.SlideToolbar
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarContract
-import com.google.android.material.bottomnavigation.BottomNavigationView
 
 abstract class BaseUiElementsController(
   args: Bundle? = null
 ) : BaseController(args) {
   protected lateinit var toolbarContract: ToolbarContract
 
-  protected lateinit var bottomNavView: BottomNavigationView
+  protected lateinit var bottomPanel: KurobaBottomPanel
   protected lateinit var toolbarContainer: FrameLayout
 
   override fun onControllerCreated(savedViewState: Bundle?) {
     super.onControllerCreated(savedViewState)
 
-    setupBottomNavView()
     setupToolbar()
   }
 
@@ -57,20 +51,6 @@ abstract class BaseUiElementsController(
     }
 
     return super.handleBack()
-  }
-
-  private fun setupBottomNavView() {
-    val bottomNavViewHeight =
-      currentContext().resources.getDimension(R.dimen.bottom_nav_view_height).toInt()
-
-    bottomNavView.setOnApplyWindowInsetsListenerAndDoRequest { v, insets ->
-      v.updateLayoutParams<CoordinatorLayout.LayoutParams> {
-        height = bottomNavViewHeight + insets.systemWindowInsetBottom
-      }
-      v.updatePadding(bottom = insets.systemWindowInsetBottom)
-
-      return@setOnApplyWindowInsetsListenerAndDoRequest insets
-    }
   }
 
   protected fun ViewGroup.switchTo(controller: BaseController) {

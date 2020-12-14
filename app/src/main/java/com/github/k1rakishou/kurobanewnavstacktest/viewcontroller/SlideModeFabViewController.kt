@@ -5,10 +5,9 @@ import com.github.k1rakishou.kurobanewnavstacktest.utils.ChanSettings
 import com.github.k1rakishou.kurobanewnavstacktest.utils.getBehaviorExt
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setBehaviorExt
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnThrottlingClickListener
+import com.github.k1rakishou.kurobanewnavstacktest.widget.behavior.CatalogFabBehavior
 import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
 import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.SlideKurobaFloatingActionButton
-import com.github.k1rakishou.kurobanewnavstacktest.widget.behavior.CatalogFabBehavior
-import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class SlideModeFabViewController(
   private val fab: SlideKurobaFloatingActionButton,
@@ -20,10 +19,6 @@ class SlideModeFabViewController(
 
   init {
     fab.setBehaviorExt(CatalogFabBehavior(fab.context, null))
-  }
-
-  fun init(laidOutBottomNavigationView: BottomNavigationView) {
-    fab.getBehaviorExt<CatalogFabBehavior>()?.init(laidOutBottomNavigationView)
   }
 
   private fun updateFocusedControllerType(isOpened: Boolean? = null) {

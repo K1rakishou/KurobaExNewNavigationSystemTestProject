@@ -4,11 +4,10 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout
-import androidx.annotation.VisibleForTesting
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import com.github.k1rakishou.kurobanewnavstacktest.R
-import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
+import com.github.k1rakishou.kurobanewnavstacktest.controller.base.CollapsableView
 import com.github.k1rakishou.kurobanewnavstacktest.utils.exhaustive
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setAlphaFast
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndDoRequest
@@ -84,8 +83,20 @@ class SlideToolbar @JvmOverloads constructor(
     return actualThreadToolbar.onBackPressed()
   }
 
-  override fun collapsableView(): View {
+  override fun collapsableView(): CollapsableView {
     return this
+  }
+
+  override fun height(): Float {
+    return height.toFloat()
+  }
+
+  override fun translationY(): Float {
+    return translationY
+  }
+
+  override fun translationY(newTranslationY: Float) {
+    translationY = newTranslationY
   }
 
   override fun showSearchToolbar(toolbarType: KurobaToolbarType) {

@@ -1,16 +1,15 @@
 package com.github.k1rakishou.kurobanewnavstacktest.core
 
-import android.view.View
 import androidx.recyclerview.widget.RecyclerView
-import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
+import com.github.k1rakishou.kurobanewnavstacktest.controller.base.CollapsableView
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.CollapsingViewController
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.ViewScreenAttachSide
 
 class CollapsingViewsHolder {
   private val collapsingViewControllerMap =
-    mutableMapOf<View, MutableMap<RecyclerView, CollapsingViewController>>()
+    mutableMapOf<CollapsableView, MutableMap<RecyclerView, CollapsingViewController>>()
 
-  fun detach(recyclerView: RecyclerView, collapsableView: View) {
+  fun detach(recyclerView: RecyclerView, collapsableView: CollapsableView) {
     collapsingViewControllerMap[collapsableView]?.remove(recyclerView)?.detach(recyclerView)
 
     if (collapsingViewControllerMap[collapsableView].isNullOrEmpty()) {
@@ -20,7 +19,7 @@ class CollapsingViewsHolder {
 
   fun attach(
     recyclerView: RecyclerView,
-    collapsableView: View,
+    collapsableView: CollapsableView,
     viewAttachSide: ViewScreenAttachSide
   ) {
     if (!collapsingViewControllerMap.containsKey(collapsableView)) {

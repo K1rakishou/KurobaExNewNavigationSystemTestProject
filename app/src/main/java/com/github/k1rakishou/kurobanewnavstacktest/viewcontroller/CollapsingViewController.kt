@@ -3,12 +3,12 @@ package com.github.k1rakishou.kurobanewnavstacktest.viewcontroller
 import android.animation.AnimatorSet
 import android.animation.ValueAnimator
 import android.content.Context
-import android.view.View
 import androidx.core.animation.addListener
 import androidx.core.animation.doOnCancel
 import androidx.core.animation.doOnEnd
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.recyclerview.widget.RecyclerView
+import com.github.k1rakishou.kurobanewnavstacktest.controller.base.CollapsableView
 import com.github.k1rakishou.kurobanewnavstacktest.utils.ChanSettings
 import com.github.k1rakishou.kurobanewnavstacktest.utils.dp
 import kotlin.math.abs
@@ -17,8 +17,7 @@ class CollapsingViewController(
   val context: Context,
   private val viewScreenAttachSide: ViewScreenAttachSide
 ) {
-  private var viewData: ViewData? = null
-  private var viewRef: View? = null
+  private var viewRef: CollapsableView? = null
   private var animationState = ANIMATION_IDLE
   private var locked: Boolean = false
 
@@ -50,17 +49,15 @@ class CollapsingViewController(
 
   fun lockUnlock(lock: Boolean, animate: Boolean) {
     if (lock) {
-      viewData?.let { data ->
-        viewRef?.let { view ->
-          playTranslationAnimation(
-            show = true,
-            animate = animate,
-            from = view.translationY,
-            to = data.initialPositionY
-          )
+      viewRef?.let { view ->
+        playTranslationAnimation(
+          show = true,
+          animate = animate,
+          from = view.translationY(),
+          to = 0f
+        )
 
-          locked = lock
-        }
+        locked = lock
       }
 
       return
@@ -74,48 +71,44 @@ class CollapsingViewController(
   fun show(animate: Boolean) {
     animatorSet.end()
 
-    viewData?.let { data ->
-      viewRef?.let { view ->
-        playTranslationAnimation(
-          show = true,
-          animate = animate,
-          from = view.translationY,
-          to = data.initialPositionY
-        )
-      }
+    viewRef?.let { view ->
+      playTranslationAnimation(
+        show = true,
+        animate = animate,
+        from = view.translationY(),
+        to = 0f
+      )
     }
   }
 
   fun hide(lockHidden: Boolean, animate: Boolean) {
     animatorSet.end()
 
-    viewData?.let { data ->
-      viewRef?.let { view ->
-        when (viewScreenAttachSide) {
-          ViewScreenAttachSide.Top -> {
-            playTranslationAnimation(
-              show = false,
-              animate = animate,
-              from = view.translationY,
-              to = data.initialPositionY - data.height
-            )
-          }
-          ViewScreenAttachSide.Bottom -> {
-            playTranslationAnimation(
-              show = false,
-              animate = animate,
-              from = view.translationY,
-              to = data.initialPositionY + data.height
-            )
-          }
+    viewRef?.let { view ->
+      when (viewScreenAttachSide) {
+        ViewScreenAttachSide.Top -> {
+          playTranslationAnimation(
+            show = false,
+            animate = animate,
+            from = view.translationY(),
+            to = -view.height()
+          )
         }
-
-        locked = lockHidden
+        ViewScreenAttachSide.Bottom -> {
+          playTranslationAnimation(
+            show = false,
+            animate = animate,
+            from = view.translationY(),
+            to = -view.height()
+          )
+        }
       }
+
+      locked = lockHidden
     }
   }
 
-  fun attach(view: View, recyclerView: RecyclerView) {
+  fun attach(view: CollapsableView, recyclerView: RecyclerView) {
     viewRef = view
 
     setup()
@@ -142,9 +135,6 @@ class CollapsingViewController(
     val view = viewRef
       ?: return
 
-    val viewData = viewData
-      ?: return
-
     if (dy > 0) {
       animationState = ANIMATION_WANT_HIDE
     } else if (dy < 0) {
@@ -152,20 +142,20 @@ class CollapsingViewController(
     }
 
     if (viewScreenAttachSide == ViewScreenAttachSide.Bottom) {
-      view.translationY += dy
+      view.translationY(view.translationY() + dy)
 
-      if (view.translationY < viewData.initialPositionY) {
-        view.translationY = viewData.initialPositionY
-      } else if (view.translationY > viewData.initialPositionY + viewData.height) {
-        view.translationY = viewData.initialPositionY + viewData.height
+      if (view.translationY() < 0f) {
+        view.translationY(0f)
+      } else if (view.translationY() > view.height()) {
+        view.translationY(view.height())
       }
     } else {
-      view.translationY -= dy
+      view.translationY(view.translationY() - dy)
 
-      if (view.translationY < viewData.initialPositionY - viewData.height) {
-        view.translationY = viewData.initialPositionY - viewData.height
-      } else if (view.translationY > viewData.initialPositionY) {
-        view.translationY = viewData.initialPositionY
+      if (view.translationY() < -view.height()) {
+        view.translationY(-view.height())
+      } else if (view.translationY() > 0f) {
+        view.translationY(0f)
       }
     }
   }
@@ -185,17 +175,10 @@ class CollapsingViewController(
     val view = viewRef
       ?: return
 
-    val bottomNavData = viewData
-      ?: return
-
-    val bottomFunc =
-      { view.translationY > (bottomNavData.initialPositionY + (bottomNavData.height * .25f)) }
-    val invBottomFunc =
-      { view.translationY < ((bottomNavData.initialPositionY + bottomNavData.height) - (bottomNavData.height * .25f)) }
-    val topFunc =
-      { view.translationY < ((bottomNavData.initialPositionY) - (bottomNavData.height * .25f)) }
-    val invTopFunc =
-      { view.translationY > ((bottomNavData.initialPositionY - bottomNavData.height) + (bottomNavData.height * .25f)) }
+    val bottomFunc = { view.translationY() > (0f + (view.height() * .25f)) }
+    val invBottomFunc = { view.translationY() < ((0f + view.height()) - (view.height() * .25f)) }
+    val topFunc = { view.translationY() < ((0f) - (view.height() * .25f)) }
+    val invTopFunc = { view.translationY() > ((0f - view.height()) + (view.height() * .25f)) }
 
     animationState = when (animationState) {
       ANIMATION_WANT_HIDE -> {
@@ -232,32 +215,32 @@ class CollapsingViewController(
     }
 
     val targetY = if (animationState == ANIMATION_RUNNING_SHOW) {
-      bottomNavData.initialPositionY
+      0f
     } else {
       when (viewScreenAttachSide) {
-        ViewScreenAttachSide.Top -> bottomNavData.initialPositionY - bottomNavData.height
-        ViewScreenAttachSide.Bottom -> bottomNavData.initialPositionY + bottomNavData.height
+        ViewScreenAttachSide.Top -> 0f - view.height()
+        ViewScreenAttachSide.Bottom -> 0f + view.height()
       }
     }
 
     playTranslationAnimation(
       animationState == ANIMATION_RUNNING_SHOW,
       true,
-      view.translationY,
+      view.translationY(),
       targetY
     )
   }
 
   private fun playTranslationAnimation(show: Boolean, animate: Boolean, from: Float, to: Float) {
     if (abs(from - to) < MIN_ANIM_DISTANCE) {
-      viewRef?.translationY = to
+      viewRef?.translationY(to)
       animationState = ANIMATION_IDLE
       isShown = show
       return
     }
 
     if (animate) {
-      val finalizeTranslationY = { viewRef?.translationY = to }
+      val finalizeTranslationY = { viewRef?.translationY(to) }
       val finalizeAnimationState = { animationState = ANIMATION_IDLE }
 
       val animator = ValueAnimator.ofFloat(from, to).apply {
@@ -265,7 +248,7 @@ class CollapsingViewController(
         doOnEnd { finalizeTranslationY() }
         doOnCancel { finalizeTranslationY() }
         addUpdateListener { valueAnimator ->
-          viewRef?.translationY = (valueAnimator.animatedValue as Float)
+          viewRef?.translationY(valueAnimator.animatedValue as Float)
         }
       }
 
@@ -278,48 +261,33 @@ class CollapsingViewController(
       )
       animatorSet.start()
     } else {
-      viewRef?.translationY = to
+      viewRef?.translationY(to)
     }
 
     isShown = show
   }
 
   private fun setup() {
-    if (viewData != null) {
-      return
-    }
-
     val view = viewRef
       ?: return
 
-    require(view.isLaidOut) { "View is not laid out" }
+    require(view.isLaidOut()) { "View is not laid out" }
 
-    if (view.height <= 0) {
+    if (view.height() <= 0) {
       return
     }
-
-    viewData = ViewData(
-      view.translationY,
-      view.height
-    )
   }
 
   private fun reset() {
     animatorSet.end()
     animationState = ANIMATION_IDLE
 
-    viewRef?.translationY = viewData?.initialPositionY ?: 0f
-
-    viewData = null
+    viewRef?.translationY(0f)
     viewRef = null
+
     locked = false
     isShown = true
   }
-
-  private data class ViewData(
-    var initialPositionY: Float,
-    var height: Int
-  )
 
   companion object {
     private const val ANIMATION_IDLE = 0

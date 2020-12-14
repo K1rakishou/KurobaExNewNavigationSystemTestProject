@@ -6,7 +6,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import androidx.core.view.doOnPreDraw
 import androidx.recyclerview.widget.RecyclerView
 import com.bluelinelabs.conductor.RouterTransaction
 import com.github.k1rakishou.kurobanewnavstacktest.R
@@ -21,8 +20,8 @@ import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.utils.getBehaviorExt
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setBehaviorExt
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.ViewScreenAttachSide
-import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
 import com.github.k1rakishou.kurobanewnavstacktest.widget.behavior.CatalogFabBehavior
+import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
 import timber.log.Timber
 
 @SuppressLint("TimberTagLength")
@@ -50,7 +49,7 @@ class SplitUiElementsController(
   ): View {
     return inflater.inflateView(R.layout.controller_split_catalog_ui_elements, container) {
       splitControllerCatalogControllerContainer = findViewById(R.id.split_controller_catalog_controller_container)
-      bottomNavView = findViewById(R.id.split_controller_bottom_nav_view)
+      bottomPanel = findViewById(R.id.split_controller_bottom_panel)
       toolbarContainer = findViewById(R.id.split_controller_toolbar_container)
 
       catalogFab = findViewById(R.id.split_controller_fab)
@@ -63,35 +62,11 @@ class SplitUiElementsController(
   override fun onControllerCreated(savedViewState: Bundle?) {
     super.onControllerCreated(savedViewState)
 
-    bottomNavView.selectedItemId = R.id.action_browse
-
-    bottomNavView.setOnNavigationItemSelectedListener { item ->
-      if (bottomNavView.selectedItemId == item.itemId) {
-        return@setOnNavigationItemSelectedListener true
-      }
-
-      splitControllerCatalogControllerContainer.switchTo(
-        controller = createControllerBySelectedItemId(
-          itemId = item.itemId,
-          uiElementsControllerCallbacks = this
-        )
-      )
-
-      return@setOnNavigationItemSelectedListener true
-    }
+    // TODO(KurobaEx): bottom nav view select items listener
 
     splitControllerCatalogControllerContainer.setupChildRouterIfNotSet(
       RouterTransaction.with(createSplitCatalogController(this))
     )
-  }
-
-  override fun onControllerShown() {
-    super.onControllerShown()
-
-    bottomNavView.doOnPreDraw {
-      catalogFab.getBehaviorExt<CatalogFabBehavior>()?.init(bottomNavView)
-      catalogFab.translationX = -KurobaFloatingActionButton.DEFAULT_MARGIN_RIGHT.toFloat()
-    }
   }
 
   override fun onControllerHidden() {
@@ -109,14 +84,14 @@ class SplitUiElementsController(
 
     collapsingViewsHolder.attach(
       recyclerView = recyclerView,
-      collapsableView = bottomNavView,
+      collapsableView = bottomPanel,
       viewAttachSide = ViewScreenAttachSide.Bottom
     )
   }
 
   override fun withdrawRecyclerView(recyclerView: RecyclerView, controllerType: ControllerType) {
     collapsingViewsHolder.detach(recyclerView, toolbarContract.collapsableView())
-    collapsingViewsHolder.detach(recyclerView, bottomNavView)
+    collapsingViewsHolder.detach(recyclerView, bottomPanel)
   }
 
   override fun lockUnlockCollapsableViews(recyclerView: RecyclerView?, lock: Boolean, animate: Boolean) {

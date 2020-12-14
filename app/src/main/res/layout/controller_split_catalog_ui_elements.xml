@@ -30,17 +30,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="top"
-        tools:layout_height="@dimen/toolbar_height"
-        tools:background="@color/colorPrimaryDark"/>
+        tools:background="@color/colorPrimaryDark"
+        tools:layout_height="@dimen/toolbar_height" />
 
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/split_controller_bottom_nav_view"
+    <com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomPanel
+        android:id="@+id/split_controller_bottom_panel"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/bottom_nav_view_height"
-        android:layout_gravity="bottom"
-        android:background="@color/colorPrimaryDark"
-        android:elevation="4dp"
-        app:menu="@menu/bottom_navigation_menu" />
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom" />
 
     <com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
         android:id="@+id/split_controller_fab"

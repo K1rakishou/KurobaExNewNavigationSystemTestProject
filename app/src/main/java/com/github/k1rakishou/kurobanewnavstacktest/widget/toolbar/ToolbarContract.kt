@@ -1,11 +1,10 @@
 package com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar
 
-import android.view.View
-import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
+import com.github.k1rakishou.kurobanewnavstacktest.controller.base.CollapsableView
 import kotlinx.coroutines.flow.Flow
 
-interface ToolbarContract {
-  fun collapsableView(): View
+interface ToolbarContract : CollapsableView {
+  fun collapsableView(): CollapsableView
   fun setToolbarVisibility(visibility: Int)
   fun onBackPressed(): Boolean
 

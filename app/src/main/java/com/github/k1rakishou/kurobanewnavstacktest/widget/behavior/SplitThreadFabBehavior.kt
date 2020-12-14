@@ -87,7 +87,7 @@ class SplitThreadFabBehavior(
         ?: return
 
       val toolbarView = toolbarContract.collapsableView()
-      if (toolbarView.translationY.toInt() == initialPositionY) {
+      if (toolbarView.translationY().toInt() == initialPositionY) {
         child.showFab()
       }
     }
@@ -106,11 +106,11 @@ class SplitThreadFabBehavior(
       ?: return
 
     val toolbarView = toolbarContract.collapsableView()
-    if (toolbarView.translationY.toInt() == initialPositionY && child.isOrWillBeHidden) {
+    if (toolbarView.translationY().toInt() == initialPositionY && child.isOrWillBeHidden) {
       child.showFab()
     }
 
-    val scale = 1f - (Math.abs(toolbarView.translationY - initialPosY) / toolbarView.height)
+    val scale = 1f - (Math.abs(toolbarView.translationY() - initialPosY) / toolbarView.height())
     child.setScale(scale, scale)
   }
 

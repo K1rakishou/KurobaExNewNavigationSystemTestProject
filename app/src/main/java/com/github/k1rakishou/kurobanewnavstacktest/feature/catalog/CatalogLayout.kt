@@ -264,7 +264,7 @@ class CatalogLayout @JvmOverloads constructor(
   private fun applyInsetsForRecyclerView() {
     val toolbarHeight = context.resources.getDimension(R.dimen.toolbar_height).toInt()
     val bottomNavViewHeight =
-      context.resources.getDimension(R.dimen.bottom_nav_view_height).toInt()
+      context.resources.getDimension(R.dimen.bottom_nav_panel_height).toInt()
 
     catalogRecyclerView.setOnApplyWindowInsetsListenerAndDoRequest { v, insets ->
       v.updatePadding(

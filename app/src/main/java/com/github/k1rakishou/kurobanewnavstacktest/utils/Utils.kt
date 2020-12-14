@@ -4,15 +4,19 @@ import android.content.res.Resources
 import android.text.TextWatcher
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowInsets
 import android.widget.EditText
 import android.widget.TextView
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.view.ViewCompat
+import androidx.core.view.doOnLayout
 import androidx.core.view.updateLayoutParams
 import com.airbnb.epoxy.*
 import com.bluelinelabs.conductor.Router
 import com.github.k1rakishou.kurobanewnavstacktest.base.BaseController
 import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 val Int.dp: Int
   get() = (this * Resources.getSystem().displayMetrics.density).toInt()
@@ -87,6 +91,16 @@ private fun View.requestApplyInsetsWhenAttached() {
 
 fun View.setOnApplyWindowInsetsListenerAndDoRequest(listener: View.OnApplyWindowInsetsListener) {
   setOnApplyWindowInsetsListener(listener)
+  requestApplyInsetsWhenAttached()
+}
+
+fun View.setOnApplyWindowInsetsOneShotListenerAndDoRequest(listener: View.OnApplyWindowInsetsListener) {
+  setOnApplyWindowInsetsListener { v, insets ->
+    setOnApplyWindowInsetsListener(null)
+    listener.onApplyWindowInsets(v, insets)
+    return@setOnApplyWindowInsetsListener insets
+  }
+
   requestApplyInsetsWhenAttached()
 }
 
@@ -188,4 +202,10 @@ fun EpoxyController.addOneshotModelBuildListener(callback: () -> Unit) {
       removeModelBuildListener(this)
     }
   })
+}
+
+suspend fun View.awaitLayout() {
+  suspendCoroutine<Unit> { continuation ->
+    doOnLayout { continuation.resume(Unit) }
+  }
 }
