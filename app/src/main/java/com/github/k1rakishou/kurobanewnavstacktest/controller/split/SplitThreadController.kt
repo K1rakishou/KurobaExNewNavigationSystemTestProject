@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
+import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.feature.thread.ThreadController
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.UiElementsControllerCallbacks
 import com.github.k1rakishou.kurobanewnavstacktest.core.CollapsingViewsHolder
@@ -16,6 +17,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadData
 import com.github.k1rakishou.kurobanewnavstacktest.utils.*
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.ViewScreenAttachSide
 import com.github.k1rakishou.kurobanewnavstacktest.widget.behavior.SplitThreadFabBehavior
+import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomPanel
 import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.KurobaToolbarType
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.NormalToolbar
@@ -24,6 +26,7 @@ class SplitThreadController(
   args: Bundle? = null
 ) : ThreadController(args), UiElementsControllerCallbacks {
   private lateinit var threadFab: KurobaFloatingActionButton
+  private lateinit var bottomPanel: KurobaBottomPanel
 
   private val collapsingViewsHolder = CollapsingViewsHolder()
   private val splitFabViewController by lazy { activityContract().mainActivityOrError().splitFabViewController }
@@ -35,22 +38,64 @@ class SplitThreadController(
   ): View {
     return super.instantiateView(inflater, container, savedViewState).apply {
       threadFab = findViewById(R.id.split_controller_thread_fab)
-      threadFab.visibility = View.VISIBLE
+      bottomPanel = findViewById(R.id.split_thread_controller_bottom_panel)
+
       threadFab.setBehaviorExt(SplitThreadFabBehavior(currentContext(), null))
+      threadFab.setOnClickListener { bottomPanel.switchInto(KurobaBottomPanel.State.ReplyLayoutPanel) }
+      threadFab.hide()
 
       val normalToolbar = findViewById<NormalToolbar>(R.id.thread_controller_toolbar)
       normalToolbar.init(KurobaToolbarType.Thread)
       normalToolbar.visibility = View.VISIBLE
 
-      super.toolbarContract(normalToolbar)
+      super.provideToolbarContract(normalToolbar)
       super.uiElementsControllerCallbacks(this@SplitThreadController)
 
-      splitFabViewController.initThreadFab(threadFab)
+      splitFabViewController.setThreadFab(threadFab)
+
+      initBottomPanel()
+    }
+  }
+
+  private fun initBottomPanel() {
+    bottomPanel.addOnBottomPanelInitialized {
+      splitFabViewController.onBottomPanelInitialized(ControllerType.Thread)
+      threadFab.initialized()
+    }
+    bottomPanel.addOnBottomPanelStateChanged { newState ->
+      splitFabViewController.onBottomPanelStateChanged(ControllerType.Thread, newState)
+
+      lockUnlockCollapsableViews(ControllerType.Thread, newState)
+    }
+
+    bottomPanel.attachFab(threadFab)
+    bottomPanel.bottomPanelPreparationsCompleted(KurobaBottomPanel.State.Hidden)
+  }
+
+  private fun lockUnlockCollapsableViews(controllerType: ControllerType, newState: KurobaBottomPanel.State) {
+    val recyclerView = collapsingViewsHolder.getRecyclerForController(controllerType)
+
+    if (newState != KurobaBottomPanel.State.Hidden) {
+      collapsingViewsHolder.lockUnlockCollapsableViews(
+        recyclerView = recyclerView,
+        lock = true,
+        animate = true
+      )
+    } else {
+      collapsingViewsHolder.lockUnlockCollapsableViews(
+        recyclerView = recyclerView,
+        lock = false,
+        animate = true
+      )
     }
   }
 
   override fun myHandleBack(): Boolean {
-    if (toolbarContract.onBackPressed()) {
+    if (isToolbarContractInitialized && toolbarContract.onBackPressed()) {
+      return true
+    }
+
+    if (::bottomPanel.isInitialized && bottomPanel.onBackPressed()) {
       return true
     }
 
@@ -76,7 +121,6 @@ class SplitThreadController(
     threadFab.doOnPreDraw {
       threadFab.getBehaviorExt<SplitThreadFabBehavior>()?.apply {
         reset()
-        init(threadFab)
       }
     }
   }
@@ -86,13 +130,18 @@ class SplitThreadController(
       collapsingViewsHolder.attach(
         recyclerView = recyclerView,
         collapsableView = toolbarContract.collapsableView(),
-        viewAttachSide = ViewScreenAttachSide.Top
+        viewAttachSide = ViewScreenAttachSide.Top,
+        controllerType = ControllerType.Thread
       )
     }
   }
 
   override fun withdrawRecyclerView(recyclerView: EpoxyRecyclerView) {
-    collapsingViewsHolder.detach(recyclerView, toolbarContract.collapsableView())
+    collapsingViewsHolder.detach(
+      recyclerView = recyclerView,
+      collapsableView = toolbarContract.collapsableView(),
+      controllerType = ControllerType.Thread
+    )
   }
 
   override fun lockUnlockCollapsableViews(

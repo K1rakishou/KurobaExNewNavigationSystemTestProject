@@ -1,5 +1,5 @@
 package com.github.k1rakishou.kurobanewnavstacktest.viewcontroller
 
-interface SlideModeFabClickListener {
+interface FabClickListener {
   fun onFabClicked(fabType: SlideModeFabViewController.FabType)
 }

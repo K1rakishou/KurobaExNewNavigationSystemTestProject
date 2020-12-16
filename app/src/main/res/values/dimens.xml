@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="toolbar_height">56dp</dimen>
     <dimen name="bottom_nav_panel_height">44dp</dimen>
+    <dimen name="bottom_reply_panel_height">112dp</dimen>
+
+    <dimen name="toolbar_height">56dp</dimen>
     <dimen name="toolbar_icon_width">40dp</dimen>
     <dimen name="toolbar_icon_padding">4dp</dimen>
 </resources>

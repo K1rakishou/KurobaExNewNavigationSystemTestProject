@@ -72,6 +72,19 @@ class KurobaToolbarStateStack(
     return stateStack.peek()
   }
 
+  fun clearState(): Boolean {
+    ensureStackCorrect()
+
+    if (stateStack.isEmpty() || stateStack.peek() == ToolbarStateClass.Uninitialized) {
+      return false
+    }
+
+    stateStack.clear()
+    stateStack.push(ToolbarStateClass.Uninitialized)
+
+    return true
+  }
+
   private fun ensureStackCorrect() {
     check(stateStack.isNotEmpty()) { "Stack must not be empty" }
 

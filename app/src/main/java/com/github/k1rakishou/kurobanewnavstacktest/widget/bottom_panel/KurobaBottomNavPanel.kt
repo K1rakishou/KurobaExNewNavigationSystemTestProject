@@ -4,18 +4,20 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Parcel
 import android.os.Parcelable
+import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.customview.view.AbsSavedState
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setAlphaFast
 import com.github.k1rakishou.kurobanewnavstacktest.widget.TouchBlockingFrameLayout
 
 @SuppressLint("ViewConstructor")
-class KurobaBottomNavPanel (
+class KurobaBottomNavPanel(
   context: Context,
   private val callbacks: KurobaBottomPanelCallbacks
-) : TouchBlockingFrameLayout(context, null, 0), View.OnClickListener {
+) : ConstraintLayout(context, null, 0), View.OnClickListener {
   private var selectedItem = SelectedItem.Uninitialized
 
   private val searchItemHolder: LinearLayout
@@ -25,7 +27,7 @@ class KurobaBottomNavPanel (
   private val itemsArray: Array<LinearLayout>
 
   init {
-    inflate(context, R.layout.kuroba_bottom_nav_panel, this)
+    LayoutInflater.from(context).inflate(R.layout.kuroba_bottom_nav_panel, this, true)
 
     searchItemHolder = findViewById<LinearLayout>(R.id.search_item_holder)
       .apply { tag = SelectedItem.Search }

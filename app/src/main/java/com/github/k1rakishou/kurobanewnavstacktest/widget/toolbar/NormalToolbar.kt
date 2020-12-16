@@ -96,6 +96,10 @@ class NormalToolbar @JvmOverloads constructor(
     actualToolbar.popToolbarStateClass(toolbarType, ToolbarStateClass.Search)
   }
 
+  override fun closeToolbar(toolbarType: KurobaToolbarType) {
+    actualToolbar.closeToolbar()
+  }
+
   override fun listenForToolbarActions(toolbarType: KurobaToolbarType): Flow<ToolbarAction> {
     return actualToolbar.listenForToolbarActions(toolbarType)
   }

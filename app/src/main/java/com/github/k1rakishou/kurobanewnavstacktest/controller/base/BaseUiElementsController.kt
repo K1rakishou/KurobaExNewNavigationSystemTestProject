@@ -45,8 +45,12 @@ abstract class BaseUiElementsController(
     }
   }
 
-  open fun myHandleBack(): Boolean {
+  override fun myHandleBack(): Boolean {
     if (::toolbarContract.isInitialized && toolbarContract.onBackPressed()) {
+      return true
+    }
+
+    if (::bottomPanel.isInitialized && bottomPanel.onBackPressed()) {
       return true
     }
 

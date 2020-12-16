@@ -123,10 +123,10 @@ class ThreadLayout @JvmOverloads constructor(
       return false
     }
 
-    // TODO(KurobaEx): switch toolbar into Uninitialized state
+    Timber.tag(TAG).d("closeOpenedThread()")
 
-    Timber.tag(TAG).d("showThreadEmptyState()")
     this.boundThreadDescriptor = null
+    this.toolbarContract?.closeToolbar(KurobaToolbarType.Thread)
 
     job?.cancel()
     job = null

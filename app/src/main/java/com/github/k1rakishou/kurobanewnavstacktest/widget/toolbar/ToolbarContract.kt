@@ -11,6 +11,7 @@ interface ToolbarContract : CollapsableView {
   fun showDefaultToolbar(toolbarType: KurobaToolbarType)
   fun showSearchToolbar(toolbarType: KurobaToolbarType)
   fun closeSearchToolbar(toolbarType: KurobaToolbarType)
+  fun closeToolbar(toolbarType: KurobaToolbarType)
 
   fun listenForToolbarActions(toolbarType: KurobaToolbarType): Flow<ToolbarAction>
 

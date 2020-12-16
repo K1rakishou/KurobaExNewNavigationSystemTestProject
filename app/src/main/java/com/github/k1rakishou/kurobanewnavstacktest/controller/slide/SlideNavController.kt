@@ -176,7 +176,7 @@ class SlideNavController(
     return SlideThreadController().apply {
       recyclerViewProvider(this@SlideNavController)
       uiElementsControllerCallbacks(uiElementsControllerCallbacks)
-      toolbarContract(toolbarContract)
+      provideToolbarContract(toolbarContract)
     }
   }
 

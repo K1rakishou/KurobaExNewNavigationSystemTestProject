@@ -142,6 +142,10 @@ abstract class BaseController(
     }
   }
 
+  open fun myHandleBack(): Boolean {
+    return false
+  }
+
   protected fun ViewGroup.setupChildRouterIfNotSet(transaction: RouterTransaction): Router {
     val router = getChildRouter(this)
     if (!router.hasRootController()) {

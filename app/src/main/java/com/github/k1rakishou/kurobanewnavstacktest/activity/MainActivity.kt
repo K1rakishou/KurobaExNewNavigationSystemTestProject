@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.os.Bundle
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
 import com.bluelinelabs.conductor.Conductor
 import com.bluelinelabs.conductor.Router
 import com.bluelinelabs.conductor.RouterTransaction
@@ -16,9 +17,11 @@ import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerPresenterDeleg
 import com.github.k1rakishou.kurobanewnavstacktest.controller.MainController
 import com.github.k1rakishou.kurobanewnavstacktest.controller.slide.SlideUiElementsController
 import com.github.k1rakishou.kurobanewnavstacktest.controller.split.SplitNavController
+import com.github.k1rakishou.kurobanewnavstacktest.core.GlobalWindowInsetsManager
 import com.github.k1rakishou.kurobanewnavstacktest.core.test.TestHelpers
 import com.github.k1rakishou.kurobanewnavstacktest.utils.BackgroundUtils
 import com.github.k1rakishou.kurobanewnavstacktest.utils.ChanSettings.isSplitMode
+import com.github.k1rakishou.kurobanewnavstacktest.utils.FullScreenUtils
 import com.github.k1rakishou.kurobanewnavstacktest.utils.findRouterWithControllerByTag
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.fab.SlideFabViewController
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.fab.SplitFabViewController
@@ -36,6 +39,7 @@ class MainActivity : AppCompatActivity(), ControllerPresenterDelegate, ActivityC
   private lateinit var router: Router
   private lateinit var rootContainer: TouchBlockingFrameLayout
   private lateinit var controllerPresenterDelegate: ControllerPresenterDelegateImpl
+  private lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -52,6 +56,7 @@ class MainActivity : AppCompatActivity(), ControllerPresenterDelegate, ActivityC
 //    router = attachRouterHacky(this, rootContainer, savedInstanceState)
     router = Conductor.attachRouter(this, rootContainer, savedInstanceState)
     controllerPresenterDelegate = ControllerPresenterDelegateImpl(router)
+    globalWindowInsetsManager = GlobalWindowInsetsManager()
 
     slideFabViewController = SlideFabViewController()
     splitFabViewController = SplitFabViewController()
@@ -62,6 +67,22 @@ class MainActivity : AppCompatActivity(), ControllerPresenterDelegate, ActivityC
 
       controllerPresenterDelegate.setRootControllerTag(controller.getControllerTag())
       router.setRoot(RouterTransaction.with(controller))
+    }
+
+    listenForInsetsUpdates()
+  }
+
+  private fun listenForInsetsUpdates() {
+    ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { view, insets ->
+      val isKeyboardOpen = FullScreenUtils.isKeyboardShown(view, insets.systemWindowInsetBottom)
+
+      globalWindowInsetsManager.updateKeyboardHeight(
+        FullScreenUtils.calculateDesiredRealBottomInset(view, insets.systemWindowInsetBottom)
+      )
+
+      globalWindowInsetsManager.updateIsKeyboardOpened(isKeyboardOpen)
+
+      return@setOnApplyWindowInsetsListener insets
     }
   }
 

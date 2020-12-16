@@ -24,11 +24,14 @@ abstract class ThreadController(
   private val testHelpers by lazy { (activity as MainActivity).testHelpers }
   private val threadViewModel by lazy { viewModels(ThreadViewModel::class).value }
 
+  protected val isToolbarContractInitialized: Boolean
+    get() = ::toolbarContract.isInitialized
+
   fun uiElementsControllerCallbacks(uiElementsControllerCallbacks: UiElementsControllerCallbacks) {
     this.uiElementsControllerCallbacks = uiElementsControllerCallbacks
   }
 
-  fun toolbarContract(toolbarContract: ToolbarContract) {
+  fun provideToolbarContract(toolbarContract: ToolbarContract) {
     this.toolbarContract = toolbarContract
   }
 
@@ -59,7 +62,7 @@ abstract class ThreadController(
     threadLayout.onDestroy()
   }
 
-  open fun myHandleBack(): Boolean {
+  override fun myHandleBack(): Boolean {
     if (threadLayout.onBackPressed()) {
       return true
     }

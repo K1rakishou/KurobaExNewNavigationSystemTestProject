@@ -2,6 +2,7 @@ package com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.fab
 
 import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.utils.BackgroundUtils
+import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomPanel
 import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
 
 class SplitFabViewController : FabViewController {
@@ -9,11 +10,11 @@ class SplitFabViewController : FabViewController {
   private lateinit var threadFab: KurobaFloatingActionButton
   private var state = State()
 
-  fun initCatalogFab(fab: KurobaFloatingActionButton) {
+  fun setCatalogFab(fab: KurobaFloatingActionButton) {
     this.catalogFab = fab
   }
 
-  fun initThreadFab(fab: KurobaFloatingActionButton) {
+  fun setThreadFab(fab: KurobaFloatingActionButton) {
     this.threadFab = fab
   }
 
@@ -26,6 +27,21 @@ class SplitFabViewController : FabViewController {
     }
 
     state.bottomPanelInitialized[controllerType] = true
+    onStateChanged(controllerType)
+  }
+
+  override fun onBottomPanelStateChanged(
+    controllerType: ControllerType,
+    newState: KurobaBottomPanel.State
+  ) {
+    BackgroundUtils.ensureMainThread()
+
+    val prevState = state.bottomPanelState[controllerType]
+    if (prevState == newState) {
+      return
+    }
+
+    state.bottomPanelState[controllerType] = newState
     onStateChanged(controllerType)
   }
 
@@ -58,20 +74,34 @@ class SplitFabViewController : FabViewController {
 
     val bottomPanelInitialized = state.bottomPanelInitialized[controllerType]
       ?: false
-
-    if (!bottomPanelInitialized) {
-      return
-    }
+    val controllerFullyLoaded = state.controllerFullyLoaded[controllerType]
+      ?: false
+    val bottomPanelState = state.bottomPanelState[controllerType]
+      ?: KurobaBottomPanel.State.Uninitialized
 
     val fab = when (controllerType) {
-      ControllerType.Catalog -> catalogFab
-      ControllerType.Thread -> threadFab
+      ControllerType.Catalog -> {
+        check(::catalogFab.isInitialized) { "catalogFab is not initialized" }
+        catalogFab
+      }
+      ControllerType.Thread -> {
+        check(::threadFab.isInitialized) { "catalogFab is not initialized" }
+        threadFab
+      }
+    }
+
+    if (!bottomPanelInitialized || !controllerFullyLoaded) {
+      fab.hideFab(lock = true)
+      return
     }
 
     val searchToolbarShown = state.searchToolbarShown[controllerType]
       ?: false
+    val isBottomPanelStateNotOk = bottomPanelState == KurobaBottomPanel.State.Uninitialized
+      || bottomPanelState == KurobaBottomPanel.State.SelectionPanel
+      || bottomPanelState == KurobaBottomPanel.State.ReplyLayoutPanel
 
-    if (searchToolbarShown) {
+    if (searchToolbarShown || isBottomPanelStateNotOk) {
       fab.hideFab(lock = true)
       return
     }
@@ -82,6 +112,7 @@ class SplitFabViewController : FabViewController {
   class State(
     val searchToolbarShown: MutableMap<ControllerType, Boolean> = mutableMapOf(),
     val controllerFullyLoaded: MutableMap<ControllerType, Boolean> = mutableMapOf(),
-    val bottomPanelInitialized: MutableMap<ControllerType, Boolean> = mutableMapOf()
+    val bottomPanelInitialized: MutableMap<ControllerType, Boolean> = mutableMapOf(),
+    val bottomPanelState: MutableMap<ControllerType, KurobaBottomPanel.State> = mutableMapOf()
   )
 }

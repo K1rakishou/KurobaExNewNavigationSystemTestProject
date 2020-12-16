@@ -44,7 +44,21 @@ class CollapsingViewController(
   }
 
   init {
-    locked = ChanSettings.collapsibleViewsAlwaysLocked(context)
+    updateLocked(newLocked = false)
+  }
+
+  private fun updateLocked(newLocked: Boolean) {
+    if (newLocked) {
+      locked = true
+      return
+    }
+
+    if (ChanSettings.collapsibleViewsAlwaysLocked(context)) {
+      locked = true
+      return
+    }
+
+    locked = false
   }
 
   fun lockUnlock(lock: Boolean, animate: Boolean) {
@@ -57,15 +71,13 @@ class CollapsingViewController(
           to = 0f
         )
 
-        locked = lock
+        updateLocked(newLocked = true)
       }
 
       return
     }
 
-    if (!ChanSettings.collapsibleViewsAlwaysLocked(context)) {
-      locked = lock
-    }
+    updateLocked(newLocked = lock)
   }
 
   fun show(animate: Boolean) {
@@ -81,7 +93,7 @@ class CollapsingViewController(
     }
   }
 
-  fun hide(lockHidden: Boolean, animate: Boolean) {
+  fun hide(lock: Boolean, animate: Boolean) {
     animatorSet.end()
 
     viewRef?.let { view ->
@@ -104,7 +116,7 @@ class CollapsingViewController(
         }
       }
 
-      locked = lockHidden
+      updateLocked(newLocked = lock)
     }
   }
 
@@ -289,7 +301,7 @@ class CollapsingViewController(
     viewRef?.translationY(0f)
     viewRef = null
 
-    locked = false
+    updateLocked(newLocked = false)
     isShown = true
   }
 

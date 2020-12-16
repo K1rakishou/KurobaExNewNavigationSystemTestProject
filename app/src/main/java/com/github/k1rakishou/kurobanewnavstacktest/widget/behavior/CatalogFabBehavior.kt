@@ -7,7 +7,10 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 
-class CatalogFabBehavior(context: Context, attributeSet: AttributeSet?) :
+class CatalogFabBehavior(
+  context: Context,
+  attributeSet: AttributeSet?
+) :
   CoordinatorLayout.Behavior<KurobaFloatingActionButton>(context, attributeSet) {
   private var snackBarVisible = false
 

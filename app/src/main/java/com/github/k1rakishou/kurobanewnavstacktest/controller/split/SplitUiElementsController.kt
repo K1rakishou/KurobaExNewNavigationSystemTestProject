@@ -22,6 +22,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.utils.setBehaviorExt
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.ViewScreenAttachSide
 import com.github.k1rakishou.kurobanewnavstacktest.widget.behavior.CatalogFabBehavior
 import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomNavPanel
+import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomPanel
 import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
 import timber.log.Timber
 
@@ -55,24 +56,36 @@ class SplitUiElementsController(
 
       catalogFab = findViewById(R.id.split_controller_fab)
       catalogFab.setBehaviorExt(CatalogFabBehavior(context, null))
+      catalogFab.setOnClickListener { bottomPanel.switchInto(KurobaBottomPanel.State.ReplyLayoutPanel) }
       catalogFab.hide()
 
-      splitFabViewController.initCatalogFab(catalogFab)
+      splitFabViewController.setCatalogFab(catalogFab)
 
-      bottomPanel.onBottomPanelInitialized {
-        splitFabViewController.onBottomPanelInitialized(ControllerType.Catalog)
-        catalogFab.initialized()
-      }
-      bottomPanel.setOnBottomNavPanelItemSelectedListener { selectedItem ->
-        splitControllerCatalogControllerContainer.switchTo(
-          controller = createControllerBySelectedItemId(
-            selectedItem = selectedItem,
-            uiElementsControllerCallbacks = this@SplitUiElementsController
-          )
-        )
-      }
-      bottomPanel.attachFab(catalogFab)
+      initBottomPanel()
     }
+  }
+
+  private fun initBottomPanel() {
+    bottomPanel.addOnBottomPanelInitialized {
+      splitFabViewController.onBottomPanelInitialized(ControllerType.Catalog)
+      catalogFab.initialized()
+    }
+    bottomPanel.addOnBottomPanelStateChanged { newState ->
+      splitFabViewController.onBottomPanelStateChanged(ControllerType.Catalog, newState)
+
+      lockUnlockCollapsableViews(ControllerType.Catalog, newState)
+    }
+    bottomPanel.addOnBottomNavPanelItemSelectedListener { selectedItem ->
+      splitControllerCatalogControllerContainer.switchTo(
+        controller = createControllerBySelectedItemId(
+          selectedItem = selectedItem,
+          uiElementsControllerCallbacks = this@SplitUiElementsController
+        )
+      )
+    }
+
+    bottomPanel.attachFab(catalogFab)
+    bottomPanel.bottomPanelPreparationsCompleted(KurobaBottomPanel.State.BottomNavPanel)
   }
 
   override fun onControllerCreated(savedViewState: Bundle?) {
@@ -95,19 +108,29 @@ class SplitUiElementsController(
     collapsingViewsHolder.attach(
       recyclerView = recyclerView,
       collapsableView = toolbarContract.collapsableView(),
-      viewAttachSide = ViewScreenAttachSide.Top
+      viewAttachSide = ViewScreenAttachSide.Top,
+      controllerType = controllerType
     )
 
     collapsingViewsHolder.attach(
       recyclerView = recyclerView,
       collapsableView = bottomPanel,
-      viewAttachSide = ViewScreenAttachSide.Bottom
+      viewAttachSide = ViewScreenAttachSide.Bottom,
+      controllerType = controllerType
     )
   }
 
   override fun withdrawRecyclerView(recyclerView: RecyclerView, controllerType: ControllerType) {
-    collapsingViewsHolder.detach(recyclerView, toolbarContract.collapsableView())
-    collapsingViewsHolder.detach(recyclerView, bottomPanel)
+    collapsingViewsHolder.detach(
+      recyclerView = recyclerView,
+      collapsableView = toolbarContract.collapsableView(),
+      controllerType = controllerType
+    )
+    collapsingViewsHolder.detach(
+      recyclerView = recyclerView,
+      collapsableView = bottomPanel,
+      controllerType = controllerType
+    )
   }
 
   override fun lockUnlockCollapsableViews(recyclerView: RecyclerView?, lock: Boolean, animate: Boolean) {
@@ -147,6 +170,24 @@ class SplitUiElementsController(
 
   override fun openThread(threadDescriptor: ThreadDescriptor) {
     threadNavigationContract.openThread(threadDescriptor)
+  }
+
+  private fun lockUnlockCollapsableViews(controllerType: ControllerType, newState: KurobaBottomPanel.State) {
+    val recyclerView = collapsingViewsHolder.getRecyclerForController(controllerType)
+
+    if (newState != KurobaBottomPanel.State.BottomNavPanel) {
+      collapsingViewsHolder.lockUnlockCollapsableViews(
+        recyclerView = recyclerView,
+        lock = true,
+        animate = true
+      )
+    } else {
+      collapsingViewsHolder.lockUnlockCollapsableViews(
+        recyclerView = recyclerView,
+        lock = false,
+        animate = true
+      )
+    }
   }
 
   private fun createControllerBySelectedItemId(

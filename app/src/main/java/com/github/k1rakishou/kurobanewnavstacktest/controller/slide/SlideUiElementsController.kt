@@ -19,6 +19,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.data.BoardDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.*
 import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomNavPanel
+import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomPanel
 import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.SlideKurobaFloatingActionButton
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.SlideToolbar
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarContract
@@ -30,7 +31,7 @@ class SlideUiElementsController(
 ) : BaseUiElementsController(args),
   UiElementsControllerCallbacks,
   SlideNavController.SlideCatalogUiElementsControllerCallbacks,
-  SlideModeFabClickListener,
+  FabClickListener,
   RecyclerViewProvider,
   ChanNavigationContract {
   private lateinit var slideControllerFab: SlideKurobaFloatingActionButton
@@ -49,6 +50,7 @@ class SlideUiElementsController(
       slideNavControllerContainer = findViewById(R.id.slide_nav_controller_container)
       bottomPanel = findViewById(R.id.slide_controller_bottom_panel)
       toolbarContainer = findViewById(R.id.slide_controller_toolbar_container)
+
       slideControllerFab = findViewById(R.id.slide_controller_fab)
       slideControllerFab.hide()
 
@@ -57,7 +59,7 @@ class SlideUiElementsController(
         this@SlideUiElementsController
       )
 
-      slideFabViewController.init(slideControllerFab)
+      slideFabViewController.setFab(slideControllerFab)
     }
   }
 
@@ -76,12 +78,37 @@ class SlideUiElementsController(
       )
     )
 
-    bottomPanel.onBottomPanelInitialized {
+    initBottomPanel()
+  }
+
+  override fun handleBack(): Boolean {
+    if (super.myHandleBack()) {
+      return true
+    }
+
+    val topController = getChildRouter(slideNavControllerContainer).getTopController()
+      as? BaseController
+      ?: return false
+
+    if (topController.myHandleBack()) {
+      return true
+    }
+
+    return super.handleBack()
+  }
+
+  private fun initBottomPanel() {
+    bottomPanel.addOnBottomPanelInitialized {
       // Doesn't matter what we use here since Slide layout has only one bottom panel
       slideFabViewController.onBottomPanelInitialized(ControllerType.Catalog)
       slideControllerFab.initialized()
     }
-    bottomPanel.setOnBottomNavPanelItemSelectedListener { selectedItem ->
+    bottomPanel.addOnBottomPanelStateChanged { newState ->
+      slideFabViewController.onBottomPanelStateChanged(ControllerType.Catalog, newState)
+
+      lockUnlockCollapsableViews(ControllerType.Catalog, newState)
+    }
+    bottomPanel.addOnBottomNavPanelItemSelectedListener { selectedItem ->
       slideNavControllerContainer.switchTo(
         controller = createControllerBySelectedItemId(
           selectedItem = selectedItem,
@@ -89,7 +116,9 @@ class SlideUiElementsController(
         )
       )
     }
+
     bottomPanel.attachFab(slideControllerFab)
+    bottomPanel.bottomPanelPreparationsCompleted(KurobaBottomPanel.State.BottomNavPanel)
   }
 
   override fun onControllerShown() {
@@ -102,9 +131,14 @@ class SlideUiElementsController(
     slideModeFabViewController.onDetach()
   }
 
+  override fun onControllerDestroyed() {
+    super.onControllerDestroyed()
+
+    bottomPanel.cleanup()
+  }
+
   override fun onFabClicked(fabType: SlideModeFabViewController.FabType) {
-    // TODO(KurobaEx): reply layout
-    showToast("onFabClicked fabType=$fabType")
+    bottomPanel.switchInto(KurobaBottomPanel.State.ReplyLayoutPanel)
   }
 
   @SuppressLint("BinaryOperationInTimber")
@@ -143,19 +177,29 @@ class SlideUiElementsController(
     collapsingViewsHolder.attach(
       recyclerView = recyclerView,
       collapsableView = toolbarContract.collapsableView(),
-      viewAttachSide = ViewScreenAttachSide.Top
+      viewAttachSide = ViewScreenAttachSide.Top,
+      controllerType = controllerType
     )
 
     collapsingViewsHolder.attach(
       recyclerView = recyclerView,
       collapsableView = bottomPanel,
-      viewAttachSide = ViewScreenAttachSide.Bottom
+      viewAttachSide = ViewScreenAttachSide.Bottom,
+      controllerType = controllerType
     )
   }
 
   override fun withdrawRecyclerView(recyclerView: RecyclerView, controllerType: ControllerType) {
-    collapsingViewsHolder.detach(recyclerView, toolbarContract.collapsableView())
-    collapsingViewsHolder.detach(recyclerView, bottomPanel)
+    collapsingViewsHolder.detach(
+      recyclerView = recyclerView,
+      collapsableView = toolbarContract.collapsableView(),
+      controllerType = controllerType
+    )
+    collapsingViewsHolder.detach(
+      recyclerView = recyclerView,
+      collapsableView = bottomPanel,
+      controllerType = controllerType
+    )
   }
 
   override fun onBeforeSliding(transitioningIntoCatalogToolbar: Boolean) {
@@ -193,6 +237,24 @@ class SlideUiElementsController(
   override fun getControllerTag(): ControllerTag = CONTROLLER_TAG
 
   override fun isSplitLayout(): Boolean = false
+
+  private fun lockUnlockCollapsableViews(controllerType: ControllerType, newState: KurobaBottomPanel.State) {
+    val recyclerView = collapsingViewsHolder.getRecyclerForController(controllerType)
+
+    if (newState != KurobaBottomPanel.State.BottomNavPanel) {
+      collapsingViewsHolder.lockUnlockCollapsableViews(
+        recyclerView = recyclerView,
+        lock = true,
+        animate = true
+      )
+    } else {
+      collapsingViewsHolder.lockUnlockCollapsableViews(
+        recyclerView = recyclerView,
+        lock = false,
+        animate = true
+      )
+    }
+  }
 
   private fun createControllerBySelectedItemId(
     selectedItem: KurobaBottomNavPanel.SelectedItem,

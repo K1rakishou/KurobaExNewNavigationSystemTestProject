@@ -11,7 +11,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.SlideKurobaFloatin
 
 class SlideModeFabViewController(
   private val fab: SlideKurobaFloatingActionButton,
-  private val slideModeFabClickListener: SlideModeFabClickListener
+  private val fabClickListener: FabClickListener
 ) : SlideModeFabViewControllerCallbacks {
   private var initialHorizontalOffset: Float = KurobaFloatingActionButton.DEFAULT_MARGIN_RIGHT.toFloat()
   private var focusedControllerType: ControllerType? = null
@@ -51,9 +51,9 @@ class SlideModeFabViewController(
         ?: return@setOnThrottlingClickListener
 
       if (controllerType == ControllerType.Catalog) {
-        slideModeFabClickListener.onFabClicked(FabType.CatalogFab)
+        fabClickListener.onFabClicked(FabType.CatalogFab)
       } else {
-        slideModeFabClickListener.onFabClicked(FabType.ThreadFab)
+        fabClickListener.onFabClicked(FabType.ThreadFab)
       }
     }
   }

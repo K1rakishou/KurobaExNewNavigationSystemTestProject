@@ -4,6 +4,7 @@ import android.animation.AnimatorSet
 import android.animation.ValueAnimator
 import android.content.Context
 import android.util.AttributeSet
+import android.view.LayoutInflater
 import android.view.View
 import android.widget.FrameLayout
 import androidx.core.animation.doOnCancel
@@ -16,6 +17,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.base.KurobaCoroutineScope
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.CollapsableView
 import com.github.k1rakishou.kurobanewnavstacktest.utils.awaitLayout
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndDoRequest
+import com.github.k1rakishou.kurobanewnavstacktest.utils.setVisibilityFast
 import com.github.k1rakishou.kurobanewnavstacktest.widget.TouchBlockingFrameLayout
 import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
 import kotlinx.coroutines.CompletableDeferred
@@ -31,24 +33,32 @@ class KurobaBottomPanel @JvmOverloads constructor(
   CollapsableView,
   KurobaBottomNavPanel.KurobaBottomPanelCallbacks {
 
-  private val scope = KurobaCoroutineScope()
-  private val insetBottomDeferred = CompletableDeferred<Int>()
-  private val container: FrameLayout
+  private val insetBottomDeferredInitial = CompletableDeferred<Int>()
+  private val bottomPanelInitialState = CompletableDeferred<State>()
 
+  private val scope = KurobaCoroutineScope()
+  private val panelContainer: FrameLayout
+
+  private var lastInsetBottom = 0
   private var state = State.Uninitialized
+  private var initialState = State.Uninitialized
   private var animatorSet: AnimatorSet? = null
+  private var attachedFab: KurobaFloatingActionButton? = null
+
   private val bottomPanelInitializationListeners = mutableListOf<() -> Unit>()
+  private val bottomPanelStateUpdatesListeners = mutableListOf<(State) -> Unit>()
   private val bottomNavPanelSelectedItemListeners = mutableListOf<(KurobaBottomNavPanel.SelectedItem) -> Unit>()
 
-  private val awaitableFab = CompletableDeferred<KurobaFloatingActionButton>()
-
   init {
-    inflate(context, R.layout.kuroba_bottom_panel, this).apply {
-      container = findViewById(R.id.actual_panel_container)
+    LayoutInflater.from(context).inflate(R.layout.kuroba_bottom_panel, this, true).apply {
+      panelContainer = findViewById(R.id.panel_container)
 
-      container.setOnApplyWindowInsetsListenerAndDoRequest { v, insets ->
+      panelContainer.setOnApplyWindowInsetsListenerAndDoRequest { v, insets ->
         updateContainerPaddings(v, insets.systemWindowInsetBottom)
-        insetBottomDeferred.complete(insets.systemWindowInsetBottom)
+
+        insetBottomDeferredInitial.complete(insets.systemWindowInsetBottom)
+        lastInsetBottom = insets.systemWindowInsetBottom
+
         return@setOnApplyWindowInsetsListenerAndDoRequest insets
       }
 
@@ -59,7 +69,7 @@ class KurobaBottomPanel @JvmOverloads constructor(
 
   private fun updateContainerPaddings(v: View, insetBottom: Int) {
     v.updateLayoutParams<FrameLayout.LayoutParams> {
-      height = getCurrentChildHeight() + insetBottom
+      height = getCurrentHeightOfChild() + insetBottom
     }
     v.updatePadding(bottom = insetBottom)
   }
@@ -77,16 +87,15 @@ class KurobaBottomPanel @JvmOverloads constructor(
       }
 
       val scale = 1f - (scaleTranslationY / height)
-      val fab = awaitableFab.getCompleted()
 
-      fab.setScalePreInitialized(scale, scale)
-      fab.translationY = -height.toFloat()
+      attachedFab!!.setScalePreInitialized(scale, scale)
+      attachedFab!!.translationY = -height.toFloat()
     }
   }
 
   private fun canUpdateFab(): Boolean {
     return height > 0
-      && awaitableFab.isCompleted
+      && attachedFab != null
       && (state == State.BottomNavPanel || state == State.Uninitialized)
   }
 
@@ -100,97 +109,165 @@ class KurobaBottomPanel @JvmOverloads constructor(
 
   override fun onFinishInflate() {
     super.onFinishInflate()
-    scope.launch { initState(State.BottomNavPanel) }
+    scope.launch { initState() }
   }
 
   override fun onItemSelected(selectedItem: KurobaBottomNavPanel.SelectedItem) {
     bottomNavPanelSelectedItemListeners.forEach { listener -> listener(selectedItem) }
   }
 
-  fun attachFab(fab: KurobaFloatingActionButton) {
-    check(!awaitableFab.isCompleted) { "Already attached" }
-    check(fab.isOrWillBeHidden) { "FAB must be hidden" }
-
-    this.awaitableFab.complete(fab)
+  fun bottomPanelPreparationsCompleted(initialState: State) {
+    this.initialState = initialState
+    bottomPanelInitialState.complete(initialState)
   }
 
-  fun onBottomPanelInitialized(func: () -> Unit) {
+  fun attachFab(fab: KurobaFloatingActionButton) {
+    check(attachedFab == null) { "Already attached" }
+
+    this.attachedFab = fab
+  }
+
+  fun addOnBottomPanelInitialized(func: () -> Unit) {
     if (state != State.Uninitialized) {
       func()
+      bottomPanelStateUpdatesListeners.forEach { func -> func(state) }
       return
     }
 
     bottomPanelInitializationListeners += func
   }
 
-  fun setOnBottomNavPanelItemSelectedListener(listener: (KurobaBottomNavPanel.SelectedItem) -> Unit) {
+  fun addOnBottomPanelStateChanged(func: (State) -> Unit) {
+    bottomPanelStateUpdatesListeners += func
+  }
+
+  fun addOnBottomNavPanelItemSelectedListener(listener: (KurobaBottomNavPanel.SelectedItem) -> Unit) {
     bottomNavPanelSelectedItemListeners += listener
   }
 
-  suspend fun switchInto(newState: State) {
-    check(state != State.Uninitialized) { "Not initialized yet" }
-
-//    if (state == newState) {
-//      return
-//    }
-//
-//    container.removeAllViews()
-//
-//    val kurobaBottomNavPanel = KurobaBottomNavPanel(context)
-//    container.addView(kurobaBottomNavPanel)
-//    kurobaBottomNavPanel.select(KurobaBottomNavPanel.SelectedItem.Browse)
-//
-//    container.requestLayout()
-//    container.awaitLayout()
-//
-//    val insetBottom = insetBottomDeferred.await()
-//    updateContainerPaddings(container, insetBottom)
-//
-//    y = (container.height + container.paddingBottom).toFloat()
-//
-//    val attachedFab = awaitableFab.getCompleted()
-//    if (newState == State.BottomNavPanel) {
-//      attachedFab.showFab()
-//    } else {
-//      attachedFab.hideFab()
-//    }
+  fun switchInto(newState: State) {
+    scope.launch { switchIntoInternal(newState) }
   }
 
-  private suspend fun initState(initialState: State) {
+  fun cleanup() {
+    endRevealAnimations()
+    scope.cancelChildren()
+
+    bottomPanelInitializationListeners.clear()
+    bottomPanelStateUpdatesListeners.clear()
+    bottomNavPanelSelectedItemListeners.clear()
+
+    attachedFab = null
+    state = State.Uninitialized
+  }
+
+  private suspend fun switchIntoInternal(newState: State) {
+    check(state != State.Uninitialized) { "Not initialized yet" }
+
+    if (state == newState) {
+      return
+    }
+
+    panelContainer.removeAllViews()
+
+    when (newState) {
+      State.Uninitialized -> throw IllegalStateException("Cannot be used as newState")
+      State.Hidden -> {
+        val kurobaBottomHiddenPanel = KurobaBottomHiddenPanel(context)
+        panelContainer.addView(kurobaBottomHiddenPanel)
+      }
+      State.BottomNavPanel -> {
+        val kurobaBottomNavPanel = KurobaBottomNavPanel(context, this)
+        panelContainer.addView(kurobaBottomNavPanel)
+        kurobaBottomNavPanel.select(KurobaBottomNavPanel.SelectedItem.Browse)
+
+        kurobaBottomNavPanel.updateLayoutParams<FrameLayout.LayoutParams> {
+          height = getCurrentHeightOfChild() + lastInsetBottom
+        }
+      }
+      State.ReplyLayoutPanel -> {
+        val kurobaBottomReplyPanel = KurobaBottomReplyPanel(context)
+        panelContainer.addView(kurobaBottomReplyPanel)
+
+        kurobaBottomReplyPanel.updateLayoutParams<FrameLayout.LayoutParams> {
+          height = getCurrentHeightOfChild() + lastInsetBottom
+        }
+      }
+      State.SelectionPanel -> TODO()
+    }
+
+    panelContainer.requestLayout()
+    panelContainer.awaitLayout()
+
+    if (newState != State.Hidden) {
+      this.setVisibilityFast(View.VISIBLE)
+      panelContainer.updateLayoutParams<FrameLayout.LayoutParams> {
+        height = getCurrentHeightOfChild() + lastInsetBottom
+      }
+      panelContainer.updatePadding(bottom = lastInsetBottom)
+    } else {
+      this.setVisibilityFast(View.GONE)
+      panelContainer.updateLayoutParams<FrameLayout.LayoutParams> {
+        height = 0
+      }
+      panelContainer.updatePadding(bottom = 0)
+    }
+
+    bottomPanelStateUpdatesListeners.forEach { func -> func(newState) }
+    state = newState
+  }
+
+  private suspend fun initState() {
+    val initialState = bottomPanelInitialState.await()
     check(state == State.Uninitialized) { "Already initialized?!" }
-    container.removeAllViews()
 
-    val kurobaBottomNavPanel = KurobaBottomNavPanel(context, this)
-    container.addView(kurobaBottomNavPanel)
-    kurobaBottomNavPanel.select(KurobaBottomNavPanel.SelectedItem.Browse)
-
-    container.requestLayout()
-    container.awaitLayout()
-
-    val insetBottom = insetBottomDeferred.await()
-    val attachedFab = awaitableFab.await()
-
-    updateContainerPaddings(container, insetBottom)
-    val fullHeight = (container.height + container.paddingBottom).toFloat()
-    translationY(fullHeight)
-
-    attachedFab.setScale(0f, 0f)
-    attachedFab.visibility = View.VISIBLE
-    attachedFab.translationY = -fullHeight
-
-    revealAnimation(this, translationY, 0f)
-
-    state = initialState
+    when (initialState) {
+      State.BottomNavPanel -> initBottomNavViewPanel()
+      State.Hidden -> initBottomHiddenPanel()
+      else -> throw NotImplementedError("Not implemented for state: $initialState")
+    }
 
     bottomPanelInitializationListeners.forEach { func -> func() }
     bottomPanelInitializationListeners.clear()
+
+    bottomPanelStateUpdatesListeners.forEach { func -> func(initialState) }
+
+    state = initialState
+  }
+
+  private suspend fun initBottomHiddenPanel() {
+    panelContainer.removeAllViews()
+
+    val kurobaBottomHiddenPanel = KurobaBottomHiddenPanel(context)
+    panelContainer.addView(kurobaBottomHiddenPanel)
+
+    panelContainer.requestLayout()
+    panelContainer.awaitLayout()
+
+    insetBottomDeferredInitial.await()
+  }
+
+  private suspend fun initBottomNavViewPanel() {
+    panelContainer.removeAllViews()
+
+    val kurobaBottomNavPanel = KurobaBottomNavPanel(context, this)
+    panelContainer.addView(kurobaBottomNavPanel)
+    kurobaBottomNavPanel.select(KurobaBottomNavPanel.SelectedItem.Browse)
+
+    panelContainer.requestLayout()
+    panelContainer.awaitLayout()
+
+    val insetBottom = insetBottomDeferredInitial.await()
+
+    updateContainerPaddings(panelContainer, insetBottom)
+    val fullHeight = (panelContainer.height + panelContainer.paddingBottom).toFloat()
+    translationY(fullHeight)
+
+    revealAnimation(this, translationY, 0f)
   }
 
   private suspend fun revealAnimation(panel: KurobaBottomPanel, fromY: Float, toY: Float) {
-    if (animatorSet != null) {
-      animatorSet?.end()
-      animatorSet = null
-    }
+    endRevealAnimations()
 
     suspendCancellableCoroutine<Unit> { continuation ->
       val translationAnimation = ValueAnimator.ofFloat(fromY, toY).apply {
@@ -209,34 +286,63 @@ class KurobaBottomPanel @JvmOverloads constructor(
           panel.visibility = View.VISIBLE
           panel.alpha = 0f
         }
-        doOnCancel { continuation.resume(Unit) }
-        doOnEnd { continuation.resume(Unit) }
+
+        fun resume() {
+          if (continuation.isActive) {
+            continuation.resume(Unit)
+          }
+        }
+
+        doOnCancel { resume() }
+        doOnEnd { resume() }
 
         start()
       }
 
       continuation.invokeOnCancellation {
-        if (animatorSet != null) {
-          animatorSet?.end()
-          animatorSet = null
-        }
+        endRevealAnimations()
       }
     }
   }
 
-  private fun getCurrentChildHeight(): Int {
-    if (container.childCount <= 0) {
+  private fun endRevealAnimations() {
+    if (animatorSet != null) {
+      animatorSet?.end()
+      animatorSet = null
+    }
+  }
+
+  private fun getCurrentHeightOfChild(): Int {
+    check(panelContainer.childCount <= 1) { "Bad children count: ${panelContainer.childCount}" }
+
+    if (panelContainer.childCount <= 0) {
       return 0
     }
 
-    return when (val child = container.getChildAt(0)) {
+    return when (val child = panelContainer.getChildAt(0)) {
       is KurobaBottomNavPanel -> child.getCurrentHeight()
-      else -> throw IllegalStateException("Unknown view: ${container.javaClass.simpleName}")
+      is KurobaBottomReplyPanel -> child.getCurrentHeight()
+      is KurobaBottomHiddenPanel -> child.getCurrentHeight()
+      else -> throw IllegalStateException("Unknown view: ${panelContainer.javaClass.simpleName}")
     }
+  }
+
+  fun onBackPressed(): Boolean {
+    if (state == State.Uninitialized || initialState == State.Uninitialized || state == initialState) {
+      return false
+    }
+
+    if (initialState != State.Uninitialized) {
+      switchInto(initialState)
+      return true
+    }
+
+    return false
   }
 
   enum class State {
     Uninitialized,
+    Hidden,
     BottomNavPanel,
     SelectionPanel,
     ReplyLayoutPanel

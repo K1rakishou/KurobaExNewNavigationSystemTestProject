@@ -2,6 +2,7 @@ package com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.fab
 
 import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.utils.BackgroundUtils
+import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomPanel
 import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.SlideKurobaFloatingActionButton
 
 class SlideFabViewController : FabViewController {
@@ -16,7 +17,7 @@ class SlideFabViewController : FabViewController {
     state.controllerFullyLoaded[ControllerType.Thread] = false
   }
 
-  fun init(fab: SlideKurobaFloatingActionButton) {
+  fun setFab(fab: SlideKurobaFloatingActionButton) {
     this.fab = fab
   }
 
@@ -28,6 +29,18 @@ class SlideFabViewController : FabViewController {
     }
 
     state.bottomPanelInitialized = true
+    onStateChanged()
+  }
+
+  override fun onBottomPanelStateChanged(controllerType: ControllerType, newState: KurobaBottomPanel.State) {
+    BackgroundUtils.ensureMainThread()
+
+    val prevState = state.bottomPanelState
+    if (prevState == newState) {
+      return
+    }
+
+    state.bottomPanelState = newState
     onStateChanged()
   }
 
@@ -76,22 +89,29 @@ class SlideFabViewController : FabViewController {
       return
     }
 
+    val bottomPanelState = state.bottomPanelState
+
     val searchToolbarShown = state.searchToolbarShown[currentControllerType]
       ?: false
+    val isBottomPanelStateNotOk = bottomPanelState == KurobaBottomPanel.State.Uninitialized
+      || bottomPanelState == KurobaBottomPanel.State.SelectionPanel
+      || bottomPanelState == KurobaBottomPanel.State.ReplyLayoutPanel
 
-    if (searchToolbarShown) {
+    check(::fab.isInitialized) { "fab is not initialized" }
+
+    if (searchToolbarShown || isBottomPanelStateNotOk) {
       fab.hideFab(lock = true)
-      return
+    } else {
+      fab.showFab(lock = false)
     }
-
-    fab.showFab(lock = false)
   }
 
   class State(
     var searchToolbarShown: MutableMap<ControllerType, Boolean> = mutableMapOf(),
     var controllerFullyLoaded: MutableMap<ControllerType, Boolean> = mutableMapOf(),
     var currentControllerType: ControllerType? = null,
-    var bottomPanelInitialized: Boolean = false
+    var bottomPanelInitialized: Boolean = false,
+    var bottomPanelState: KurobaBottomPanel.State = KurobaBottomPanel.State.Uninitialized
   )
 
 }

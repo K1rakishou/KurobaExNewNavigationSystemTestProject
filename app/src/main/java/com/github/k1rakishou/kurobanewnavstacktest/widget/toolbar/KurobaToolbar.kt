@@ -126,6 +126,19 @@ class KurobaToolbar @JvmOverloads constructor(
     pushNewToolbarStateClass(kurobaToolbarType, toolbarStateClass)
   }
 
+  fun closeToolbar() {
+    BackgroundUtils.ensureMainThread()
+
+    if (!toolbarViewModel.getToolbarStateStack(kurobaToolbarType).clearState()) {
+      return
+    }
+
+    onToolbarStateChanged(
+      newToolbarStateClass = ToolbarStateClass.Uninitialized,
+      toolbarStateChangeType = ToolbarStateChangeType.Pop
+    )
+  }
+
   override fun popToolbarStateClass(
     kurobaToolbarType: KurobaToolbarType,
     toolbarStateClass: ToolbarStateClass

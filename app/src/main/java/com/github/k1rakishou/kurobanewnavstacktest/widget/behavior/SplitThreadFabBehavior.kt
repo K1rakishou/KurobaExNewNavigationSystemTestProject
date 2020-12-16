@@ -14,17 +14,9 @@ class SplitThreadFabBehavior(
     context: Context,
     attributeSet: AttributeSet?
 ) : CoordinatorLayout.Behavior<KurobaFloatingActionButton>(context, attributeSet) {
-  private var initialPositionY: Int? = null
   private var snackBarVisible = false
 
-  fun init(laidOutFab: FloatingActionButton) {
-    require(laidOutFab.isLaidOut) { "FloatingActionButton is not laid out!" }
-
-    this.initialPositionY = laidOutFab.translationY.toInt()
-  }
-
   fun reset() {
-    initialPositionY = null
     snackBarVisible = false
   }
 
@@ -50,10 +42,6 @@ class SplitThreadFabBehavior(
       dependency: View
   ): Boolean {
     if (dependency is ToolbarContract) {
-      if (initialPositionY == null) {
-        return false
-      }
-
       resolveMaterialToolbarView(parent, child, dependency)
       return true
     }
@@ -78,16 +66,12 @@ class SplitThreadFabBehavior(
     if (dependency is Snackbar.SnackbarLayout) {
       snackBarVisible = false
 
-      if (initialPositionY == null) {
-        return
-      }
-
       val toolbarContract = findChildView(parent) { view -> view is ToolbarContract }
         as? ToolbarContract
         ?: return
 
       val toolbarView = toolbarContract.collapsableView()
-      if (toolbarView.translationY().toInt() == initialPositionY) {
+      if (toolbarView.translationY().toInt() == 0) {
         child.showFab()
       }
     }
@@ -102,15 +86,12 @@ class SplitThreadFabBehavior(
       return
     }
 
-    val initialPosY = initialPositionY
-      ?: return
-
     val toolbarView = toolbarContract.collapsableView()
-    if (toolbarView.translationY().toInt() == initialPositionY && child.isOrWillBeHidden) {
+    if (toolbarView.translationY().toInt() == 0 && child.isOrWillBeHidden) {
       child.showFab()
     }
 
-    val scale = 1f - (Math.abs(toolbarView.translationY() - initialPosY) / toolbarView.height())
+    val scale = 1f - (Math.abs(toolbarView.translationY()) / toolbarView.height())
     child.setScale(scale, scale)
   }
 

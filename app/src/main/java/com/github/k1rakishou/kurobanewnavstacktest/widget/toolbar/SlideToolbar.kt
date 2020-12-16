@@ -121,6 +121,13 @@ class SlideToolbar @JvmOverloads constructor(
     }.exhaustive
   }
 
+  override fun closeToolbar(toolbarType: KurobaToolbarType) {
+    when (toolbarType) {
+      KurobaToolbarType.Catalog -> actualCatalogToolbar.closeToolbar()
+      KurobaToolbarType.Thread -> actualThreadToolbar.closeToolbar()
+    }.exhaustive
+  }
+
   override fun listenForToolbarActions(toolbarType: KurobaToolbarType): Flow<ToolbarAction> {
     return when (toolbarType) {
       KurobaToolbarType.Catalog -> actualCatalogToolbar.listenForToolbarActions(toolbarType)
