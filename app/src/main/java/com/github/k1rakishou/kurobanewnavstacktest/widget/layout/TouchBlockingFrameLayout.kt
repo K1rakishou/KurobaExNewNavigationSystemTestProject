@@ -1,4 +1,4 @@
-package com.github.k1rakishou.kurobanewnavstacktest.widget
+package com.github.k1rakishou.kurobanewnavstacktest.widget.layout
 
 import android.content.Context
 import android.util.AttributeSet

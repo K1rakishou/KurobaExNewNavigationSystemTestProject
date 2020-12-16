@@ -18,7 +18,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.controller.base.CollapsableVi
 import com.github.k1rakishou.kurobanewnavstacktest.utils.awaitLayout
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndDoRequest
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setVisibilityFast
-import com.github.k1rakishou.kurobanewnavstacktest.widget.TouchBlockingFrameLayout
+import com.github.k1rakishou.kurobanewnavstacktest.widget.layout.TouchBlockingFrameLayout
 import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.suspendCancellableCoroutine

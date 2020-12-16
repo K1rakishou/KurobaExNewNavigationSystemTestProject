@@ -12,7 +12,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.data.PostDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.utils.FullScreenUtils.hideSystemUi
 import com.github.k1rakishou.kurobanewnavstacktest.utils.FullScreenUtils.setupFullscreen
 import com.github.k1rakishou.kurobanewnavstacktest.viewstate.ViewStateConstants
-import com.github.k1rakishou.kurobanewnavstacktest.widget.TouchBlockingFrameLayout
+import com.github.k1rakishou.kurobanewnavstacktest.widget.layout.TouchBlockingFrameLayout
 import dev.chrisbanes.insetter.Insetter
 import java.lang.RuntimeException
 

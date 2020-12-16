@@ -4,49 +4,58 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/home_controller_root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/backColor">
 
-    <com.github.k1rakishou.kurobanewnavstacktest.widget.DrawerWidthAdjustingLayout
+    <com.github.k1rakishou.kurobanewnavstacktest.widget.layout.DrawerWidthAdjustingLayout
         android:id="@+id/split_controller_drawer"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <com.github.k1rakishou.kurobanewnavstacktest.widget.TouchBlockingFrameLayout
-            android:id="@+id/split_controller_catalog_controller_container"
+        <com.github.k1rakishou.kurobanewnavstacktest.widget.layout.TouchBlockingCoordinatorLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent">
 
-        <com.github.k1rakishou.kurobanewnavstacktest.widget.TouchBlockingFrameLayout
+            <com.github.k1rakishou.kurobanewnavstacktest.widget.layout.TouchBlockingFrameLayout
+                android:id="@+id/split_controller_catalog_controller_container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/backColor"/>
+
+            <com.github.k1rakishou.kurobanewnavstacktest.widget.layout.TouchBlockingFrameLayout
+                android:id="@+id/split_controller_toolbar_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top"
+                tools:background="@color/colorPrimaryDark"
+                tools:layout_height="@dimen/toolbar_height" />
+
+            <com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomPanel
+                android:id="@+id/split_controller_bottom_panel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom" />
+
+            <com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
+                android:id="@+id/split_controller_fab"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|end"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="16dp"
+                android:src="@drawable/ic_baseline_create_24"
+                tools:layout_marginBottom="72dp" />
+
+
+        </com.github.k1rakishou.kurobanewnavstacktest.widget.layout.TouchBlockingCoordinatorLayout>
+
+        <com.github.k1rakishou.kurobanewnavstacktest.widget.layout.TouchBlockingFrameLayout
             android:id="@+id/split_controller_drawer_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="start"
-            android:background="#80505050" />
+            android:background="@color/backColor" />
 
-    </com.github.k1rakishou.kurobanewnavstacktest.widget.DrawerWidthAdjustingLayout>
-
-    <com.github.k1rakishou.kurobanewnavstacktest.widget.TouchBlockingFrameLayout
-        android:id="@+id/split_controller_toolbar_container"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top"
-        tools:background="@color/colorPrimaryDark"
-        tools:layout_height="@dimen/toolbar_height" />
-
-    <com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomPanel
-        android:id="@+id/split_controller_bottom_panel"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom" />
-
-    <com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
-        android:id="@+id/split_controller_fab"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
-        android:src="@drawable/ic_baseline_create_24"
-        tools:layout_marginBottom="72dp" />
+    </com.github.k1rakishou.kurobanewnavstacktest.widget.layout.DrawerWidthAdjustingLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

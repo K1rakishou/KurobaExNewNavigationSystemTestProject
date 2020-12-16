@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.github.k1rakishou.kurobanewnavstacktest.widget;
+package com.github.k1rakishou.kurobanewnavstacktest.widget.layout;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -28,7 +28,6 @@ import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;

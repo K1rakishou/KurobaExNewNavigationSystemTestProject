@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import androidx.core.view.GravityCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.bluelinelabs.conductor.RouterTransaction
 import com.github.k1rakishou.kurobanewnavstacktest.R
@@ -21,6 +22,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.*
 import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomNavPanel
 import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomPanel
 import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.SlideKurobaFloatingActionButton
+import com.github.k1rakishou.kurobanewnavstacktest.widget.layout.DrawerWidthAdjustingLayout
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.SlideToolbar
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarContract
 import timber.log.Timber
@@ -34,6 +36,7 @@ class SlideUiElementsController(
   FabClickListener,
   RecyclerViewProvider,
   ChanNavigationContract {
+  private lateinit var drawer: DrawerWidthAdjustingLayout
   private lateinit var slideControllerFab: SlideKurobaFloatingActionButton
   private lateinit var slideModeFabViewController: SlideModeFabViewController
   private lateinit var slideNavControllerContainer: FrameLayout
@@ -47,6 +50,7 @@ class SlideUiElementsController(
     savedViewState: Bundle?
   ): View {
     return inflater.inflateView(R.layout.controller_slide_catalog_ui_elements, container) {
+      drawer = findViewById(R.id.slide_controller_drawer)
       slideNavControllerContainer = findViewById(R.id.slide_nav_controller_container)
       bottomPanel = findViewById(R.id.slide_controller_bottom_panel)
       toolbarContainer = findViewById(R.id.slide_controller_toolbar_container)
@@ -82,6 +86,11 @@ class SlideUiElementsController(
   }
 
   override fun handleBack(): Boolean {
+    if (::drawer.isInitialized && drawer.isDrawerOpen(GravityCompat.START)) {
+      drawer.closeDrawer(GravityCompat.START)
+      return true
+    }
+
     if (super.myHandleBack()) {
       return true
     }

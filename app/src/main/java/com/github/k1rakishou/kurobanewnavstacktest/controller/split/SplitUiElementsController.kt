@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import androidx.core.view.GravityCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.bluelinelabs.conductor.RouterTransaction
 import com.github.k1rakishou.kurobanewnavstacktest.R
@@ -24,6 +25,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.widget.behavior.CatalogFabBeh
 import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomNavPanel
 import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomPanel
 import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
+import com.github.k1rakishou.kurobanewnavstacktest.widget.layout.DrawerWidthAdjustingLayout
 import timber.log.Timber
 
 @SuppressLint("TimberTagLength")
@@ -33,6 +35,7 @@ class SplitUiElementsController(
   UiElementsControllerCallbacks,
   ChanNavigationContract,
   RecyclerViewProvider {
+  private lateinit var drawer: DrawerWidthAdjustingLayout
   private lateinit var catalogFab: KurobaFloatingActionButton
   private lateinit var splitControllerCatalogControllerContainer: FrameLayout
   private lateinit var threadNavigationContract: ThreadNavigationContract
@@ -50,6 +53,7 @@ class SplitUiElementsController(
     savedViewState: Bundle?
   ): View {
     return inflater.inflateView(R.layout.controller_split_catalog_ui_elements, container) {
+      drawer = findViewById(R.id.split_controller_drawer)
       splitControllerCatalogControllerContainer = findViewById(R.id.split_controller_catalog_controller_container)
       bottomPanel = findViewById(R.id.split_controller_bottom_panel)
       toolbarContainer = findViewById(R.id.split_controller_toolbar_container)
@@ -96,6 +100,15 @@ class SplitUiElementsController(
     splitControllerCatalogControllerContainer.setupChildRouterIfNotSet(
       RouterTransaction.with(createSplitCatalogController(this))
     )
+  }
+
+  override fun myHandleBack(): Boolean {
+    if (::drawer.isInitialized && drawer.isDrawerOpen(GravityCompat.START)) {
+      drawer.closeDrawer(GravityCompat.START)
+      return true
+    }
+
+    return super.myHandleBack()
   }
 
   override fun onControllerHidden() {

@@ -26,7 +26,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.utils.findRouterWithControlle
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.fab.SlideFabViewController
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.fab.SplitFabViewController
 import com.github.k1rakishou.kurobanewnavstacktest.viewstate.ViewStateConstants
-import com.github.k1rakishou.kurobanewnavstacktest.widget.TouchBlockingFrameLayout
+import com.github.k1rakishou.kurobanewnavstacktest.widget.layout.TouchBlockingFrameLayout
 import dev.chrisbanes.insetter.Insetter
 
 class MainActivity : AppCompatActivity(), ControllerPresenterDelegate, ActivityContract {

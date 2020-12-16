@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.github.k1rakishou.kurobanewnavstacktest.widget.SlidingPaneLayoutEx xmlns:android="http://schemas.android.com/apk/res/android"
+<com.github.k1rakishou.kurobanewnavstacktest.widget.layout.SlidingPaneLayoutEx xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/sliding_pane_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.github.k1rakishou.kurobanewnavstacktest.widget.TouchBlockingFrameLayout
+    <com.github.k1rakishou.kurobanewnavstacktest.widget.layout.TouchBlockingFrameLayout
         android:id="@+id/catalog_controller_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <com.github.k1rakishou.kurobanewnavstacktest.widget.TouchBlockingFrameLayout
+    <com.github.k1rakishou.kurobanewnavstacktest.widget.layout.TouchBlockingFrameLayout
         android:id="@+id/thread_controller_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-</com.github.k1rakishou.kurobanewnavstacktest.widget.SlidingPaneLayoutEx>
+</com.github.k1rakishou.kurobanewnavstacktest.widget.layout.SlidingPaneLayoutEx>

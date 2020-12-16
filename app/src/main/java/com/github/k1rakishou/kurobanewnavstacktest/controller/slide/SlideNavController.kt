@@ -18,8 +18,8 @@ import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.utils.ChanSettings
 import com.github.k1rakishou.kurobanewnavstacktest.utils.ScreenOrientationUtils
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.SlideModeFabViewControllerCallbacks
-import com.github.k1rakishou.kurobanewnavstacktest.widget.SlidingPaneLayoutEx
-import com.github.k1rakishou.kurobanewnavstacktest.widget.SlidingPaneLayoutSlideHandler
+import com.github.k1rakishou.kurobanewnavstacktest.widget.layout.SlidingPaneLayoutEx
+import com.github.k1rakishou.kurobanewnavstacktest.widget.layout.SlidingPaneLayoutSlideHandler
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarContract
 
 class SlideNavController(

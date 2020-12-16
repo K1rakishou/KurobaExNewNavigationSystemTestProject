@@ -4,7 +4,7 @@ import androidx.test.rule.ActivityTestRule
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.activity.MainActivity
 import com.github.k1rakishou.kurobanewnavstacktest.core.test.TestHelpers
-import com.github.k1rakishou.kurobanewnavstacktest.widget.SlidingPaneLayoutEx
+import com.github.k1rakishou.kurobanewnavstacktest.widget.layout.SlidingPaneLayoutEx
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.KurobaToolbarType
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.SlideToolbar
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarStateClass

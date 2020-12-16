@@ -11,7 +11,6 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.customview.view.AbsSavedState
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setAlphaFast
-import com.github.k1rakishou.kurobanewnavstacktest.widget.TouchBlockingFrameLayout
 
 @SuppressLint("ViewConstructor")
 class KurobaBottomNavPanel(
