@@ -95,8 +95,6 @@ class SplitUiElementsController(
   override fun onControllerCreated(savedViewState: Bundle?) {
     super.onControllerCreated(savedViewState)
 
-    // TODO(KurobaEx): bottom nav view select items listener
-
     splitControllerCatalogControllerContainer.setupChildRouterIfNotSet(
       RouterTransaction.with(createSplitCatalogController(this))
     )

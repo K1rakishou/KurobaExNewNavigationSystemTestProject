@@ -1,12 +1,13 @@
 package com.github.k1rakishou.kurobanewnavstacktest.utils
 
 import android.content.res.Resources
+import android.graphics.drawable.ColorDrawable
 import android.text.TextWatcher
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowInsets
 import android.widget.EditText
 import android.widget.TextView
+import androidx.annotation.ColorInt
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.doOnLayout
@@ -15,6 +16,7 @@ import com.airbnb.epoxy.*
 import com.bluelinelabs.conductor.Router
 import com.github.k1rakishou.kurobanewnavstacktest.base.BaseController
 import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
+import kotlinx.coroutines.CancellableContinuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -35,7 +37,7 @@ fun EpoxyRecyclerView.withModelsAsync(buildModels: EpoxyController.() -> Unit) {
 }
 
 class SimpleAsyncEpoxyController(
-    val builder: EpoxyController.() -> Unit
+  val builder: EpoxyController.() -> Unit
 ) : AsyncEpoxyController() {
   override fun buildModels() {
     builder()
@@ -79,13 +81,13 @@ private fun View.requestApplyInsetsWhenAttached() {
   }
 
   this.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
-      override fun onViewAttachedToWindow(v: View) {
-          v.removeOnAttachStateChangeListener(this)
-          ViewCompat.requestApplyInsets(v)
-      }
+    override fun onViewAttachedToWindow(v: View) {
+      v.removeOnAttachStateChangeListener(this)
+      ViewCompat.requestApplyInsets(v)
+    }
 
-      override fun onViewDetachedFromWindow(v: View?) {
-      }
+    override fun onViewDetachedFromWindow(v: View?) {
+    }
   })
 }
 
@@ -105,12 +107,12 @@ fun View.setOnApplyWindowInsetsOneShotListenerAndDoRequest(listener: View.OnAppl
 }
 
 fun View.updateMargins(
-    left: Int? = null,
-    start: Int? = null,
-    right: Int? = null,
-    end: Int? = null,
-    top: Int? = null,
-    bottom: Int? = null
+  left: Int? = null,
+  start: Int? = null,
+  right: Int? = null,
+  end: Int? = null,
+  top: Int? = null,
+  bottom: Int? = null
 ) {
   updateLayoutParams<ViewGroup.MarginLayoutParams> {
     leftMargin = left ?: leftMargin
@@ -162,6 +164,21 @@ fun View.setEnabledFast(enable: Boolean) {
   this.isEnabled = enable
 }
 
+fun View.setBackgroundColorFast(@ColorInt newColor: Int) {
+  val backgroundDrawable = background
+
+  if (backgroundDrawable !is ColorDrawable) {
+    setBackgroundColor(newColor)
+    return
+  }
+
+  if (backgroundDrawable.color == newColor) {
+    return
+  }
+
+  setBackgroundColor(newColor)
+}
+
 fun EditText.doIgnoringTextWatcher(textWatcher: TextWatcher, func: EditText.() -> Unit) {
   removeTextChangedListener(textWatcher)
   func(this)
@@ -207,5 +224,11 @@ fun EpoxyController.addOneshotModelBuildListener(callback: () -> Unit) {
 suspend fun View.awaitLayout() {
   suspendCoroutine<Unit> { continuation ->
     doOnLayout { continuation.resume(Unit) }
+  }
+}
+
+fun <T> CancellableContinuation<T>.resumeIfActive(value: T) {
+  if (isActive) {
+    resume(value)
   }
 }

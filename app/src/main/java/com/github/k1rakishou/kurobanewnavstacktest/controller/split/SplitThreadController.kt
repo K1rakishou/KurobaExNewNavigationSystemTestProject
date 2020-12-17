@@ -108,7 +108,7 @@ class SplitThreadController(
     threadFab.setOnApplyWindowInsetsListenerAndDoRequest { v, insets ->
       threadFab.updateMargins(
         end = KurobaFloatingActionButton.DEFAULT_MARGIN_RIGHT + insets.systemWindowInsetRight,
-        bottom = KurobaFloatingActionButton.DEFAULT_MARGIN_RIGHT + insets.systemWindowInsetBottom
+        bottom = KurobaFloatingActionButton.DEFAULT_MARGIN_RIGHT
       )
 
       return@setOnApplyWindowInsetsListenerAndDoRequest insets

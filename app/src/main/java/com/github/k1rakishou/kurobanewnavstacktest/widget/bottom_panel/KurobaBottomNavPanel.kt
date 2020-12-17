@@ -11,12 +11,14 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.customview.view.AbsSavedState
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setAlphaFast
+import com.github.k1rakishou.kurobanewnavstacktest.utils.setEnabledFast
+import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnThrottlingClickListener
 
 @SuppressLint("ViewConstructor")
 class KurobaBottomNavPanel(
   context: Context,
   private val callbacks: KurobaBottomPanelCallbacks
-) : ConstraintLayout(context, null, 0), View.OnClickListener {
+) : ConstraintLayout(context, null, 0), ChildPanelContract, View.OnClickListener {
   private var selectedItem = SelectedItem.Uninitialized
 
   private val searchItemHolder: LinearLayout
@@ -44,7 +46,7 @@ class KurobaBottomNavPanel(
       settingsItemHolder,
     )
 
-    itemsArray.forEach { item -> item.setOnClickListener(this) }
+    itemsArray.forEach { item -> item.setOnThrottlingClickListener(this) }
   }
 
   override fun onFinishInflate() {
@@ -116,8 +118,19 @@ class KurobaBottomNavPanel(
     select(state.selectedItem!!)
   }
 
-  fun getCurrentHeight(): Int {
+  override fun getCurrentHeight(): Int {
     return context.resources.getDimension(R.dimen.bottom_nav_panel_height).toInt()
+  }
+
+  override fun getBackgroundColor(): Int {
+    return context.resources.getColor(R.color.colorPrimaryDark)
+  }
+
+  override fun enableOrDisableControls(enable: Boolean) {
+    searchItemHolder.setEnabledFast(enable)
+    bookmarksItemHolder.setEnabledFast(enable)
+    browseItemHolder.setEnabledFast(enable)
+    settingsItemHolder.setEnabledFast(enable)
   }
 
   enum class SelectedItem(val value: Int) {

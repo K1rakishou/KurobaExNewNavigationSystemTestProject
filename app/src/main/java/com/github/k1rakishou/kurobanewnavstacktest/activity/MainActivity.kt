@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
-import com.bluelinelabs.conductor.Conductor
 import com.bluelinelabs.conductor.Router
 import com.bluelinelabs.conductor.RouterTransaction
 import com.bluelinelabs.conductor.internal.LifecycleHandler
@@ -53,8 +52,7 @@ class MainActivity : AppCompatActivity(), ControllerPresenterDelegate, ActivityC
     window.navigationBarColor = Color.TRANSPARENT
 
     rootContainer = findViewById(R.id.root_container)
-//    router = attachRouterHacky(this, rootContainer, savedInstanceState)
-    router = Conductor.attachRouter(this, rootContainer, savedInstanceState)
+    router = attachRouterHacky(this, rootContainer, savedInstanceState)
     controllerPresenterDelegate = ControllerPresenterDelegateImpl(router)
     globalWindowInsetsManager = GlobalWindowInsetsManager()
 
@@ -122,31 +120,39 @@ class MainActivity : AppCompatActivity(), ControllerPresenterDelegate, ActivityC
     return this
   }
 
-  // TODO(KurobaEx): this doesn't work. Because of this not working there is a problem with
-  //  Split/Slide root controller getting rebound upon config change which leads to nasty bugs
-  //  (one of them is causing toolbars to get initialized with wrong state). This cannot be fixed
-  //  right now because I have no idea how to properly remove controller from backstack upon config
-  //  change.
   private fun attachRouterHacky(
     activity: Activity,
     container: ViewGroup,
     savedInstanceState: Bundle?
   ): Router {
     BackgroundUtils.ensureMainThread()
-    val isSplitMode = isSplitMode(activity)
     val router = LifecycleHandler.install(activity)
       .getRouter(container, savedInstanceState)
 
     if (savedInstanceState != null) {
-      // This is a hack to remove previously added controllers to avoid rebinding them just to pop
-      // them again afterwards when screen orientation change occurs. Basically, what happens, after
-      // the phone is rotated, and lets say we were in Portrait orientation, the Slide controller
-      // stack is present in the router backstack and it is rebound. Then we get to the point where
-      // we decide what layout mode to use (slide or split) and replace the previous controller
-      // (slide in this case) with new controller (split in this case). This may lead to all kind of
-      // funny bugs so we want to avoid that controller getting rebound. So we want to pop it before
-      // calling "router.rebindIfNeeded()"
-      val controllerTag = if (isSplitMode) {
+      // Unfortunately, we have to destroy the whole backstack (staring with the MainController and
+      // going deeper in the hierarchy) because otherwise a nasty bug will happen. In this app we
+      // use different kind of controllers for Portrait/Landscape (or for Tablets) orientations: for
+      // Portrait there is Slide***Controller and for Landscape there is Split***Controller. When
+      // the user rotates the phone we want to switch from Slide controllers to Split controllers
+      // or vice versa. But Conductor preserves the controller backstack across orientation changes
+      // and then even rebinds them (meaning they will receive OnCreate/OnDestroy/etc lifecycle
+      // events), so after the phone rotates the following will happen:
+      // Let's say we were in Portrait orientation (Slide mode) and the phone is rotated 90 degrees.
+      // After activity recreation Router.rebindIfNeeded() is called and all the old controllers
+      // (Slide mode) will be rebound (event though we are already in the Split mode). Then in the
+      // MainController we will figure out that we are in Split mode and Slide controllers will be
+      // replaced with Split controllers, meaning that Slide controllers will be destroyed then
+      // created and then immediately destroyed again. This is bad because there is a lot of stuff
+      // that will be recreated during the rebind phase (like toolbars or bottom panels),
+      // and they will be recreated with the wrong states which will lead to all kind of bugs.
+      // To fix that (or more like hack around) we are deleting the whole backstack starting from the
+      // very root. This is not good for us since we will have to manually recreate the backstack
+      // back (with the help of viewmodels) but I don't know how to do this properly, there seems
+      // to be no other way in Conductor. The official example (MasterDetailController) doesn't
+      // work for this app.
+
+      val controllerTag = if (isSplitMode(this)) {
         SlideUiElementsController.CONTROLLER_TAG
       } else {
         SplitNavController.CONTROLLER_TAG
@@ -154,17 +160,7 @@ class MainActivity : AppCompatActivity(), ControllerPresenterDelegate, ActivityC
 
       val result = router.findRouterWithControllerByTag(controllerTag)
       if (result != null) {
-        val (foundRouter, foundController) = result
-        val backstackCopy = foundRouter.backstack
-
-        val index = backstackCopy.indexOfFirst { routerTransaction ->
-          (routerTransaction.controller as? BaseController)?.getControllerTag() == controllerTag
-        }
-
-        if (index >= 0) {
-          backstackCopy.removeAt(index)
-          foundRouter.setBackstack(backstackCopy, null)
-        }
+        router.setBackstack(emptyList(), null)
       }
     }
 
