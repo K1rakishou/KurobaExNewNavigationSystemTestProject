@@ -2,7 +2,7 @@ package com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.fab
 
 import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.utils.BackgroundUtils
-import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomPanel
+import com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaBottomPanelStateKind
 import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.SlideKurobaFloatingActionButton
 
 class SlideFabViewController : FabViewController {
@@ -32,7 +32,7 @@ class SlideFabViewController : FabViewController {
     onStateChanged()
   }
 
-  override fun onBottomPanelStateChanged(controllerType: ControllerType, newState: KurobaBottomPanel.State) {
+  override fun onBottomPanelStateChanged(controllerType: ControllerType, newState: KurobaBottomPanelStateKind) {
     BackgroundUtils.ensureMainThread()
 
     val prevState = state.bottomPanelState
@@ -93,9 +93,9 @@ class SlideFabViewController : FabViewController {
 
     val searchToolbarShown = state.searchToolbarShown[currentControllerType]
       ?: false
-    val isBottomPanelStateNotOk = bottomPanelState == KurobaBottomPanel.State.Uninitialized
-      || bottomPanelState == KurobaBottomPanel.State.SelectionPanel
-      || bottomPanelState == KurobaBottomPanel.State.ReplyLayoutPanel
+    val isBottomPanelStateNotOk = bottomPanelState == KurobaBottomPanelStateKind.Uninitialized
+      || bottomPanelState == KurobaBottomPanelStateKind.SelectionPanel
+      || bottomPanelState == KurobaBottomPanelStateKind.ReplyLayoutPanel
 
     check(::fab.isInitialized) { "fab is not initialized" }
 
@@ -111,7 +111,7 @@ class SlideFabViewController : FabViewController {
     var controllerFullyLoaded: MutableMap<ControllerType, Boolean> = mutableMapOf(),
     var currentControllerType: ControllerType? = null,
     var bottomPanelInitialized: Boolean = false,
-    var bottomPanelState: KurobaBottomPanel.State = KurobaBottomPanel.State.Uninitialized
+    var bottomPanelState: KurobaBottomPanelStateKind = KurobaBottomPanelStateKind.Uninitialized
   )
 
 }

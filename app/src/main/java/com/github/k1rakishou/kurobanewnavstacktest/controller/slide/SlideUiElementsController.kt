@@ -19,8 +19,8 @@ import com.github.k1rakishou.kurobanewnavstacktest.core.CollapsingViewsHolder
 import com.github.k1rakishou.kurobanewnavstacktest.data.BoardDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.*
-import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomNavPanel
-import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomPanel
+import com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaBottomPanelStateKind
+import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomNavPanelSelectedItem
 import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.SlideKurobaFloatingActionButton
 import com.github.k1rakishou.kurobanewnavstacktest.widget.layout.DrawerWidthAdjustingLayout
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.SlideToolbar
@@ -82,7 +82,30 @@ class SlideUiElementsController(
       )
     )
 
-    initBottomPanel()
+    bottomPanel.addOnBottomPanelInitialized { controllerType ->
+      // Doesn't matter what we use here since Slide layout has only one bottom panel
+      slideFabViewController.onBottomPanelInitialized(controllerType)
+      slideControllerFab.initialized()
+    }
+    bottomPanel.addOnBottomPanelStateChanged { controllerType, newState ->
+      slideFabViewController.onBottomPanelStateChanged(controllerType, newState)
+      lockUnlockCollapsableViews(controllerType, newState)
+    }
+    bottomPanel.addOnBottomNavPanelItemSelectedListener { selectedItem ->
+      slideNavControllerContainer.switchTo(
+        controller = createControllerBySelectedItemId(
+          selectedItem = selectedItem,
+          uiElementsControllerCallbacks = this
+        )
+      )
+    }
+    bottomPanel.addOnBottomPanelHeightChangeListener { controllerType, height, isFullScreen ->
+      collapsingViewsHolder.getRecyclerForController(controllerType)?.let { recyclerView ->
+        // TODO(KurobaEx): subclass recycler
+      }
+    }
+
+    bottomPanel.attachFab(slideControllerFab)
   }
 
   override fun handleBack(): Boolean {
@@ -106,30 +129,6 @@ class SlideUiElementsController(
     return super.handleBack()
   }
 
-  private fun initBottomPanel() {
-    bottomPanel.addOnBottomPanelInitialized {
-      // Doesn't matter what we use here since Slide layout has only one bottom panel
-      slideFabViewController.onBottomPanelInitialized(ControllerType.Catalog)
-      slideControllerFab.initialized()
-    }
-    bottomPanel.addOnBottomPanelStateChanged { newState ->
-      slideFabViewController.onBottomPanelStateChanged(ControllerType.Catalog, newState)
-
-      lockUnlockCollapsableViews(ControllerType.Catalog, newState)
-    }
-    bottomPanel.addOnBottomNavPanelItemSelectedListener { selectedItem ->
-      slideNavControllerContainer.switchTo(
-        controller = createControllerBySelectedItemId(
-          selectedItem = selectedItem,
-          uiElementsControllerCallbacks = this
-        )
-      )
-    }
-
-    bottomPanel.attachFab(slideControllerFab)
-    bottomPanel.bottomPanelPreparationsCompleted(KurobaBottomPanel.State.BottomNavPanel)
-  }
-
   override fun onControllerShown() {
     super.onControllerShown()
     slideModeFabViewController.onAttach()
@@ -147,7 +146,7 @@ class SlideUiElementsController(
   }
 
   override fun onFabClicked(fabType: SlideModeFabViewController.FabType) {
-    bottomPanel.switchInto(KurobaBottomPanel.State.ReplyLayoutPanel)
+    bottomPanel.switchInto(KurobaBottomPanelStateKind.ReplyLayoutPanel)
   }
 
   @SuppressLint("BinaryOperationInTimber")
@@ -225,6 +224,21 @@ class SlideUiElementsController(
 
   override fun onControllerGainedFocus(isCatalogController: Boolean) {
     (toolbarContract.collapsableView() as SlideToolbar).onControllerGainedFocus(isCatalogController)
+
+    val controllerType = if (isCatalogController) {
+      ControllerType.Catalog
+    } else {
+      ControllerType.Thread
+    }
+
+    if (!bottomPanel.isBottomPanelInitialized(controllerType)) {
+      bottomPanel.bottomPanelPreparationsCompleted(
+        controllerType,
+        KurobaBottomPanelStateKind.BottomNavPanel
+      )
+    }
+
+    bottomPanel.onControllerFocused(controllerType)
   }
 
   override fun lockUnlockCollapsableViews(recyclerView: RecyclerView?, lock: Boolean, animate: Boolean) {
@@ -247,10 +261,13 @@ class SlideUiElementsController(
 
   override fun isSplitLayout(): Boolean = false
 
-  private fun lockUnlockCollapsableViews(controllerType: ControllerType, newState: KurobaBottomPanel.State) {
+  private fun lockUnlockCollapsableViews(
+    controllerType: ControllerType,
+    newState: KurobaBottomPanelStateKind
+  ) {
     val recyclerView = collapsingViewsHolder.getRecyclerForController(controllerType)
 
-    if (newState != KurobaBottomPanel.State.BottomNavPanel) {
+    if (newState != KurobaBottomPanelStateKind.BottomNavPanel) {
       collapsingViewsHolder.lockUnlockCollapsableViews(
         recyclerView = recyclerView,
         lock = true,
@@ -266,13 +283,13 @@ class SlideUiElementsController(
   }
 
   private fun createControllerBySelectedItemId(
-    selectedItem: KurobaBottomNavPanel.SelectedItem,
+    selectedItem: KurobaBottomNavPanelSelectedItem,
     uiElementsControllerCallbacks: UiElementsControllerCallbacks
   ): BaseController {
     return when (selectedItem) {
-      KurobaBottomNavPanel.SelectedItem.Search -> TODO()
-      KurobaBottomNavPanel.SelectedItem.Bookmarks -> createBookmarksController(uiElementsControllerCallbacks)
-      KurobaBottomNavPanel.SelectedItem.Browse -> {
+      KurobaBottomNavPanelSelectedItem.Search -> TODO()
+      KurobaBottomNavPanelSelectedItem.Bookmarks -> createBookmarksController(uiElementsControllerCallbacks)
+      KurobaBottomNavPanelSelectedItem.Browse -> {
         createSlideNavController(
           uiElementsControllerCallbacks = uiElementsControllerCallbacks,
           slideCatalogUiElementsControllerCallbacks = this,
@@ -281,7 +298,7 @@ class SlideUiElementsController(
           toolbarContract = toolbarContract
         )
       }
-      KurobaBottomNavPanel.SelectedItem.Settings -> createSettingsController(uiElementsControllerCallbacks)
+      KurobaBottomNavPanelSelectedItem.Settings -> createSettingsController(uiElementsControllerCallbacks)
       else -> throw IllegalStateException("Unknown itemId: $selectedItem")
     }
   }

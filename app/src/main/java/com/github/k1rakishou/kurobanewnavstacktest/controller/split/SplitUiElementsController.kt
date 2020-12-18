@@ -21,9 +21,9 @@ import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.utils.getBehaviorExt
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setBehaviorExt
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.ViewScreenAttachSide
+import com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaBottomPanelStateKind
 import com.github.k1rakishou.kurobanewnavstacktest.widget.behavior.CatalogFabBehavior
-import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomNavPanel
-import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomPanel
+import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomNavPanelSelectedItem
 import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
 import com.github.k1rakishou.kurobanewnavstacktest.widget.layout.DrawerWidthAdjustingLayout
 import timber.log.Timber
@@ -60,7 +60,7 @@ class SplitUiElementsController(
 
       catalogFab = findViewById(R.id.split_controller_fab)
       catalogFab.setBehaviorExt(CatalogFabBehavior(context, null))
-      catalogFab.setOnClickListener { bottomPanel.switchInto(KurobaBottomPanel.State.ReplyLayoutPanel) }
+      catalogFab.setOnClickListener { bottomPanel.switchInto(KurobaBottomPanelStateKind.ReplyLayoutPanel) }
       catalogFab.hide()
 
       splitFabViewController.setCatalogFab(catalogFab)
@@ -74,7 +74,8 @@ class SplitUiElementsController(
       splitFabViewController.onBottomPanelInitialized(ControllerType.Catalog)
       catalogFab.initialized()
     }
-    bottomPanel.addOnBottomPanelStateChanged { newState ->
+    bottomPanel.addOnBottomPanelStateChanged { panelControllerType, newState ->
+      check(panelControllerType == ControllerType.Catalog)
       splitFabViewController.onBottomPanelStateChanged(ControllerType.Catalog, newState)
 
       lockUnlockCollapsableViews(ControllerType.Catalog, newState)
@@ -89,7 +90,13 @@ class SplitUiElementsController(
     }
 
     bottomPanel.attachFab(catalogFab)
-    bottomPanel.bottomPanelPreparationsCompleted(KurobaBottomPanel.State.BottomNavPanel)
+
+    bottomPanel.bottomPanelPreparationsCompleted(
+      ControllerType.Catalog,
+      KurobaBottomPanelStateKind.BottomNavPanel
+    )
+
+    bottomPanel.onControllerFocused(ControllerType.Catalog)
   }
 
   override fun onControllerCreated(savedViewState: Bundle?) {
@@ -183,10 +190,13 @@ class SplitUiElementsController(
     threadNavigationContract.openThread(threadDescriptor)
   }
 
-  private fun lockUnlockCollapsableViews(controllerType: ControllerType, newState: KurobaBottomPanel.State) {
+  private fun lockUnlockCollapsableViews(
+    controllerType: ControllerType,
+    newState: KurobaBottomPanelStateKind
+  ) {
     val recyclerView = collapsingViewsHolder.getRecyclerForController(controllerType)
 
-    if (newState != KurobaBottomPanel.State.BottomNavPanel) {
+    if (newState != KurobaBottomPanelStateKind.BottomNavPanel) {
       collapsingViewsHolder.lockUnlockCollapsableViews(
         recyclerView = recyclerView,
         lock = true,
@@ -202,14 +212,14 @@ class SplitUiElementsController(
   }
 
   private fun createControllerBySelectedItemId(
-    selectedItem: KurobaBottomNavPanel.SelectedItem,
+    selectedItem: KurobaBottomNavPanelSelectedItem,
     uiElementsControllerCallbacks: UiElementsControllerCallbacks
   ): BaseController {
     return when (selectedItem) {
-      KurobaBottomNavPanel.SelectedItem.Search -> TODO()
-      KurobaBottomNavPanel.SelectedItem.Bookmarks -> createBookmarksController(uiElementsControllerCallbacks)
-      KurobaBottomNavPanel.SelectedItem.Browse -> createSplitCatalogController(uiElementsControllerCallbacks)
-      KurobaBottomNavPanel.SelectedItem.Settings -> createSettingsController(uiElementsControllerCallbacks)
+      KurobaBottomNavPanelSelectedItem.Search -> TODO()
+      KurobaBottomNavPanelSelectedItem.Bookmarks -> createBookmarksController(uiElementsControllerCallbacks)
+      KurobaBottomNavPanelSelectedItem.Browse -> createSplitCatalogController(uiElementsControllerCallbacks)
+      KurobaBottomNavPanelSelectedItem.Settings -> createSettingsController(uiElementsControllerCallbacks)
       else -> throw IllegalStateException("Unknown itemId: $selectedItem")
     }
   }

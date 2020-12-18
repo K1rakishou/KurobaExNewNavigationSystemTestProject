@@ -106,6 +106,14 @@ fun View.setOnApplyWindowInsetsOneShotListenerAndDoRequest(listener: View.OnAppl
   requestApplyInsetsWhenAttached()
 }
 
+fun ViewGroup.getChildAtOrNull(index: Int): View? {
+  if (index < 0 || index >= childCount) {
+    return null
+  }
+
+  return getChildAt(index)
+}
+
 fun View.updateMargins(
   left: Int? = null,
   start: Int? = null,
@@ -225,6 +233,11 @@ suspend fun View.awaitLayout() {
   suspendCoroutine<Unit> { continuation ->
     doOnLayout { continuation.resume(Unit) }
   }
+}
+
+suspend fun View.requestLayoutAndAwait() {
+  requestLayout()
+  awaitLayout()
 }
 
 fun <T> CancellableContinuation<T>.resumeIfActive(value: T) {

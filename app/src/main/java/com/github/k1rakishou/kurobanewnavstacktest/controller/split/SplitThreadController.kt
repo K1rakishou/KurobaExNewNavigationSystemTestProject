@@ -16,6 +16,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.core.CollapsingViewsHolder
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadData
 import com.github.k1rakishou.kurobanewnavstacktest.utils.*
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.ViewScreenAttachSide
+import com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaBottomPanelStateKind
 import com.github.k1rakishou.kurobanewnavstacktest.widget.behavior.SplitThreadFabBehavior
 import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomPanel
 import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
@@ -41,7 +42,7 @@ class SplitThreadController(
       bottomPanel = findViewById(R.id.split_thread_controller_bottom_panel)
 
       threadFab.setBehaviorExt(SplitThreadFabBehavior(currentContext(), null))
-      threadFab.setOnClickListener { bottomPanel.switchInto(KurobaBottomPanel.State.ReplyLayoutPanel) }
+      threadFab.setOnClickListener { bottomPanel.switchInto(KurobaBottomPanelStateKind.ReplyLayoutPanel) }
       threadFab.hide()
 
       val normalToolbar = findViewById<NormalToolbar>(R.id.thread_controller_toolbar)
@@ -59,23 +60,30 @@ class SplitThreadController(
 
   private fun initBottomPanel() {
     bottomPanel.addOnBottomPanelInitialized {
-      splitFabViewController.onBottomPanelInitialized(ControllerType.Thread)
+      splitFabViewController.onBottomPanelInitialized(controllerType)
       threadFab.initialized()
     }
-    bottomPanel.addOnBottomPanelStateChanged { newState ->
-      splitFabViewController.onBottomPanelStateChanged(ControllerType.Thread, newState)
+    bottomPanel.addOnBottomPanelStateChanged { panelControllerType, newState ->
+      check(panelControllerType == controllerType) {
+        "Unexpected panelControllerType: $panelControllerType"
+      }
 
-      lockUnlockCollapsableViews(ControllerType.Thread, newState)
+      splitFabViewController.onBottomPanelStateChanged(controllerType, newState)
+      lockUnlockCollapsableViews(panelControllerType, newState)
     }
 
     bottomPanel.attachFab(threadFab)
-    bottomPanel.bottomPanelPreparationsCompleted(KurobaBottomPanel.State.Hidden)
+    bottomPanel.bottomPanelPreparationsCompleted(controllerType, KurobaBottomPanelStateKind.Hidden)
+    bottomPanel.onControllerFocused(controllerType)
   }
 
-  private fun lockUnlockCollapsableViews(controllerType: ControllerType, newState: KurobaBottomPanel.State) {
+  private fun lockUnlockCollapsableViews(
+    controllerType: ControllerType,
+    newState: KurobaBottomPanelStateKind
+  ) {
     val recyclerView = collapsingViewsHolder.getRecyclerForController(controllerType)
 
-    if (newState != KurobaBottomPanel.State.Hidden) {
+    if (newState != KurobaBottomPanelStateKind.Hidden) {
       collapsingViewsHolder.lockUnlockCollapsableViews(
         recyclerView = recyclerView,
         lock = true,

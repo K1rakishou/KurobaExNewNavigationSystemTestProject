@@ -2,7 +2,7 @@ package com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.fab
 
 import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.utils.BackgroundUtils
-import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomPanel
+import com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaBottomPanelStateKind
 import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
 
 class SplitFabViewController : FabViewController {
@@ -32,7 +32,7 @@ class SplitFabViewController : FabViewController {
 
   override fun onBottomPanelStateChanged(
     controllerType: ControllerType,
-    newState: KurobaBottomPanel.State
+    newState: KurobaBottomPanelStateKind
   ) {
     BackgroundUtils.ensureMainThread()
 
@@ -77,7 +77,7 @@ class SplitFabViewController : FabViewController {
     val controllerFullyLoaded = state.controllerFullyLoaded[controllerType]
       ?: false
     val bottomPanelState = state.bottomPanelState[controllerType]
-      ?: KurobaBottomPanel.State.Uninitialized
+      ?: KurobaBottomPanelStateKind.Uninitialized
 
     val fab = when (controllerType) {
       ControllerType.Catalog -> {
@@ -97,9 +97,9 @@ class SplitFabViewController : FabViewController {
 
     val searchToolbarShown = state.searchToolbarShown[controllerType]
       ?: false
-    val isBottomPanelStateNotOk = bottomPanelState == KurobaBottomPanel.State.Uninitialized
-      || bottomPanelState == KurobaBottomPanel.State.SelectionPanel
-      || bottomPanelState == KurobaBottomPanel.State.ReplyLayoutPanel
+    val isBottomPanelStateNotOk = bottomPanelState == KurobaBottomPanelStateKind.Uninitialized
+      || bottomPanelState == KurobaBottomPanelStateKind.SelectionPanel
+      || bottomPanelState == KurobaBottomPanelStateKind.ReplyLayoutPanel
 
     if (searchToolbarShown || isBottomPanelStateNotOk) {
       fab.hideFab(lock = true)
@@ -113,6 +113,6 @@ class SplitFabViewController : FabViewController {
     val searchToolbarShown: MutableMap<ControllerType, Boolean> = mutableMapOf(),
     val controllerFullyLoaded: MutableMap<ControllerType, Boolean> = mutableMapOf(),
     val bottomPanelInitialized: MutableMap<ControllerType, Boolean> = mutableMapOf(),
-    val bottomPanelState: MutableMap<ControllerType, KurobaBottomPanel.State> = mutableMapOf()
+    val bottomPanelState: MutableMap<ControllerType, KurobaBottomPanelStateKind> = mutableMapOf()
   )
 }

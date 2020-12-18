@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.LayoutInflater
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.kurobanewnavstacktest.R
+import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 
 class KurobaBottomHiddenPanel(
   context: Context,
@@ -22,6 +23,19 @@ class KurobaBottomHiddenPanel(
   }
 
   override fun enableOrDisableControls(enable: Boolean) {
+  }
+
+  override fun saveState(bottomPanelViewState: KurobaBottomPanelViewState) {
+  }
+
+  override fun restoreState(bottomPanelViewState: KurobaBottomPanelViewState) {
+  }
+
+  override fun updateCurrentControllerType(controllerType: ControllerType) {
+
+  }
+
+  override suspend fun updateHeight(parentHeight: Int) {
 
   }
 }
