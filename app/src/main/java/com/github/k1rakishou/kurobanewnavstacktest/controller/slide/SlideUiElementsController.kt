@@ -19,10 +19,11 @@ import com.github.k1rakishou.kurobanewnavstacktest.core.CollapsingViewsHolder
 import com.github.k1rakishou.kurobanewnavstacktest.data.BoardDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.*
-import com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaBottomPanelStateKind
+import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomPanelStateKind
 import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomNavPanelSelectedItem
 import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.SlideKurobaFloatingActionButton
 import com.github.k1rakishou.kurobanewnavstacktest.widget.layout.DrawerWidthAdjustingLayout
+import com.github.k1rakishou.kurobanewnavstacktest.widget.recycler.PaddingAwareRecyclerView
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.SlideToolbar
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarContract
 import timber.log.Timber
@@ -101,10 +102,8 @@ class SlideUiElementsController(
         )
       )
     }
-    bottomPanel.addOnBottomPanelHeightChangeListener { controllerType, height, isFullScreen ->
-      collapsingViewsHolder.getRecyclerForController(controllerType)?.let { recyclerView ->
-        // TODO(KurobaEx): subclass recycler
-      }
+    bottomPanel.addOnBottomPanelHeightChangeListener { controllerType, panelHeight ->
+      collapsingViewsHolder.getRecyclerForController(controllerType)?.updatePanelHeight(panelHeight)
     }
   }
 
@@ -179,9 +178,9 @@ class SlideUiElementsController(
     (slideNavController as ThreadNavigationContract).openThread(threadDescriptor)
   }
 
-  override fun provideRecyclerView(recyclerView: RecyclerView, controllerType: ControllerType) {
+  override fun provideRecyclerView(recyclerView: PaddingAwareRecyclerView, controllerType: ControllerType) {
     slideModeFabViewController.reset()
-    bottomPanel.onRecyclerViewHeightKnown(controllerType, recyclerView.height)
+    bottomPanel.onPanelAvailableVerticalSpaceKnown(controllerType, recyclerView.height)
 
     collapsingViewsHolder.attach(
       recyclerView = recyclerView,
@@ -198,7 +197,7 @@ class SlideUiElementsController(
     )
   }
 
-  override fun withdrawRecyclerView(recyclerView: RecyclerView, controllerType: ControllerType) {
+  override fun withdrawRecyclerView(recyclerView: PaddingAwareRecyclerView, controllerType: ControllerType) {
     collapsingViewsHolder.detach(
       recyclerView = recyclerView,
       collapsableView = toolbarContract.collapsableView(),
@@ -239,10 +238,20 @@ class SlideUiElementsController(
       )
     }
 
-    bottomPanel.onControllerFocused(controllerType)
+    bottomPanel.onControllerFocused(controllerType) {
+      val panelHeight = bottomPanel.getBottomPanelHeight(controllerType)
+      if (panelHeight != null) {
+        collapsingViewsHolder.getRecyclerForController(controllerType)
+          ?.updatePanelHeight(panelHeight)
+      }
+    }
   }
 
-  override fun lockUnlockCollapsableViews(recyclerView: RecyclerView?, lock: Boolean, animate: Boolean) {
+  override fun lockUnlockCollapsableViews(
+    recyclerView: PaddingAwareRecyclerView?,
+    lock: Boolean,
+    animate: Boolean
+  ) {
     collapsingViewsHolder.lockUnlockCollapsableViews(
       recyclerView = recyclerView,
       lock = lock,

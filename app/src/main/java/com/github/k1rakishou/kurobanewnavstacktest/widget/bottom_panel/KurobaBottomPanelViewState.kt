@@ -1,7 +1,5 @@
 package com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel
 
-import com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaBottomPanelStateKind
-
 data class KurobaBottomPanelViewState(
   var panelCurrentStateKind: KurobaBottomPanelStateKind = KurobaBottomPanelStateKind.Uninitialized,
   var panelInitialStateKind: KurobaBottomPanelStateKind = KurobaBottomPanelStateKind.Uninitialized,

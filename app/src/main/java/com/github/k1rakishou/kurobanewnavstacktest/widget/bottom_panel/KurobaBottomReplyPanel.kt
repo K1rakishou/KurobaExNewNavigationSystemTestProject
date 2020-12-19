@@ -22,7 +22,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.utils.*
 class KurobaBottomReplyPanel(
   context: Context,
   initialControllerType: ControllerType,
-  private val totalAvailableHeight: Int,
+  private val availableVerticalSpace: Int,
   private val viewModel: KurobaBottomPanelViewModel,
   private val callbacks: KurobaBottomPanelCallbacks
 ) : ConstraintLayout(context, null, 0), ChildPanelContract {
@@ -99,7 +99,7 @@ class KurobaBottomReplyPanel(
 
   override fun getCurrentHeight(): Int {
     return if (viewState.expanded) {
-      totalAvailableHeight
+      availableVerticalSpace
     } else {
       context.resources.getDimension(R.dimen.bottom_reply_panel_height).toInt()
     }

@@ -20,6 +20,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.utils.ScreenOrientationUtils
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.SlideModeFabViewControllerCallbacks
 import com.github.k1rakishou.kurobanewnavstacktest.widget.layout.SlidingPaneLayoutEx
 import com.github.k1rakishou.kurobanewnavstacktest.widget.layout.SlidingPaneLayoutSlideHandler
+import com.github.k1rakishou.kurobanewnavstacktest.widget.recycler.PaddingAwareRecyclerView
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarContract
 
 class SlideNavController(
@@ -142,11 +143,17 @@ class SlideNavController(
     }
   }
 
-  override fun provideRecyclerView(recyclerView: RecyclerView, controllerType: ControllerType) {
+  override fun provideRecyclerView(
+    recyclerView: PaddingAwareRecyclerView,
+    controllerType: ControllerType
+  ) {
     recyclerViewProvider.provideRecyclerView(recyclerView, controllerType)
   }
 
-  override fun withdrawRecyclerView(recyclerView: RecyclerView, controllerType: ControllerType) {
+  override fun withdrawRecyclerView(
+    recyclerView: PaddingAwareRecyclerView,
+    controllerType: ControllerType
+  ) {
     recyclerViewProvider.withdrawRecyclerView(recyclerView, controllerType)
   }
 

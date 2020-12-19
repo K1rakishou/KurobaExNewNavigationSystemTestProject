@@ -33,12 +33,12 @@ class MainActivity : AppCompatActivity(), ControllerPresenterDelegate, ActivityC
   lateinit var testHelpers: TestHelpers
   lateinit var slideFabViewController: SlideFabViewController
   lateinit var splitFabViewController: SplitFabViewController
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   // TODO(KurobaEx): DI ^^^
 
   private lateinit var router: Router
   private lateinit var rootContainer: TouchBlockingFrameLayout
   private lateinit var controllerPresenterDelegate: ControllerPresenterDelegateImpl
-  private lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -73,6 +73,7 @@ class MainActivity : AppCompatActivity(), ControllerPresenterDelegate, ActivityC
   private fun listenForInsetsUpdates() {
     ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { view, insets ->
       val isKeyboardOpen = FullScreenUtils.isKeyboardShown(view, insets.systemWindowInsetBottom)
+      globalWindowInsetsManager.updateInsets(insets)
 
       globalWindowInsetsManager.updateKeyboardHeight(
         FullScreenUtils.calculateDesiredRealBottomInset(view, insets.systemWindowInsetBottom)

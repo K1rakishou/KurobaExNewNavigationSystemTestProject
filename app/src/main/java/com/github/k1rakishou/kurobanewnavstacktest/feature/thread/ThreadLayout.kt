@@ -26,6 +26,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.utils.addOneshotModelBuildLis
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndDoRequest
 import com.github.k1rakishou.kurobanewnavstacktest.viewstate.ViewStateConstants
 import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
+import com.github.k1rakishou.kurobanewnavstacktest.widget.recycler.PaddingAwareRecyclerView
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.KurobaToolbarType
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarAction
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarContract
@@ -42,7 +43,7 @@ class ThreadLayout @JvmOverloads constructor(
   private val chanRepository = ChanRepository
   private val kurobaCoroutineScope = KurobaCoroutineScope()
 
-  private val threadRecyclerView: EpoxyRecyclerView
+  private val threadRecyclerView: PaddingAwareRecyclerView
 
   private var job: Job? = null
   private var boundThreadDescriptor: ThreadDescriptor? = null
@@ -293,8 +294,8 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   interface ThreadControllerCallbacks {
-    fun provideRecyclerView(recyclerView: EpoxyRecyclerView)
-    fun withdrawRecyclerView(recyclerView: EpoxyRecyclerView)
+    fun provideRecyclerView(recyclerView: PaddingAwareRecyclerView)
+    fun withdrawRecyclerView(recyclerView: PaddingAwareRecyclerView)
 
     fun onSearchToolbarShown()
     fun onSearchToolbarHidden()

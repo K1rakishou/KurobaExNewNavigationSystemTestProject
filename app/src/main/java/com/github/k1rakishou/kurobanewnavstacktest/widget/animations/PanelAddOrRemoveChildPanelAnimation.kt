@@ -36,8 +36,8 @@ class PanelAddOrRemoveChildPanelAnimation : SimpleKurobaAnimation() {
 
     val prevScale = panelContainer.scaleY
     val newScale = when {
-      newHeight > prevHeight -> (newHeight / prevHeight).toFloat()
-      newHeight < prevHeight -> (prevHeight / newHeight).toFloat()
+      newHeight > prevHeight -> (newHeight / prevHeight.coerceAtLeast(1)).toFloat()
+      newHeight < prevHeight -> (prevHeight / newHeight.coerceAtLeast(1)).toFloat()
       else -> 1f
     }
 
@@ -61,12 +61,12 @@ class PanelAddOrRemoveChildPanelAnimation : SimpleKurobaAnimation() {
 
       val translationAnimation = ValueAnimator.ofFloat(prevTranslationY, newTranslationY).apply {
         addUpdateListener { animator ->
-          parentPanel.translationY = animator.value()
+          val animatedTranslationY = animator.value<Float>()
+          parentPanel.translationY = animatedTranslationY
 
           attachedFab?.let { fab ->
             initialFabTranslationY?.let { initialY ->
-              val deltaTranslationY = animator.value<Float>()
-              fab.translationY = initialY + deltaTranslationY
+              fab.translationY = initialY + animatedTranslationY
             }
           }
         }

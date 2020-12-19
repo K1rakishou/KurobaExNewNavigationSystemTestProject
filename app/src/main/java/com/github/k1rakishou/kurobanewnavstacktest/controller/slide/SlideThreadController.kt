@@ -8,6 +8,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.controller.FocusableControlle
 import com.github.k1rakishou.kurobanewnavstacktest.controller.RecyclerViewProvider
 import com.github.k1rakishou.kurobanewnavstacktest.feature.thread.ThreadController
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadData
+import com.github.k1rakishou.kurobanewnavstacktest.widget.recycler.PaddingAwareRecyclerView
 
 class SlideThreadController(
   args: Bundle? = null
@@ -20,11 +21,11 @@ class SlideThreadController(
     this.recyclerViewProvider = recyclerViewProvider
   }
 
-  override fun provideRecyclerView(recyclerView: EpoxyRecyclerView) {
+  override fun provideRecyclerView(recyclerView: PaddingAwareRecyclerView) {
     recyclerViewProvider.provideRecyclerView(recyclerView, CONTROLLER_TYPE)
   }
 
-  override fun withdrawRecyclerView(recyclerView: EpoxyRecyclerView) {
+  override fun withdrawRecyclerView(recyclerView: PaddingAwareRecyclerView) {
     recyclerViewProvider.withdrawRecyclerView(recyclerView, CONTROLLER_TYPE)
   }
 

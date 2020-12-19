@@ -21,11 +21,12 @@ import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.utils.getBehaviorExt
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setBehaviorExt
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.ViewScreenAttachSide
-import com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaBottomPanelStateKind
+import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomPanelStateKind
 import com.github.k1rakishou.kurobanewnavstacktest.widget.behavior.CatalogFabBehavior
 import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomNavPanelSelectedItem
 import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
 import com.github.k1rakishou.kurobanewnavstacktest.widget.layout.DrawerWidthAdjustingLayout
+import com.github.k1rakishou.kurobanewnavstacktest.widget.recycler.PaddingAwareRecyclerView
 import timber.log.Timber
 
 @SuppressLint("TimberTagLength")
@@ -90,7 +91,9 @@ class SplitUiElementsController(
         )
       )
     }
-
+    bottomPanel.addOnBottomPanelHeightChangeListener { controllerType, panelHeight ->
+      collapsingViewsHolder.getRecyclerForController(controllerType)?.updatePanelHeight(panelHeight)
+    }
     bottomPanel.bottomPanelPreparationsCompleted(
       ControllerType.Catalog,
       KurobaBottomPanelStateKind.BottomNavPanel
@@ -122,8 +125,11 @@ class SplitUiElementsController(
     catalogFab.getBehaviorExt<CatalogFabBehavior>()?.reset()
   }
 
-  override fun provideRecyclerView(recyclerView: RecyclerView, controllerType: ControllerType) {
-    bottomPanel.onRecyclerViewHeightKnown(controllerType, recyclerView.height)
+  override fun provideRecyclerView(
+    recyclerView: PaddingAwareRecyclerView,
+    controllerType: ControllerType
+  ) {
+    bottomPanel.onPanelAvailableVerticalSpaceKnown(controllerType, recyclerView.height)
 
     collapsingViewsHolder.attach(
       recyclerView = recyclerView,
@@ -140,7 +146,10 @@ class SplitUiElementsController(
     )
   }
 
-  override fun withdrawRecyclerView(recyclerView: RecyclerView, controllerType: ControllerType) {
+  override fun withdrawRecyclerView(
+    recyclerView: PaddingAwareRecyclerView,
+    controllerType: ControllerType
+  ) {
     collapsingViewsHolder.detach(
       recyclerView = recyclerView,
       collapsableView = toolbarContract.collapsableView(),
@@ -153,7 +162,11 @@ class SplitUiElementsController(
     )
   }
 
-  override fun lockUnlockCollapsableViews(recyclerView: RecyclerView?, lock: Boolean, animate: Boolean) {
+  override fun lockUnlockCollapsableViews(
+    recyclerView: PaddingAwareRecyclerView?,
+    lock: Boolean,
+    animate: Boolean
+  ) {
     collapsingViewsHolder.lockUnlockCollapsableViews(
       recyclerView = recyclerView,
       lock = lock,

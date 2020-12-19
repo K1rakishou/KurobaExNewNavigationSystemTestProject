@@ -60,7 +60,10 @@ class KurobaBottomNavPanel(
 
   override fun restoreState(bottomPanelViewState: KurobaBottomPanelViewState) {
     val oldState = bottomPanelViewState.bottomNavPanelState
-    selectInternal(oldState.selectedItem)
+
+    if (oldState.selectedItem != KurobaBottomNavPanelSelectedItem.Uninitialized) {
+      selectInternal(oldState.selectedItem)
+    }
   }
 
   override fun updateCurrentControllerType(controllerType: ControllerType) {
@@ -123,7 +126,9 @@ class KurobaBottomNavPanel(
   }
 
   private fun selectInternal(newSelectedItem: KurobaBottomNavPanelSelectedItem): Boolean {
-    require(newSelectedItem != KurobaBottomNavPanelSelectedItem.Uninitialized) { "Bad newSelectedItem: $newSelectedItem" }
+    require(newSelectedItem != KurobaBottomNavPanelSelectedItem.Uninitialized) {
+      "Bad newSelectedItem: $newSelectedItem"
+    }
 
     // TODO(KurobaEx): animations
     itemsArray.forEach { item ->

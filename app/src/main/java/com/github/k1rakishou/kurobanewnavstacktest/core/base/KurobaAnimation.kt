@@ -1,9 +1,11 @@
 package com.github.k1rakishou.kurobanewnavstacktest.core.base
 
 import android.animation.AnimatorSet
+import com.github.k1rakishou.kurobanewnavstacktest.utils.endAndAwait
 
 interface KurobaAnimation {
   fun endAnimation()
+  suspend fun endAnimationAndAwait()
   fun onAnimationCompleted()
   fun isRunning(): Boolean
 }
@@ -16,6 +18,10 @@ abstract class SimpleKurobaAnimation : KurobaAnimation {
       animatorSet?.end()
       animatorSet = null
     }
+  }
+
+  override suspend fun endAnimationAndAwait() {
+    animatorSet?.endAndAwait()
   }
 
   override fun onAnimationCompleted() {

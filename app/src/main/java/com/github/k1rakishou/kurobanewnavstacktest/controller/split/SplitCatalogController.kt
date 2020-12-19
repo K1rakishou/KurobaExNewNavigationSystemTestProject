@@ -7,6 +7,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.core.base.ControllerTag
 import com.github.k1rakishou.kurobanewnavstacktest.controller.RecyclerViewProvider
 import com.github.k1rakishou.kurobanewnavstacktest.feature.catalog.CatalogController
 import com.github.k1rakishou.kurobanewnavstacktest.data.CatalogData
+import com.github.k1rakishou.kurobanewnavstacktest.widget.recycler.PaddingAwareRecyclerView
 
 class SplitCatalogController(args: Bundle? = null) : CatalogController(args) {
   private lateinit var recyclerViewProvider: RecyclerViewProvider
@@ -16,14 +17,14 @@ class SplitCatalogController(args: Bundle? = null) : CatalogController(args) {
     this.recyclerViewProvider = recyclerViewProvider
   }
 
-  override fun provideRecyclerView(recyclerView: EpoxyRecyclerView) {
+  override fun provideRecyclerView(recyclerView: PaddingAwareRecyclerView) {
     recyclerView.doOnPreDraw {
       recyclerViewProvider.provideRecyclerView(recyclerView, controllerType)
       uiElementsControllerCallbacks.showFab()
     }
   }
 
-  override fun withdrawRecyclerView(recyclerView: EpoxyRecyclerView) {
+  override fun withdrawRecyclerView(recyclerView: PaddingAwareRecyclerView) {
     recyclerViewProvider.withdrawRecyclerView(recyclerView, controllerType)
   }
 

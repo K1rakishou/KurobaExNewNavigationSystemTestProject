@@ -5,11 +5,12 @@ import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.CollapsableView
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.CollapsingViewController
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.ViewScreenAttachSide
+import com.github.k1rakishou.kurobanewnavstacktest.widget.recycler.PaddingAwareRecyclerView
 
 class CollapsingViewsHolder {
   private val collapsingViewControllerMap =
     mutableMapOf<CollapsableView, MutableMap<RecyclerView, CollapsingViewController>>()
-  private val recyclers = mutableMapOf<ControllerType, RecyclerView>()
+  private val recyclers = mutableMapOf<ControllerType, PaddingAwareRecyclerView>()
 
   fun detach(
     recyclerView: RecyclerView,
@@ -26,7 +27,7 @@ class CollapsingViewsHolder {
   }
 
   fun attach(
-    recyclerView: RecyclerView,
+    recyclerView: PaddingAwareRecyclerView,
     collapsableView: CollapsableView,
     viewAttachSide: ViewScreenAttachSide,
     controllerType: ControllerType
@@ -46,7 +47,7 @@ class CollapsingViewsHolder {
     recyclers.put(controllerType, recyclerView)
   }
 
-  fun lockUnlockCollapsableViews(recyclerView: RecyclerView?, lock: Boolean, animate: Boolean) {
+  fun lockUnlockCollapsableViews(recyclerView: PaddingAwareRecyclerView?, lock: Boolean, animate: Boolean) {
     for ((_, innerMap) in collapsingViewControllerMap.entries) {
       for ((rv, collapsingViewController) in innerMap) {
         if (recyclerView != null && recyclerView !== rv) {
@@ -58,7 +59,7 @@ class CollapsingViewsHolder {
     }
   }
 
-  fun getRecyclerForController(controllerType: ControllerType): RecyclerView? {
+  fun getRecyclerForController(controllerType: ControllerType): PaddingAwareRecyclerView? {
     return recyclers[controllerType]
   }
 

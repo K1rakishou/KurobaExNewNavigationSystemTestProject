@@ -1,5 +1,6 @@
 package com.github.k1rakishou.kurobanewnavstacktest.utils
 
+import android.animation.AnimatorSet
 import android.animation.ValueAnimator
 import android.content.res.Resources
 import android.graphics.drawable.ColorDrawable
@@ -10,6 +11,8 @@ import android.widget.EditText
 import android.widget.TextView
 import androidx.annotation.ColorInt
 import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.core.animation.doOnCancel
+import androidx.core.animation.doOnEnd
 import androidx.core.view.ViewCompat
 import androidx.core.view.doOnLayout
 import androidx.core.view.updateLayoutParams
@@ -18,6 +21,7 @@ import com.bluelinelabs.conductor.Router
 import com.github.k1rakishou.kurobanewnavstacktest.core.base.BaseController
 import com.github.k1rakishou.kurobanewnavstacktest.core.base.ControllerTag
 import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -249,4 +253,22 @@ fun <T> CancellableContinuation<T>.resumeIfActive(value: T) {
 
 fun <T> ValueAnimator.value(): T {
   return animatedValue as T
+}
+
+suspend fun AnimatorSet.endAndAwait() {
+  if (!isStarted) {
+    return
+  }
+
+  if (!isRunning) {
+    return
+  }
+
+  suspendCancellableCoroutine<Unit> { continuation ->
+    doOnCancel { continuation.resumeIfActive(Unit) }
+    doOnEnd { continuation.resumeIfActive(Unit) }
+    continuation.invokeOnCancellation { continuation.resumeIfActive(Unit) }
+
+    end()
+  }
 }

@@ -7,21 +7,26 @@ import com.github.k1rakishou.kurobanewnavstacktest.controller.FocusableControlle
 import com.github.k1rakishou.kurobanewnavstacktest.controller.RecyclerViewProvider
 import com.github.k1rakishou.kurobanewnavstacktest.feature.catalog.CatalogController
 import com.github.k1rakishou.kurobanewnavstacktest.data.CatalogData
+import com.github.k1rakishou.kurobanewnavstacktest.widget.recycler.PaddingAwareRecyclerView
 
-class SlideCatalogController(args: Bundle? = null) : CatalogController(args), FocusableController {
+class SlideCatalogController(
+  args: Bundle? = null
+) : CatalogController(args), FocusableController {
   private lateinit var recyclerViewProvider: RecyclerViewProvider
-  private val slideFabViewController by lazy { activityContract().mainActivityOrError().slideFabViewController }
+  private val slideFabViewController by lazy {
+    activityContract().mainActivityOrError().slideFabViewController
+  }
 
   fun recyclerViewProvider(recyclerViewProvider: RecyclerViewProvider) {
     this.recyclerViewProvider = recyclerViewProvider
   }
 
-  override fun provideRecyclerView(recyclerView: EpoxyRecyclerView) {
+  override fun provideRecyclerView(recyclerView: PaddingAwareRecyclerView) {
     recyclerViewProvider.provideRecyclerView(recyclerView, controllerType)
     uiElementsControllerCallbacks.showFab()
   }
 
-  override fun withdrawRecyclerView(recyclerView: EpoxyRecyclerView) {
+  override fun withdrawRecyclerView(recyclerView: PaddingAwareRecyclerView) {
     recyclerViewProvider.withdrawRecyclerView(recyclerView, controllerType)
   }
 

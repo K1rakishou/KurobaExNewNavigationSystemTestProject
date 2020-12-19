@@ -21,8 +21,8 @@ import com.github.k1rakishou.kurobanewnavstacktest.repository.ChanRepository
 import com.github.k1rakishou.kurobanewnavstacktest.utils.BackgroundUtils
 import com.github.k1rakishou.kurobanewnavstacktest.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.kurobanewnavstacktest.utils.errorMessageOrClassName
-import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndDoRequest
 import com.github.k1rakishou.kurobanewnavstacktest.viewstate.ViewStateConstants
+import com.github.k1rakishou.kurobanewnavstacktest.widget.recycler.PaddingAwareRecyclerView
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.KurobaToolbarType
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarAction
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarContract
@@ -36,7 +36,7 @@ class CatalogLayout @JvmOverloads constructor(
   attributeSet: AttributeSet? = null,
   attrDefStyle: Int = 0
 ) : ConstraintLayout(context, attributeSet, attrDefStyle) {
-  private val catalogRecyclerView: EpoxyRecyclerView
+  private val catalogRecyclerView: PaddingAwareRecyclerView
   private val chanRepository = ChanRepository
   private val kurobaCoroutineScope = KurobaCoroutineScope()
 
@@ -71,8 +71,6 @@ class CatalogLayout @JvmOverloads constructor(
       toolbarContract.listenForToolbarActions(KurobaToolbarType.Catalog)
         .collect { toolbarAction -> onToolbarAction(toolbarAction) }
     }
-
-    applyInsetsForRecyclerView()
 
     catalogRecyclerView.doOnPreDraw {
       catalogControllerCallbacks.provideRecyclerView(catalogRecyclerView)
@@ -261,26 +259,11 @@ class CatalogLayout @JvmOverloads constructor(
     context.startActivity(intent)
   }
 
-  private fun applyInsetsForRecyclerView() {
-    val toolbarHeight = context.resources.getDimension(R.dimen.toolbar_height).toInt()
-    val bottomNavViewHeight =
-      context.resources.getDimension(R.dimen.bottom_nav_panel_height).toInt()
-
-    catalogRecyclerView.setOnApplyWindowInsetsListenerAndDoRequest { v, insets ->
-      v.updatePadding(
-        top = toolbarHeight + insets.systemWindowInsetTop,
-        bottom = bottomNavViewHeight + insets.systemWindowInsetBottom
-      )
-
-      return@setOnApplyWindowInsetsListenerAndDoRequest insets
-    }
-  }
-
   interface CatalogControllerCallbacks {
     suspend fun waitUntilAttached(): Boolean
 
-    fun provideRecyclerView(recyclerView: EpoxyRecyclerView)
-    fun withdrawRecyclerView(recyclerView: EpoxyRecyclerView)
+    fun provideRecyclerView(recyclerView: PaddingAwareRecyclerView)
+    fun withdrawRecyclerView(recyclerView: PaddingAwareRecyclerView)
 
     fun onSearchToolbarShown()
     fun onSearchToolbarHidden()

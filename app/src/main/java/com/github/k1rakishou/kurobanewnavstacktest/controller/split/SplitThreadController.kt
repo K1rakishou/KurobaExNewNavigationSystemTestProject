@@ -16,10 +16,11 @@ import com.github.k1rakishou.kurobanewnavstacktest.core.CollapsingViewsHolder
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadData
 import com.github.k1rakishou.kurobanewnavstacktest.utils.*
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.ViewScreenAttachSide
-import com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaBottomPanelStateKind
+import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomPanelStateKind
 import com.github.k1rakishou.kurobanewnavstacktest.widget.behavior.SplitThreadFabBehavior
 import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomPanel
 import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
+import com.github.k1rakishou.kurobanewnavstacktest.widget.recycler.PaddingAwareRecyclerView
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.KurobaToolbarType
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.NormalToolbar
 
@@ -71,6 +72,9 @@ class SplitThreadController(
 
       splitFabViewController.onBottomPanelStateChanged(controllerType, newState)
       lockUnlockCollapsableViews(panelControllerType, newState)
+    }
+    bottomPanel.addOnBottomPanelHeightChangeListener { controllerType, panelHeight ->
+      collapsingViewsHolder.getRecyclerForController(controllerType)?.updatePanelHeight(panelHeight)
     }
 
     bottomPanel.bottomPanelPreparationsCompleted(controllerType, KurobaBottomPanelStateKind.Hidden)
@@ -133,9 +137,9 @@ class SplitThreadController(
     }
   }
 
-  override fun provideRecyclerView(recyclerView: EpoxyRecyclerView) {
+  override fun provideRecyclerView(recyclerView: PaddingAwareRecyclerView) {
     recyclerView.doOnPreDraw {
-      bottomPanel.onRecyclerViewHeightKnown(controllerType, recyclerView.height)
+      bottomPanel.onPanelAvailableVerticalSpaceKnown(controllerType, recyclerView.height)
 
       collapsingViewsHolder.attach(
         recyclerView = recyclerView,
@@ -146,7 +150,7 @@ class SplitThreadController(
     }
   }
 
-  override fun withdrawRecyclerView(recyclerView: EpoxyRecyclerView) {
+  override fun withdrawRecyclerView(recyclerView: PaddingAwareRecyclerView) {
     collapsingViewsHolder.detach(
       recyclerView = recyclerView,
       collapsableView = toolbarContract.collapsableView(),
@@ -155,7 +159,7 @@ class SplitThreadController(
   }
 
   override fun lockUnlockCollapsableViews(
-    recyclerView: RecyclerView?,
+    recyclerView: PaddingAwareRecyclerView?,
     lock: Boolean,
     animate: Boolean
   ) {

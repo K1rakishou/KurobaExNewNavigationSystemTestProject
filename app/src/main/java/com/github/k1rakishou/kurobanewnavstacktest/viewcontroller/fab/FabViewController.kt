@@ -1,7 +1,7 @@
 package com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.fab
 
 import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
-import com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaBottomPanelStateKind
+import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomPanelStateKind
 
 interface FabViewController {
   fun onBottomPanelInitialized(controllerType: ControllerType)

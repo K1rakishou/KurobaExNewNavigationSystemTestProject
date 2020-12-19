@@ -13,7 +13,6 @@ import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.CollapsableView
 import com.github.k1rakishou.kurobanewnavstacktest.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.kurobanewnavstacktest.utils.*
-import com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaBottomPanelStateKind
 import com.github.k1rakishou.kurobanewnavstacktest.widget.animations.PanelAddOrRemoveChildPanelAnimation
 import com.github.k1rakishou.kurobanewnavstacktest.widget.animations.PanelDisappearanceAnimation
 import com.github.k1rakishou.kurobanewnavstacktest.widget.animations.PanelRemoveAnimation
@@ -35,7 +34,7 @@ class KurobaBottomPanel @JvmOverloads constructor(
 
   private val insetBottomDeferredInitial = CompletableDeferred<Int>()
   private val bottomPanelInitialized = mutableMapOf<ControllerType, CompletableDeferred<Unit>>()
-  private val recyclerViewHeight = mutableMapOf<ControllerType, CompletableDeferred<Int>>()
+  private val panelAvailableVerticalSpace = mutableMapOf<ControllerType, CompletableDeferred<Int>>()
 
   private val viewModel by lazy { (context as MainActivity).viewModelStorage(KurobaBottomPanelViewModel::class).value }
   private val scope = KurobaCoroutineScope()
@@ -58,7 +57,7 @@ class KurobaBottomPanel @JvmOverloads constructor(
   private var attachedFab: KurobaFloatingActionButton? = null
 
   private val bottomPanelInitializationListeners = mutableListOf<(ControllerType) -> Unit>()
-  private val bottomPanelHeightChangeListeners = mutableListOf<(ControllerType, Int, Boolean) -> Unit>() // TODO(KurobaEx):
+  private val bottomPanelHeightChangeListeners = mutableListOf<(ControllerType, Int) -> Unit>()
   private val bottomPanelStateUpdatesListeners = mutableListOf<(ControllerType, KurobaBottomPanelStateKind) -> Unit>()
   private val bottomNavPanelSelectedItemListeners = mutableListOf<(KurobaBottomNavPanelSelectedItem) -> Unit>()
 
@@ -71,8 +70,8 @@ class KurobaBottomPanel @JvmOverloads constructor(
     bottomPanelInitialized[ControllerType.Catalog] = CompletableDeferred()
     bottomPanelInitialized[ControllerType.Thread] = CompletableDeferred()
 
-    recyclerViewHeight[ControllerType.Catalog] = CompletableDeferred()
-    recyclerViewHeight[ControllerType.Thread] = CompletableDeferred()
+    panelAvailableVerticalSpace[ControllerType.Catalog] = CompletableDeferred()
+    panelAvailableVerticalSpace[ControllerType.Thread] = CompletableDeferred()
 
     LayoutInflater.from(context).inflate(R.layout.kuroba_bottom_panel, this, true).apply {
       panelContainer = findViewById(R.id.panel_container)
@@ -165,21 +164,34 @@ class KurobaBottomPanel @JvmOverloads constructor(
     return bottomPanelInitialized[controllerType]!!.isCompleted
   }
 
-  fun onControllerFocused(controllerType: ControllerType) {
+  fun onControllerFocused(
+    controllerType: ControllerType,
+    controllerFocusedCallback: () -> Unit = {}
+  ) {
     if (this.controllerType == controllerType) {
+      controllerFocusedCallback()
       return
     }
 
-    log("onControllerFocused controllerType=$controllerType")
-
-    this.controllerType = controllerType
-    val currentPanelStateKind = viewState.panelCurrentStateKind
+    val controllerTypeCopy = controllerType
 
     scope.launch {
+      if (controllerTypeCopy != controllerType) {
+        controllerFocusedCallback()
+        return@launch
+      }
+
+      log("onControllerFocused controllerType=$controllerType")
+      allAnimations.forEach { animation -> animation.endAnimationAndAwait() }
+
+      this@KurobaBottomPanel.controllerType = controllerType
+      val currentPanelStateKind = viewState.panelCurrentStateKind
+
       bottomPanelInitialized[controllerType]!!.await()
-      recyclerViewHeight[controllerType]!!.await()
+      panelAvailableVerticalSpace[controllerType]!!.await()
 
       switchIntoInternal(currentPanelStateKind)
+      controllerFocusedCallback()
     }
   }
 
@@ -188,11 +200,17 @@ class KurobaBottomPanel @JvmOverloads constructor(
       return
     }
 
-    log("switchInto newState=$newState")
+    val newStateCopy = newState
 
     scope.launch {
+      if (newState != newStateCopy) {
+        return@launch
+      }
+
+      log("switchInto newState=$newState")
+
       bottomPanelInitialized[controllerType]!!.await()
-      recyclerViewHeight[controllerType]!!.await()
+      panelAvailableVerticalSpace[controllerType]!!.await()
 
       if (newState == KurobaBottomPanelStateKind.Hidden) {
         hidePanel()
@@ -202,8 +220,8 @@ class KurobaBottomPanel @JvmOverloads constructor(
     }
   }
 
-  fun onRecyclerViewHeightKnown(controllerType: ControllerType, recyclerViewHeight: Int) {
-    this.recyclerViewHeight[controllerType]!!.complete(recyclerViewHeight)
+  fun onPanelAvailableVerticalSpaceKnown(controllerType: ControllerType, recyclerViewHeight: Int) {
+    this.panelAvailableVerticalSpace[controllerType]!!.complete(recyclerViewHeight)
   }
 
   fun bottomPanelPreparationsCompleted(
@@ -225,7 +243,7 @@ class KurobaBottomPanel @JvmOverloads constructor(
         initBottomPanel(controllerType, initialState)
         bottomPanelInitialized[controllerType]!!.complete(Unit)
       } else {
-        recyclerViewHeight[controllerType]!!.await()
+        panelAvailableVerticalSpace[controllerType]!!.await()
 
         if (viewState.panelCurrentStateKind != KurobaBottomPanelStateKind.Hidden) {
           switchIntoInternal(viewState.panelCurrentStateKind)
@@ -263,8 +281,16 @@ class KurobaBottomPanel @JvmOverloads constructor(
     bottomNavPanelSelectedItemListeners += listener
   }
 
-  fun addOnBottomPanelHeightChangeListener(listener: (ControllerType, Int, Boolean) -> Unit) {
+  fun addOnBottomPanelHeightChangeListener(listener: (ControllerType, Int) -> Unit) {
     bottomPanelHeightChangeListeners += listener
+  }
+
+  fun getBottomPanelHeight(controllerType: ControllerType): Int? {
+    if (this.controllerType != controllerType) {
+      return null
+    }
+
+    return getCurrentChildPanelOrNull()?.getCurrentHeight()
   }
 
   fun cleanup() {
@@ -345,13 +371,19 @@ class KurobaBottomPanel @JvmOverloads constructor(
     val kurobaBottomHiddenPanel = KurobaBottomHiddenPanel(context)
     panelContainer.addView(kurobaBottomHiddenPanel)
 
-    bottomPanelStateUpdatesListeners.forEach { func -> func(controllerType, newState) }
+    bottomPanelStateUpdatesListeners.forEach { func ->
+      func(controllerType, newState)
+    }
+    bottomPanelHeightChangeListeners.forEach { func ->
+      func(controllerType, kurobaBottomHiddenPanel.getCurrentHeight())
+    }
+
     viewState.panelCurrentStateKind = newState
 
     childPanel.enableOrDisableControls(enable = true)
   }
 
-  private suspend fun switchIntoInternal(newStateKind: KurobaBottomPanelStateKind) {
+  suspend fun switchIntoInternal(newStateKind: KurobaBottomPanelStateKind) {
     val currentChildPanel = panelContainer.getChildAtOrNull(0) as? ChildPanelContract
     val isTheSamePanel = isTheSamePanel(newStateKind, currentChildPanel)
 
@@ -377,7 +409,14 @@ class KurobaBottomPanel @JvmOverloads constructor(
       currentChildPanel.updateCurrentControllerType(controllerType)
     }
 
-    bottomPanelStateUpdatesListeners.forEach { func -> func(controllerType, newStateKind) }
+    bottomPanelStateUpdatesListeners.forEach { func ->
+      func(controllerType, newStateKind)
+    }
+    bottomPanelHeightChangeListeners.forEach { func ->
+      val addedChildPanel = panelContainer.getChildAtOrNull(0) as ChildPanelContract
+      func(controllerType, addedChildPanel.getCurrentHeight())
+    }
+
     viewState.panelCurrentStateKind = newStateKind
   }
 
@@ -489,12 +528,12 @@ class KurobaBottomPanel @JvmOverloads constructor(
         )
       }
       KurobaBottomPanelStateKind.ReplyLayoutPanel -> {
-        val recyclerViewHeight = recyclerViewHeight[controllerType]!!.getCompleted()
+        val availableVerticalSpace = panelAvailableVerticalSpace[controllerType]!!.getCompleted()
 
         return KurobaBottomReplyPanel(
           context,
           controllerType,
-          recyclerViewHeight,
+          availableVerticalSpace,
           viewModel,
           this
         )
@@ -523,6 +562,9 @@ class KurobaBottomPanel @JvmOverloads constructor(
     bottomPanelInitializationListeners.clear()
 
     bottomPanelStateUpdatesListeners.forEach { func -> func(controllerType, initialStateKind) }
+    bottomPanelHeightChangeListeners.forEach { func ->
+      func(controllerType, childPanelContract.getCurrentHeight())
+    }
 
     viewState.panelCurrentStateKind = initialStateKind
     childPanelContract.enableOrDisableControls(enable = true)

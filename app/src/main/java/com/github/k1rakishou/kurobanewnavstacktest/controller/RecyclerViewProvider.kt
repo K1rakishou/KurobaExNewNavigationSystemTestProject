@@ -1,8 +1,8 @@
 package com.github.k1rakishou.kurobanewnavstacktest.controller
 
-import androidx.recyclerview.widget.RecyclerView
+import com.github.k1rakishou.kurobanewnavstacktest.widget.recycler.PaddingAwareRecyclerView
 
 interface RecyclerViewProvider {
-  fun provideRecyclerView(recyclerView: RecyclerView, controllerType: ControllerType)
-  fun withdrawRecyclerView(recyclerView: RecyclerView, controllerType: ControllerType)
+  fun provideRecyclerView(recyclerView: PaddingAwareRecyclerView, controllerType: ControllerType)
+  fun withdrawRecyclerView(recyclerView: PaddingAwareRecyclerView, controllerType: ControllerType)
 }

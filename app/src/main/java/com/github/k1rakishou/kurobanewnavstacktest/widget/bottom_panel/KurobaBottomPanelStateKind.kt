@@ -1,4 +1,4 @@
-package com.github.k1rakishou.kurobanewnavstacktest.widget
+package com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel
 
 enum class KurobaBottomPanelStateKind {
   Uninitialized,
