@@ -46,6 +46,13 @@ class KurobaBottomPanel @JvmOverloads constructor(
   private val panelRemoveAnimation = PanelRemoveAnimation()
   private val panelAddOrRemoveChildPanelAnimation = PanelAddOrRemoveChildPanelAnimation()
 
+  private val allAnimations = arrayOf(
+    panelRevealAnimation,
+    panelDisappearanceAnimation,
+    panelRemoveAnimation,
+    panelAddOrRemoveChildPanelAnimation
+  )
+
   private var lastInsetBottom = 0
   private var controllerType: ControllerType = ControllerType.Catalog
   private var attachedFab: KurobaFloatingActionButton? = null
@@ -261,10 +268,7 @@ class KurobaBottomPanel @JvmOverloads constructor(
   }
 
   fun cleanup() {
-    panelRevealAnimation.endAnimation()
-    panelDisappearanceAnimation.endAnimation()
-    panelRemoveAnimation.endAnimation()
-    panelAddOrRemoveChildPanelAnimation.endAnimation()
+    allAnimations.forEach { animation -> animation.endAnimation() }
 
     scope.cancelChildren()
     destroyChildPanel()
@@ -278,10 +282,8 @@ class KurobaBottomPanel @JvmOverloads constructor(
   }
 
   fun onBackPressed(): Boolean {
-    if (panelRevealAnimation.isRunning()
-      || panelAddOrRemoveChildPanelAnimation.isRunning()
-      || panelDisappearanceAnimation.isRunning()
-      || panelRemoveAnimation.isRunning()) {
+    val hasRunningAnimations = allAnimations.any { animation -> animation.isRunning() }
+    if (hasRunningAnimations) {
       // If any of the animations is in progress, consume the click and do nothing
       return true
     }

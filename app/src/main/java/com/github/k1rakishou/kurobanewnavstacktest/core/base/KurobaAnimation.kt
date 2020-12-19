@@ -14,7 +14,7 @@ abstract class SimpleKurobaAnimation : KurobaAnimation {
   override fun endAnimation() {
     if (animatorSet != null) {
       animatorSet?.end()
-      onAnimationCompleted()
+      animatorSet = null
     }
   }
 
