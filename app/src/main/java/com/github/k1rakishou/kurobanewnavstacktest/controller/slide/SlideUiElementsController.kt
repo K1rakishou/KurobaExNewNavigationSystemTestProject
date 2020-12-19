@@ -82,6 +82,8 @@ class SlideUiElementsController(
       )
     )
 
+    bottomPanel.attachFab(slideControllerFab)
+
     bottomPanel.addOnBottomPanelInitialized { controllerType ->
       // Doesn't matter what we use here since Slide layout has only one bottom panel
       slideFabViewController.onBottomPanelInitialized(controllerType)
@@ -104,8 +106,6 @@ class SlideUiElementsController(
         // TODO(KurobaEx): subclass recycler
       }
     }
-
-    bottomPanel.attachFab(slideControllerFab)
   }
 
   override fun handleBack(): Boolean {
@@ -181,6 +181,7 @@ class SlideUiElementsController(
 
   override fun provideRecyclerView(recyclerView: RecyclerView, controllerType: ControllerType) {
     slideModeFabViewController.reset()
+    bottomPanel.onRecyclerViewHeightKnown(controllerType, recyclerView.height)
 
     collapsingViewsHolder.attach(
       recyclerView = recyclerView,

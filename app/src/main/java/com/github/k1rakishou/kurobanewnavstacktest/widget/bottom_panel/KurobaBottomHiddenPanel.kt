@@ -25,9 +25,6 @@ class KurobaBottomHiddenPanel(
   override fun enableOrDisableControls(enable: Boolean) {
   }
 
-  override fun saveState(bottomPanelViewState: KurobaBottomPanelViewState) {
-  }
-
   override fun restoreState(bottomPanelViewState: KurobaBottomPanelViewState) {
   }
 
@@ -38,4 +35,13 @@ class KurobaBottomHiddenPanel(
   override suspend fun updateHeight(parentHeight: Int) {
 
   }
+
+  override fun handleBack(): Boolean {
+    return false
+  }
+
+  override fun onDestroy() {
+
+  }
+
 }

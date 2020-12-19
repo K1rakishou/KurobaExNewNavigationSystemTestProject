@@ -6,10 +6,9 @@ interface ChildPanelContract {
   fun getCurrentHeight(): Int
   fun getBackgroundColor(): Int
   fun enableOrDisableControls(enable: Boolean)
-
-  fun saveState(bottomPanelViewState: KurobaBottomPanelViewState)
   fun restoreState(bottomPanelViewState: KurobaBottomPanelViewState)
-
   fun updateCurrentControllerType(controllerType: ControllerType)
+  fun handleBack(): Boolean
+  fun onDestroy()
   suspend fun updateHeight(parentHeight: Int)
 }

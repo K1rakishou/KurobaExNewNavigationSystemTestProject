@@ -59,6 +59,7 @@ class SplitThreadController(
   }
 
   private fun initBottomPanel() {
+    bottomPanel.attachFab(threadFab)
     bottomPanel.addOnBottomPanelInitialized {
       splitFabViewController.onBottomPanelInitialized(controllerType)
       threadFab.initialized()
@@ -72,7 +73,6 @@ class SplitThreadController(
       lockUnlockCollapsableViews(panelControllerType, newState)
     }
 
-    bottomPanel.attachFab(threadFab)
     bottomPanel.bottomPanelPreparationsCompleted(controllerType, KurobaBottomPanelStateKind.Hidden)
     bottomPanel.onControllerFocused(controllerType)
   }
@@ -135,6 +135,8 @@ class SplitThreadController(
 
   override fun provideRecyclerView(recyclerView: EpoxyRecyclerView) {
     recyclerView.doOnPreDraw {
+      bottomPanel.onRecyclerViewHeightKnown(controllerType, recyclerView.height)
+
       collapsingViewsHolder.attach(
         recyclerView = recyclerView,
         collapsableView = toolbarContract.collapsableView(),

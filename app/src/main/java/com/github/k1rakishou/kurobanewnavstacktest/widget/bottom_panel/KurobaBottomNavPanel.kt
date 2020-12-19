@@ -58,10 +58,6 @@ class KurobaBottomNavPanel(
     select(KurobaBottomNavPanelSelectedItem.Browse)
   }
 
-  override fun saveState(bottomPanelViewState: KurobaBottomPanelViewState) {
-    bottomPanelViewState.bottomNavPanelState.fillFromOther(viewState)
-  }
-
   override fun restoreState(bottomPanelViewState: KurobaBottomPanelViewState) {
     val oldState = bottomPanelViewState.bottomNavPanelState
     selectInternal(oldState.selectedItem)
@@ -90,6 +86,10 @@ class KurobaBottomNavPanel(
     settingsItemHolder.setEnabledFast(enable)
   }
 
+  override fun onDestroy() {
+
+  }
+
   override fun onClick(v: View?) {
     val selectedItem = when {
       v === searchItemHolder -> KurobaBottomNavPanelSelectedItem.Search
@@ -108,6 +108,10 @@ class KurobaBottomNavPanel(
     }
 
     callbacks.onItemSelected(selectedItem)
+  }
+
+  override fun handleBack(): Boolean {
+    return false
   }
 
   fun select(newSelectedItem: KurobaBottomNavPanelSelectedItem): Boolean {

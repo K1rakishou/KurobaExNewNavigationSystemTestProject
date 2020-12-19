@@ -9,22 +9,10 @@ data class KurobaBottomPanelViewState(
   val bottomReplyPanelState: KurobaBottomReplyPanelViewState = KurobaBottomReplyPanelViewState()
 ) {
 
-  fun isDefault(): Boolean {
-    return panelCurrentStateKind == KurobaBottomPanelStateKind.Uninitialized
-      && panelInitialStateKind == KurobaBottomPanelStateKind.Uninitialized
-  }
-
   fun currentStateAllowsFabUpdate(): Boolean {
     return panelCurrentStateKind == KurobaBottomPanelStateKind.BottomNavPanel
       || panelCurrentStateKind == KurobaBottomPanelStateKind.Uninitialized
       || panelCurrentStateKind == KurobaBottomPanelStateKind.Hidden
-  }
-
-  fun fillFrom(oldState: KurobaBottomPanelViewState) {
-    panelCurrentStateKind = oldState.panelCurrentStateKind
-    panelInitialStateKind = oldState.panelInitialStateKind
-    bottomNavPanelState.fillFromOther(oldState.bottomNavPanelState)
-    bottomReplyPanelState.fillFromOther(oldState.bottomReplyPanelState)
   }
 
 }

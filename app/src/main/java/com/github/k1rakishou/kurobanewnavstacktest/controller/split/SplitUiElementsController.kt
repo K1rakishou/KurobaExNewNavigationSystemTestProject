@@ -70,6 +70,8 @@ class SplitUiElementsController(
   }
 
   private fun initBottomPanel() {
+    bottomPanel.attachFab(catalogFab)
+
     bottomPanel.addOnBottomPanelInitialized {
       splitFabViewController.onBottomPanelInitialized(ControllerType.Catalog)
       catalogFab.initialized()
@@ -88,8 +90,6 @@ class SplitUiElementsController(
         )
       )
     }
-
-    bottomPanel.attachFab(catalogFab)
 
     bottomPanel.bottomPanelPreparationsCompleted(
       ControllerType.Catalog,
@@ -123,6 +123,8 @@ class SplitUiElementsController(
   }
 
   override fun provideRecyclerView(recyclerView: RecyclerView, controllerType: ControllerType) {
+    bottomPanel.onRecyclerViewHeightKnown(controllerType, recyclerView.height)
+
     collapsingViewsHolder.attach(
       recyclerView = recyclerView,
       collapsableView = toolbarContract.collapsableView(),
