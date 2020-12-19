@@ -5,8 +5,8 @@ import android.os.Bundle
 import android.view.*
 import androidx.appcompat.widget.AppCompatImageView
 import com.github.k1rakishou.kurobanewnavstacktest.R
-import com.github.k1rakishou.kurobanewnavstacktest.base.BaseController
-import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
+import com.github.k1rakishou.kurobanewnavstacktest.core.base.BaseController
+import com.github.k1rakishou.kurobanewnavstacktest.core.base.ControllerTag
 import com.github.k1rakishou.kurobanewnavstacktest.data.PostDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.repository.ChanRepository
 import com.github.k1rakishou.kurobanewnavstacktest.utils.FullScreenUtils.hideSystemUi

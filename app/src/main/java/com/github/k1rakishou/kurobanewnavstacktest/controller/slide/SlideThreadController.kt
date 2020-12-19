@@ -2,7 +2,7 @@ package com.github.k1rakishou.kurobanewnavstacktest.controller.slide
 
 import android.os.Bundle
 import com.airbnb.epoxy.EpoxyRecyclerView
-import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
+import com.github.k1rakishou.kurobanewnavstacktest.core.base.ControllerTag
 import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.controller.FocusableController
 import com.github.k1rakishou.kurobanewnavstacktest.controller.RecyclerViewProvider

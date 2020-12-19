@@ -14,7 +14,7 @@ import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import androidx.core.widget.doOnTextChanged
 import com.github.k1rakishou.kurobanewnavstacktest.R
-import com.github.k1rakishou.kurobanewnavstacktest.base.KurobaCoroutineScope
+import com.github.k1rakishou.kurobanewnavstacktest.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.utils.*
 
@@ -87,6 +87,7 @@ class KurobaBottomReplyPanel(
     removeAllViews()
     initializeView(context)
 
+    restoreState(viewModel.getBottomPanelState(controllerType))
     this.setVisibilityFast(View.VISIBLE)
   }
 

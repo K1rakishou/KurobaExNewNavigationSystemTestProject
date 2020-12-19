@@ -1,4 +1,4 @@
-package com.github.k1rakishou.kurobanewnavstacktest.base
+package com.github.k1rakishou.kurobanewnavstacktest.core.base
 
 import android.content.Context
 import android.os.Bundle

@@ -5,7 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.github.k1rakishou.kurobanewnavstacktest.activity.MainActivity
-import com.github.k1rakishou.kurobanewnavstacktest.base.BaseController
+import com.github.k1rakishou.kurobanewnavstacktest.core.base.BaseController
 import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ThreadNavigationContract
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.UiElementsControllerCallbacks

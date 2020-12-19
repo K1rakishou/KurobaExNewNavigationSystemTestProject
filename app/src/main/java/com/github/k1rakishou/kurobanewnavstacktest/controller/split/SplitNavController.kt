@@ -8,8 +8,8 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import com.bluelinelabs.conductor.RouterTransaction
 import com.github.k1rakishou.kurobanewnavstacktest.R
-import com.github.k1rakishou.kurobanewnavstacktest.base.BaseController
-import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
+import com.github.k1rakishou.kurobanewnavstacktest.core.base.BaseController
+import com.github.k1rakishou.kurobanewnavstacktest.core.base.ControllerTag
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.CatalogNavigationContract
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ChanNavigationContract
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ThreadNavigationContract

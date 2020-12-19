@@ -1,31 +1,27 @@
 package com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel
 
-import android.animation.AnimatorSet
-import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.FrameLayout
-import androidx.core.animation.doOnCancel
-import androidx.core.animation.doOnEnd
-import androidx.core.animation.doOnStart
 import androidx.core.view.*
-import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.activity.MainActivity
-import com.github.k1rakishou.kurobanewnavstacktest.base.KurobaCoroutineScope
 import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.CollapsableView
+import com.github.k1rakishou.kurobanewnavstacktest.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.kurobanewnavstacktest.utils.*
 import com.github.k1rakishou.kurobanewnavstacktest.widget.KurobaBottomPanelStateKind
-import com.github.k1rakishou.kurobanewnavstacktest.widget.layout.TouchBlockingFrameLayout
+import com.github.k1rakishou.kurobanewnavstacktest.widget.animations.PanelAddOrRemoveChildPanelAnimation
+import com.github.k1rakishou.kurobanewnavstacktest.widget.animations.PanelDisappearanceAnimation
+import com.github.k1rakishou.kurobanewnavstacktest.widget.animations.PanelRemoveAnimation
+import com.github.k1rakishou.kurobanewnavstacktest.widget.animations.PanelRevealAnimation
 import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
+import com.github.k1rakishou.kurobanewnavstacktest.widget.layout.TouchBlockingFrameLayout
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.suspendCancellableCoroutine
 import timber.log.Timber
-import java.lang.IllegalStateException
 
 @SuppressLint("BinaryOperationInTimber")
 class KurobaBottomPanel @JvmOverloads constructor(
@@ -45,12 +41,14 @@ class KurobaBottomPanel @JvmOverloads constructor(
   private val scope = KurobaCoroutineScope()
   private val panelContainer: FrameLayout
 
+  private val panelRevealAnimation = PanelRevealAnimation()
+  private val panelDisappearanceAnimation = PanelDisappearanceAnimation()
+  private val panelRemoveAnimation = PanelRemoveAnimation()
+  private val panelAddOrRemoveChildPanelAnimation = PanelAddOrRemoveChildPanelAnimation()
+
   private var lastInsetBottom = 0
-  private var revealAnimatorSet: AnimatorSet? = null
-  private var stateChangeAnimatorSet: AnimatorSet? = null
-  private var disappearanceAnimatorSet: AnimatorSet? = null
-  private var attachedFab: KurobaFloatingActionButton? = null
   private var controllerType: ControllerType = ControllerType.Catalog
+  private var attachedFab: KurobaFloatingActionButton? = null
 
   private val bottomPanelInitializationListeners = mutableListOf<(ControllerType) -> Unit>()
   private val bottomPanelHeightChangeListeners = mutableListOf<(ControllerType, Int, Boolean) -> Unit>() // TODO(KurobaEx):
@@ -263,9 +261,10 @@ class KurobaBottomPanel @JvmOverloads constructor(
   }
 
   fun cleanup() {
-    endRevealAnimations()
-    endStateChangeAnimations()
-    endDisappearanceAnimations()
+    panelRevealAnimation.endAnimation()
+    panelDisappearanceAnimation.endAnimation()
+    panelRemoveAnimation.endAnimation()
+    panelAddOrRemoveChildPanelAnimation.endAnimation()
 
     scope.cancelChildren()
     destroyChildPanel()
@@ -279,9 +278,10 @@ class KurobaBottomPanel @JvmOverloads constructor(
   }
 
   fun onBackPressed(): Boolean {
-    if (revealAnimatorSet != null
-      || stateChangeAnimatorSet != null
-      || disappearanceAnimatorSet != null) {
+    if (panelRevealAnimation.isRunning()
+      || panelAddOrRemoveChildPanelAnimation.isRunning()
+      || panelDisappearanceAnimation.isRunning()
+      || panelRemoveAnimation.isRunning()) {
       // If any of the animations is in progress, consume the click and do nothing
       return true
     }
@@ -326,13 +326,14 @@ class KurobaBottomPanel @JvmOverloads constructor(
     childPanel as ChildPanelContract
     childPanel.enableOrDisableControls(enable = false)
 
-    var prevHeight = childPanel.getCurrentHeight()
-    if (prevHeight == 0) {
-      prevHeight = 1
-    }
+    val prevHeight = childPanel.getCurrentHeight().coerceAtLeast(1)
 
-    disappearanceAnimation(
+    panelDisappearanceAnimation.disappearanceAnimation(
+      this,
       panelContainer,
+      lastInsetBottom,
+      attachedFab,
+      translationY,
       prevHeight,
       0
     )
@@ -404,13 +405,14 @@ class KurobaBottomPanel @JvmOverloads constructor(
     log("addOrReplaceChildPanel newStateKind=${newStateKind}")
 
     val prevColor = getCurrentChildPanelOrNull()?.getBackgroundColor()
-    var prevHeight = getCurrentChildPanelOrNull()?.getCurrentHeight() ?: 0
+    val prevHeight = getCurrentChildPanelOrNull()?.getCurrentHeight()?.coerceAtLeast(1) ?: 0
 
-    if (prevHeight == 0) {
-      prevHeight = 1
-    }
-
-    destroyChildPanel()
+    panelRemoveAnimation.removeOldChildPanelWithAnimation(
+      panelContainer,
+      destroyPanelFunc = {
+        destroyChildPanel()
+      }
+    )
 
     val childPanel = instantiateChildPanel(newStateKind)
     childPanel as ChildPanelContract
@@ -420,9 +422,12 @@ class KurobaBottomPanel @JvmOverloads constructor(
     val newColor = childPanel.getBackgroundColor()
     val newHeight = childPanel.getCurrentHeight()
 
-    stateChangeAnimation(
+    panelAddOrRemoveChildPanelAnimation.addNewChildPanelWithAnimation(
+      this,
       panelContainer,
+      attachedFab,
       childPanel,
+      lastInsetBottom,
       prevColor ?: newColor,
       newColor,
       prevHeight,
@@ -568,263 +573,14 @@ class KurobaBottomPanel @JvmOverloads constructor(
     updateContainerPaddings(panelContainer, lastInsetBottom)
     updateFab((panelContainer.height).toFloat())
 
-    bottomNavViewPanelRevealAnimation(this, kurobaBottomNavPanel, translationY, 0f)
+    panelRevealAnimation.bottomNavViewPanelRevealAnimation(
+      this,
+      kurobaBottomNavPanel,
+      translationY,
+      0f
+    )
+
     return kurobaBottomNavPanel
-  }
-
-  private suspend fun disappearanceAnimation(
-    panelContainer: FrameLayout,
-    prevHeight: Int,
-    newHeight: Int
-  ) {
-    require(newHeight < prevHeight) { "Bad height: prevHeight=$prevHeight, newHeight=$newHeight" }
-    endDisappearanceAnimations()
-
-    val prevTranslationY = translationY
-    val newTranslationY = translationY + (prevHeight - newHeight)
-    val initialFabTranslationY = attachedFab?.translationY
-
-    suspendCancellableCoroutine<Unit> { continuation ->
-      val translationAnimation = ValueAnimator.ofFloat(prevTranslationY, newTranslationY).apply {
-        addUpdateListener { animator ->
-          this@KurobaBottomPanel.translationY = animator.animatedValue as Float
-
-          attachedFab?.let { fab ->
-            initialFabTranslationY?.let { initialY ->
-              val deltaTranslationY = animator.animatedValue as Float
-              fab.translationY = initialY + deltaTranslationY
-            }
-          }
-        }
-      }
-
-      val alphaAnimation = ValueAnimator.ofFloat(1f, 0f).apply {
-        addUpdateListener { animator ->
-          this@KurobaBottomPanel.setAlphaFast(animator.animatedValue as Float)
-        }
-      }
-
-      fun onAnimationEnd() {
-        disappearanceAnimatorSet = null
-        continuation.resumeIfActive(Unit)
-      }
-
-      disappearanceAnimatorSet = AnimatorSet().apply {
-        playTogether(translationAnimation, alphaAnimation)
-
-        interpolator = INTERPOLATOR
-        duration = GENERIC_ANIMATION_DURATION
-        doOnCancel { onAnimationEnd() }
-
-        doOnEnd {
-          translationY = prevTranslationY
-
-          panelContainer.updateLayoutParams<FrameLayout.LayoutParams> { height = 0 }
-          panelContainer.updatePadding(bottom = lastInsetBottom)
-          this@KurobaBottomPanel.setVisibilityFast(View.INVISIBLE)
-
-          onAnimationEnd()
-        }
-
-        start()
-      }
-    }
-  }
-
-  private suspend fun stateChangeAnimation(
-    panelContainer: FrameLayout,
-    childPanel: View,
-    prevColor: Int,
-    newColor: Int,
-    prevHeight: Int,
-    newHeight: Int,
-    doBeforeViewVisible: suspend (View) -> Unit
-  ) {
-    endStateChangeAnimations()
-    childPanel as ChildPanelContract
-
-    val prevScale = panelContainer.scaleY
-    val newScale = when {
-      newHeight > prevHeight -> (newHeight / prevHeight).toFloat()
-      newHeight < prevHeight -> (prevHeight / newHeight).toFloat()
-      else -> 1f
-    }
-
-    val prevPivotY = panelContainer.pivotY
-    val prevTranslationY = panelContainer.translationY
-    val newTranslationY = prevTranslationY - (newHeight - prevHeight)
-    val initialFabTranslationY = attachedFab?.translationY
-
-    panelContainer.setVisibilityFast(View.VISIBLE)
-    this@KurobaBottomPanel.setAlphaFast(1f)
-    this@KurobaBottomPanel.setVisibilityFast(View.VISIBLE)
-    this@KurobaBottomPanel.setBackgroundColorFast(newColor)
-
-    suspendCancellableCoroutine<Unit> { continuation ->
-      val colorAnimation = ValueAnimator.ofArgb(prevColor, newColor).apply {
-        addUpdateListener { animator ->
-          panelContainer.setBackgroundColorFast(animator.animatedValue as Int)
-          childPanel.setBackgroundColorFast(animator.animatedValue as Int)
-        }
-      }
-
-      val translationAnimation = ValueAnimator.ofFloat(prevTranslationY, newTranslationY).apply {
-        addUpdateListener { animator ->
-          this@KurobaBottomPanel.translationY = animator.animatedValue as Float
-
-          attachedFab?.let { fab ->
-            initialFabTranslationY?.let { initialY ->
-              val deltaTranslationY = animator.animatedValue as Float
-              fab.translationY = initialY + deltaTranslationY
-            }
-          }
-        }
-      }
-
-      val scaleAnimation = ValueAnimator.ofFloat(prevScale, newScale).apply {
-        addUpdateListener { animator ->
-          this@KurobaBottomPanel.scaleY = animator.animatedValue as Float
-        }
-      }
-
-      val boundsChangeAnimatorSet = AnimatorSet().apply {
-        playTogether(colorAnimation, translationAnimation, scaleAnimation)
-        duration = BOUNDS_CHANGE_ANIMATION_DURATION
-        doOnStart {
-          this@KurobaBottomPanel.pivotY = 0f
-        }
-        doOnEnd {
-          this@KurobaBottomPanel.scaleY = prevScale
-          this@KurobaBottomPanel.pivotY = prevPivotY
-          this@KurobaBottomPanel.translationY = prevTranslationY
-
-          panelContainer.updateLayoutParams<FrameLayout.LayoutParams> {
-            height = childPanel.getCurrentHeight() + lastInsetBottom
-          }
-          panelContainer.updatePadding(bottom = lastInsetBottom)
-        }
-      }
-
-      fun onAnimationEnd() {
-        stateChangeAnimatorSet = null
-        continuation.resumeIfActive(Unit)
-      }
-
-      stateChangeAnimatorSet = AnimatorSet().apply {
-        play(boundsChangeAnimatorSet)
-
-        interpolator = INTERPOLATOR
-        doOnCancel { onAnimationEnd() }
-        doOnEnd { onAnimationEnd() }
-
-        start()
-      }
-
-      continuation.invokeOnCancellation {
-        endStateChangeAnimations()
-      }
-    }
-
-    doBeforeViewVisible(childPanel)
-
-    suspendCancellableCoroutine<Unit> { continuation ->
-      val alphaAnimation = ValueAnimator.ofFloat(0f, 1f).apply {
-        duration = ALPHA_ANIMATION_DURATION
-        addUpdateListener { animator ->
-          childPanel.setAlphaFast(animator.animatedFraction as Float)
-        }
-      }
-
-      fun onAnimationEnd() {
-        stateChangeAnimatorSet = null
-        continuation.resumeIfActive(Unit)
-      }
-
-      stateChangeAnimatorSet = AnimatorSet().apply {
-        play(alphaAnimation)
-
-        interpolator = INTERPOLATOR
-        doOnStart {
-          childPanel.setAlphaFast(0f)
-          childPanel.setVisibilityFast(View.VISIBLE)
-        }
-        doOnCancel { onAnimationEnd() }
-        doOnEnd { onAnimationEnd() }
-
-        start()
-      }
-    }
-  }
-
-  private suspend fun bottomNavViewPanelRevealAnimation(
-    parentPanel: KurobaBottomPanel,
-    childPanel: View,
-    fromY: Float,
-    toY: Float
-  ) {
-    endRevealAnimations()
-
-    suspendCancellableCoroutine<Unit> { continuation ->
-      val translationAnimation = ValueAnimator.ofFloat(fromY, toY).apply {
-        addUpdateListener { animator ->
-          parentPanel.translationY(animator.animatedValue as Float)
-        }
-      }
-
-      val alphaAnimation = ValueAnimator.ofFloat(0f, 1f).apply {
-        addUpdateListener { animator ->
-          parentPanel.setAlphaFast(animator.animatedValue as Float)
-          childPanel.setAlphaFast(animator.animatedValue as Float)
-        }
-      }
-
-      fun onAnimationEnd() {
-        revealAnimatorSet = null
-        continuation.resumeIfActive(Unit)
-      }
-
-      revealAnimatorSet = AnimatorSet().apply {
-        playTogether(translationAnimation, alphaAnimation)
-        duration = GENERIC_ANIMATION_DURATION
-        interpolator = INTERPOLATOR
-        doOnStart {
-          childPanel.setVisibilityFast(View.VISIBLE)
-          parentPanel.setVisibilityFast(View.VISIBLE)
-          childPanel.setAlphaFast(0f)
-          parentPanel.setAlphaFast(0f)
-        }
-
-        doOnCancel { onAnimationEnd() }
-        doOnEnd { onAnimationEnd() }
-
-        start()
-      }
-
-      continuation.invokeOnCancellation {
-        endRevealAnimations()
-      }
-    }
-  }
-
-  private fun endRevealAnimations() {
-    if (revealAnimatorSet != null) {
-      revealAnimatorSet?.end()
-      revealAnimatorSet = null
-    }
-  }
-
-  private fun endStateChangeAnimations() {
-    if (stateChangeAnimatorSet != null) {
-      stateChangeAnimatorSet?.end()
-      stateChangeAnimatorSet = null
-    }
-  }
-
-  private fun endDisappearanceAnimations() {
-    if (disappearanceAnimatorSet != null) {
-      disappearanceAnimatorSet?.end()
-      disappearanceAnimatorSet = null
-    }
   }
 
   private fun getCurrentChildPanelOrNull(): ChildPanelContract? {
@@ -840,12 +596,6 @@ class KurobaBottomPanel @JvmOverloads constructor(
 
   companion object {
     private const val TAG = "KurobaBottomPanel"
-
-    private val INTERPOLATOR = FastOutSlowInInterpolator()
-    private const val GENERIC_ANIMATION_DURATION = 250L
-
-    private const val BOUNDS_CHANGE_ANIMATION_DURATION = 175L
-    private const val ALPHA_ANIMATION_DURATION = 75L
   }
 
 }

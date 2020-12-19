@@ -10,9 +10,9 @@ import com.bluelinelabs.conductor.Router
 import com.bluelinelabs.conductor.RouterTransaction
 import com.bluelinelabs.conductor.internal.LifecycleHandler
 import com.github.k1rakishou.kurobanewnavstacktest.R
-import com.github.k1rakishou.kurobanewnavstacktest.base.BaseController
-import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerPresenterDelegate
-import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerPresenterDelegateImpl
+import com.github.k1rakishou.kurobanewnavstacktest.core.base.BaseController
+import com.github.k1rakishou.kurobanewnavstacktest.core.base.ControllerPresenterDelegate
+import com.github.k1rakishou.kurobanewnavstacktest.core.base.ControllerPresenterDelegateImpl
 import com.github.k1rakishou.kurobanewnavstacktest.controller.MainController
 import com.github.k1rakishou.kurobanewnavstacktest.controller.slide.SlideUiElementsController
 import com.github.k1rakishou.kurobanewnavstacktest.controller.split.SplitNavController

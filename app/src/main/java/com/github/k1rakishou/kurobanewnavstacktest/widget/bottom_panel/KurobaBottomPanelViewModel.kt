@@ -1,6 +1,6 @@
 package com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel
 
-import com.github.k1rakishou.kurobanewnavstacktest.base.BaseViewModel
+import com.github.k1rakishou.kurobanewnavstacktest.core.base.BaseViewModel
 import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 
 class KurobaBottomPanelViewModel : BaseViewModel() {

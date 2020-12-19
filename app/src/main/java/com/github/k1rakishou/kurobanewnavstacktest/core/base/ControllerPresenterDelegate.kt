@@ -1,4 +1,4 @@
-package com.github.k1rakishou.kurobanewnavstacktest.base
+package com.github.k1rakishou.kurobanewnavstacktest.core.base
 
 import com.bluelinelabs.conductor.RouterTransaction
 

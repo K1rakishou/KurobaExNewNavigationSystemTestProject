@@ -1,5 +1,6 @@
 package com.github.k1rakishou.kurobanewnavstacktest.utils
 
+import android.animation.ValueAnimator
 import android.content.res.Resources
 import android.graphics.drawable.ColorDrawable
 import android.text.TextWatcher
@@ -14,8 +15,8 @@ import androidx.core.view.doOnLayout
 import androidx.core.view.updateLayoutParams
 import com.airbnb.epoxy.*
 import com.bluelinelabs.conductor.Router
-import com.github.k1rakishou.kurobanewnavstacktest.base.BaseController
-import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
+import com.github.k1rakishou.kurobanewnavstacktest.core.base.BaseController
+import com.github.k1rakishou.kurobanewnavstacktest.core.base.ControllerTag
 import kotlinx.coroutines.CancellableContinuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -244,4 +245,8 @@ fun <T> CancellableContinuation<T>.resumeIfActive(value: T) {
   if (isActive) {
     resume(value)
   }
+}
+
+fun <T> ValueAnimator.value(): T {
+  return animatedValue as T
 }

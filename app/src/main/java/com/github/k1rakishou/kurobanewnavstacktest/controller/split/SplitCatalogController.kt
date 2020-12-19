@@ -3,7 +3,7 @@ package com.github.k1rakishou.kurobanewnavstacktest.controller.split
 import android.os.Bundle
 import androidx.core.view.doOnPreDraw
 import com.airbnb.epoxy.EpoxyRecyclerView
-import com.github.k1rakishou.kurobanewnavstacktest.base.ControllerTag
+import com.github.k1rakishou.kurobanewnavstacktest.core.base.ControllerTag
 import com.github.k1rakishou.kurobanewnavstacktest.controller.RecyclerViewProvider
 import com.github.k1rakishou.kurobanewnavstacktest.feature.catalog.CatalogController
 import com.github.k1rakishou.kurobanewnavstacktest.data.CatalogData
