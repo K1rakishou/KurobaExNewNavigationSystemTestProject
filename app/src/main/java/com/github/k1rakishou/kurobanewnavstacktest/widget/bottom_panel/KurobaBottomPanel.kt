@@ -369,6 +369,8 @@ class KurobaBottomPanel @JvmOverloads constructor(
     destroyChildPanel()
 
     val kurobaBottomHiddenPanel = KurobaBottomHiddenPanel(context)
+    kurobaBottomHiddenPanel.initializeView()
+
     panelContainer.addView(kurobaBottomHiddenPanel)
 
     bottomPanelStateUpdatesListeners.forEach { func ->
@@ -455,9 +457,8 @@ class KurobaBottomPanel @JvmOverloads constructor(
       }
     )
 
-    val childPanel = instantiateChildPanel(newStateKind)
+    val childPanel = instantiateAndInitializeChildPanel(newStateKind)
     childPanel as ChildPanelContract
-
     disableControlsFunc(childPanel)
 
     val newColor = childPanel.getBackgroundColor()
@@ -511,8 +512,8 @@ class KurobaBottomPanel @JvmOverloads constructor(
     }
   }
 
-  private fun instantiateChildPanel(stateKind: KurobaBottomPanelStateKind): View {
-    return when (stateKind) {
+  private suspend fun instantiateAndInitializeChildPanel(stateKind: KurobaBottomPanelStateKind): View {
+    val childPanel = when (stateKind) {
       KurobaBottomPanelStateKind.Uninitialized -> {
         throw IllegalStateException("Cannot be used as newStateKind")
       }
@@ -530,7 +531,7 @@ class KurobaBottomPanel @JvmOverloads constructor(
       KurobaBottomPanelStateKind.ReplyLayoutPanel -> {
         val availableVerticalSpace = panelAvailableVerticalSpace[controllerType]!!.getCompleted()
 
-        return KurobaBottomReplyPanel(
+        KurobaBottomReplyPanel(
           context,
           controllerType,
           availableVerticalSpace,
@@ -540,6 +541,10 @@ class KurobaBottomPanel @JvmOverloads constructor(
       }
       KurobaBottomPanelStateKind.SelectionPanel -> TODO()
     }
+
+    childPanel.initializeView()
+
+    return childPanel
   }
 
   private suspend fun initBottomPanel(
@@ -580,6 +585,8 @@ class KurobaBottomPanel @JvmOverloads constructor(
     destroyChildPanel()
 
     val kurobaBottomHiddenPanel = KurobaBottomHiddenPanel(context)
+    kurobaBottomHiddenPanel.initializeView()
+
     panelContainer.addView(kurobaBottomHiddenPanel)
     panelContainer.setBackgroundColorFast(kurobaBottomHiddenPanel.getBackgroundColor())
     setBackgroundColorFast(kurobaBottomHiddenPanel.getBackgroundColor())
@@ -604,6 +611,8 @@ class KurobaBottomPanel @JvmOverloads constructor(
     destroyChildPanel()
 
     val kurobaBottomNavPanel = KurobaBottomNavPanel(context, controllerType, viewModel, this)
+    kurobaBottomNavPanel.initializeView()
+
     panelContainer.addView(kurobaBottomNavPanel)
     panelContainer.setBackgroundColorFast(kurobaBottomNavPanel.getBackgroundColor())
     setBackgroundColorFast(kurobaBottomNavPanel.getBackgroundColor())

@@ -6,4 +6,10 @@
     <dimen name="toolbar_height">56dp</dimen>
     <dimen name="toolbar_icon_width">40dp</dimen>
     <dimen name="toolbar_icon_padding">4dp</dimen>
+
+    <dimen name="attach_new_file_button_collapsed_width">100dp</dimen>
+    <dimen name="attach_new_file_button_collapsed_height">70dp</dimen>
+    <dimen name="attach_new_file_button_expanded_width">140dp</dimen>
+    <dimen name="attach_new_file_button_expanded_height">120dp</dimen>
+    <dimen name="attach_new_file_button_vertical_margin">4dp</dimen>
 </resources>

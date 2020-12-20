@@ -21,16 +21,16 @@ class KurobaBottomNavPanel(
 ) : ConstraintLayout(context, null, 0), ChildPanelContract, View.OnClickListener {
   private var controllerType = initialControllerType
 
-  private val searchItemHolder: LinearLayout
-  private val bookmarksItemHolder: LinearLayout
-  private val browseItemHolder: LinearLayout
-  private val settingsItemHolder: LinearLayout
-  private val itemsArray: Array<LinearLayout>
+  private lateinit var searchItemHolder: LinearLayout
+  private lateinit var bookmarksItemHolder: LinearLayout
+  private lateinit var browseItemHolder: LinearLayout
+  private lateinit var settingsItemHolder: LinearLayout
+  private lateinit var itemsArray: Array<LinearLayout>
 
   private val viewState: KurobaBottomNavPanelViewState
     get() = viewModel.getBottomPanelState(controllerType).bottomNavPanelState
 
-  init {
+  override suspend fun initializeView() {
     LayoutInflater.from(context).inflate(R.layout.kuroba_bottom_nav_panel, this, true)
 
     searchItemHolder = findViewById<LinearLayout>(R.id.search_item_holder)

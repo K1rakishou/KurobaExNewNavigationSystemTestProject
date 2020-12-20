@@ -10,7 +10,7 @@ class KurobaBottomHiddenPanel(
   context: Context,
 ) : ConstraintLayout(context, null, 0), ChildPanelContract {
 
-  init {
+  override suspend fun initializeView() {
     LayoutInflater.from(context).inflate(R.layout.kuroba_bottom_hidden_panel, this, true)
   }
 

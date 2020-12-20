@@ -21,14 +21,12 @@ class PaddingAwareRecyclerView @JvmOverloads constructor(
   private var prevTopInset: Int = 0
   private var prevBottomInset: Int = 0
 
-  init {
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+
     val globalWindowInsetsManager = (context as MainActivity).globalWindowInsetsManager
     prevTopInset = globalWindowInsetsManager.topInset
     prevBottomInset = globalWindowInsetsManager.bottomInset
-  }
-
-  override fun onAttachedToWindow() {
-    super.onAttachedToWindow()
 
     setOnApplyWindowInsetsListenerAndDoRequest { view, insets ->
       val bottomNavViewHeight = if (prevBottomPanelHeight < 0) {

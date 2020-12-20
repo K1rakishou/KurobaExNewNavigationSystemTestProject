@@ -10,5 +10,7 @@ interface ChildPanelContract {
   fun updateCurrentControllerType(controllerType: ControllerType)
   fun handleBack(): Boolean
   fun onDestroy()
+
+  suspend fun initializeView()
   suspend fun updateHeight(parentHeight: Int)
 }

@@ -10,13 +10,23 @@ import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.doOnLayout
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import androidx.core.widget.doOnTextChanged
+import androidx.recyclerview.widget.GridLayoutManager
+import com.airbnb.epoxy.EpoxyController
+import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
+import com.github.k1rakishou.kurobanewnavstacktest.data.ReplyAttachmentFile
+import com.github.k1rakishou.kurobanewnavstacktest.epoxy.EpoxyAttachNewFileButtonView
+import com.github.k1rakishou.kurobanewnavstacktest.epoxy.EpoxyAttachNewFileButtonViewModel_
+import com.github.k1rakishou.kurobanewnavstacktest.epoxy.epoxyAttachNewFileButtonView
+import com.github.k1rakishou.kurobanewnavstacktest.epoxy.epoxyReplyAttachmentFileView
 import com.github.k1rakishou.kurobanewnavstacktest.utils.*
+import kotlin.random.Random
 
 @SuppressLint("ViewConstructor")
 class KurobaBottomReplyPanel(
@@ -31,18 +41,19 @@ class KurobaBottomReplyPanel(
   private lateinit var replyPanelRoot: ConstraintLayout
   private lateinit var replyInputEditText: AppCompatEditText
   private lateinit var replyPanelExpandCollapseButton: TextView
+  private lateinit var replyAttachmentsRecyclerView: EpoxyRecyclerView
+  private lateinit var replyPanelTopPart: ConstraintLayout
+  private lateinit var replyPanelBottomPart: ConstraintLayout
   private lateinit var textWatcher: TextWatcher
+
+  private val controller = KurobaBottomReplyPanelEpoxyController()
 
   private val viewState: KurobaBottomReplyPanelViewState
     get() = viewModel.getBottomPanelState(controllerType).bottomReplyPanelState
 
   private val scope = KurobaCoroutineScope()
 
-  init {
-    initializeView(context)
-  }
-
-  private fun initializeView(context: Context) {
+  override suspend fun initializeView() {
     if (viewState.expanded) {
       LayoutInflater.from(context).inflate(R.layout.kuroba_bottom_reply_panel_expanded, this, true)
     } else {
@@ -52,16 +63,30 @@ class KurobaBottomReplyPanel(
     replyPanelRoot = findViewById(R.id.reply_panel_root)
     replyInputEditText = findViewById(R.id.reply_input_edit_text)
     replyPanelExpandCollapseButton = findViewById(R.id.reply_panel_expand_collapse_button)
+    replyPanelTopPart = findViewById(R.id.reply_panel_top_part)
+    replyPanelBottomPart = findViewById(R.id.reply_panel_bottom_part)
+    replyAttachmentsRecyclerView = findViewById(R.id.reply_attachments_recycler_view)
+    replyAttachmentsRecyclerView.setController(controller)
 
     replyPanelExpandCollapseButton.setOnThrottlingClickListener {
       scope.launch { updateExpandedCollapsedState(viewState.expanded.not()) }
     }
 
-    setOnApplyWindowInsetsListenerAndDoRequest { v, insets ->
+    setOnApplyWindowInsetsListenerAndDoRequest { parentView, insets ->
       if (viewState.expanded) {
-        updatePadding(top = insets.systemWindowInsetTop)
+        parentView.updatePadding(top = insets.systemWindowInsetTop)
       } else {
-        updatePadding(top = 0)
+        parentView.updatePadding(top = 0)
+      }
+
+      return@setOnApplyWindowInsetsListenerAndDoRequest insets
+    }
+
+    replyAttachmentsRecyclerView.setOnApplyWindowInsetsListenerAndDoRequest { recyclerView, insets ->
+      if (viewState.expanded) {
+        recyclerView.updatePadding(bottom = insets.systemWindowInsetBottom)
+      } else {
+        recyclerView.updatePadding(bottom = 0)
       }
 
       return@setOnApplyWindowInsetsListenerAndDoRequest insets
@@ -76,6 +101,110 @@ class KurobaBottomReplyPanel(
       viewState.selectionStart = replyInputEditText.selectionStart
       viewState.selectionEnd = replyInputEditText.selectionEnd
     }
+
+    doOnLayout {
+      val replyAttachmentsRecyclerViewWidth = when {
+        replyAttachmentsRecyclerView.width > 0 -> replyAttachmentsRecyclerView.width
+        replyAttachmentsRecyclerView.measuredWidth > 0 -> replyAttachmentsRecyclerView.measuredWidth
+        else -> throw IllegalStateException("View is not measured!")
+      }
+
+      val replyPanelTopPartHeight = when {
+        replyPanelTopPart.height > 0 -> replyPanelTopPart.height
+        replyPanelTopPart.measuredHeight > 0 -> replyPanelTopPart.measuredHeight
+        else -> throw IllegalStateException("View is not measured!")
+      }
+
+      updateLayoutParams<FrameLayout.LayoutParams> { height = getCurrentHeight() }
+
+      updateLayoutManagerAndSpanCount(replyAttachmentsRecyclerViewWidth)
+      updateReplyPanelBottomPartHeight(replyPanelTopPartHeight)
+    }
+  }
+
+  private fun updateReplyPanelBottomPartHeight(replyPanelTopPartHeight: Int) {
+    if (!viewState.expanded) {
+      return
+    }
+
+    check(availableVerticalSpace > replyPanelTopPartHeight) {
+      "availableVerticalSpace ($availableVerticalSpace) must be greater " +
+        "than replyPanelTopPartHeight ($replyPanelTopPartHeight)"
+    }
+
+    val replyPanelBottomPartHeight = availableVerticalSpace - replyPanelTopPartHeight
+    check(replyPanelBottomPartHeight > 0) { "Bad recyclerHeight: $replyPanelBottomPartHeight" }
+
+    replyPanelBottomPart.updateLayoutParams<ConstraintLayout.LayoutParams> {
+      height = replyPanelBottomPartHeight
+    }
+  }
+
+  private fun updateLayoutManagerAndSpanCount(replyAttachmentsRecyclerViewWidth: Int) {
+    check(replyAttachmentsRecyclerViewWidth > 0) {
+      "Bad replyAttachmentsRecyclerViewWidth: $replyAttachmentsRecyclerViewWidth"
+    }
+
+    val attachNewFileButtonWidth = if (viewState.expanded) {
+      context.resources.getDimension(R.dimen.attach_new_file_button_expanded_width)
+    } else {
+      context.resources.getDimension(R.dimen.attach_new_file_button_collapsed_width)
+    }
+
+    val spanCount = (replyAttachmentsRecyclerViewWidth / attachNewFileButtonWidth.toInt())
+      .coerceAtLeast(2)
+
+    val prevSpanCount = (replyAttachmentsRecyclerView.layoutManager as? GridLayoutManager)
+      ?.spanCount
+      ?: -1
+
+    if (prevSpanCount == spanCount) {
+      return
+    }
+
+    controller.currentSpanCount = spanCount
+
+    val layoutManager = GridLayoutManager(context, spanCount)
+    layoutManager.spanSizeLookup = controller.spanSizeLookup
+    replyAttachmentsRecyclerView.layoutManager = layoutManager
+
+    redrawAttachmentFiles()
+  }
+
+  private fun redrawAttachmentFiles() {
+    controller.callback = redraw@ {
+      if (viewState.replyAttachments.isEmpty()) {
+        epoxyAttachNewFileButtonView {
+          id("epoxy_new_attachment_button_empty")
+          size(EpoxyAttachNewFileButtonView.Size(viewState.expanded, true))
+          onClickListener { attachNewReplyFile() }
+        }
+        return@redraw
+      }
+
+      viewState.replyAttachments.forEach { attachment ->
+        epoxyReplyAttachmentFileView {
+          id("epoxy_reply_attachment_file_${attachment.id}")
+          expandedCollapsedMode(viewState.expanded)
+          color(attachment.color)
+        }
+      }
+
+      epoxyAttachNewFileButtonView {
+        id("epoxy_new_attachment_button_not_empty")
+        size(EpoxyAttachNewFileButtonView.Size(viewState.expanded, false))
+        onClickListener { attachNewReplyFile() }
+      }
+    }
+
+    controller.requestModelBuild()
+  }
+
+  private fun attachNewReplyFile() {
+    val nextId = viewState.replyAttachments.lastOrNull()?.id?.plus(1) ?: 0
+    viewState.replyAttachments += ReplyAttachmentFile(nextId, random.nextInt())
+
+    redrawAttachmentFiles()
   }
 
   private suspend fun updateExpandedCollapsedState(expanded: Boolean) {
@@ -85,16 +214,10 @@ class KurobaBottomReplyPanel(
     callbacks.updateParentPanelHeight(getCurrentHeight())
 
     removeAllViews()
-    initializeView(context)
+    initializeView()
 
     restoreState(viewModel.getBottomPanelState(controllerType))
     this.setVisibilityFast(View.VISIBLE)
-  }
-
-  override fun onFinishInflate() {
-    super.onFinishInflate()
-
-    updateLayoutParams<FrameLayout.LayoutParams> { height = getCurrentHeight() }
   }
 
   override fun getCurrentHeight(): Int {
@@ -157,12 +280,46 @@ class KurobaBottomReplyPanel(
     replyPanelRoot.requestLayoutAndAwait()
   }
 
+  private inner class KurobaBottomReplyPanelEpoxyController : EpoxyController() {
+    var callback: EpoxyController.() -> Unit = {}
+    var currentSpanCount = 1
+
+    private val replyPanelSpanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+      override fun getSpanSize(position: Int): Int {
+        try {
+          val model = controller.adapter.getModelAtPosition(position)
+          val itemCount = controller.adapter.itemCount
+
+          if (itemCount <= 1 && model is EpoxyAttachNewFileButtonViewModel_) {
+            return currentSpanCount
+          }
+
+          return 1
+        } catch (ignored: Throwable) {
+          return 1
+        }
+      }
+    }
+
+    override fun buildModels() {
+      callback(this)
+    }
+
+    override fun getSpanSizeLookup(): GridLayoutManager.SpanSizeLookup {
+      return replyPanelSpanSizeLookup
+    }
+  }
+
   interface KurobaBottomPanelCallbacks {
     suspend fun updateParentPanelHeight(newHeight: Int)
   }
 
   companion object {
     private const val TAG = "KurobaBottomReplyPanel"
+
+    // TODO(KurobaEx): vvv remove me
+    private val random = Random(System.currentTimeMillis())
+    // TODO(KurobaEx): ^^^ remove me
   }
 
 }
