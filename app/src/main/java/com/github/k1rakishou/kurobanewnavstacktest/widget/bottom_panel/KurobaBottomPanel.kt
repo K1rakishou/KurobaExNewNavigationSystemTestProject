@@ -477,7 +477,8 @@ class KurobaBottomPanel @JvmOverloads constructor(
       doBeforeViewVisible = { panel ->
         panel as ChildPanelContract
 
-        initializeChildPanel(newStateKind, panel)
+        attachChildPanelToParent(newStateKind, panel)
+        panel.onPanelAttachedToParent()
         panel.updateHeight(panelContainer.height)
         updateFab((panelContainer.height).toFloat())
 
@@ -487,7 +488,7 @@ class KurobaBottomPanel @JvmOverloads constructor(
     enableControlsFunc(childPanel)
   }
 
-  private fun initializeChildPanel(stateKind: KurobaBottomPanelStateKind, childPanel: View) {
+  private fun attachChildPanelToParent(stateKind: KurobaBottomPanelStateKind, childPanel: View) {
     when (stateKind) {
       KurobaBottomPanelStateKind.Uninitialized -> {
         throw IllegalStateException("Cannot be used as newStateKind")
@@ -534,6 +535,7 @@ class KurobaBottomPanel @JvmOverloads constructor(
         KurobaBottomReplyPanel(
           context,
           controllerType,
+          this,
           availableVerticalSpace,
           viewModel,
           this

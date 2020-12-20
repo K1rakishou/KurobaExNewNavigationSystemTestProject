@@ -26,18 +26,18 @@ import com.github.k1rakishou.kurobanewnavstacktest.epoxy.EpoxyAttachNewFileButto
 import com.github.k1rakishou.kurobanewnavstacktest.epoxy.epoxyAttachNewFileButtonView
 import com.github.k1rakishou.kurobanewnavstacktest.epoxy.epoxyReplyAttachmentFileView
 import com.github.k1rakishou.kurobanewnavstacktest.utils.*
+import com.github.k1rakishou.kurobanewnavstacktest.widget.animations.ReplyPanelSizeChangeAnimation
 import kotlin.random.Random
 
 @SuppressLint("ViewConstructor")
 class KurobaBottomReplyPanel(
   context: Context,
   initialControllerType: ControllerType,
+  private val parentPanel: KurobaBottomPanel,
   private val availableVerticalSpace: Int,
   private val viewModel: KurobaBottomPanelViewModel,
   private val callbacks: KurobaBottomPanelCallbacks
 ) : ConstraintLayout(context, null, 0), ChildPanelContract {
-  private var controllerType = initialControllerType
-
   private lateinit var replyPanelRoot: ConstraintLayout
   private lateinit var replyInputEditText: AppCompatEditText
   private lateinit var replyPanelExpandCollapseButton: TextView
@@ -46,7 +46,12 @@ class KurobaBottomReplyPanel(
   private lateinit var replyPanelBottomPart: ConstraintLayout
   private lateinit var textWatcher: TextWatcher
 
+  private var controllerType = initialControllerType
+  private var currentlyExpanded = false
+  private var lastInsetBottom = 0
+
   private val controller = KurobaBottomReplyPanelEpoxyController()
+  private val replyPanelSizeChangeAnimation = ReplyPanelSizeChangeAnimation()
 
   private val viewState: KurobaBottomReplyPanelViewState
     get() = viewModel.getBottomPanelState(controllerType).bottomReplyPanelState
@@ -54,54 +59,11 @@ class KurobaBottomReplyPanel(
   private val scope = KurobaCoroutineScope()
 
   override suspend fun initializeView() {
-    if (viewState.expanded) {
-      LayoutInflater.from(context).inflate(R.layout.kuroba_bottom_reply_panel_expanded, this, true)
-    } else {
-      LayoutInflater.from(context).inflate(R.layout.kuroba_bottom_reply_panel_collapsed, this, true)
-    }
+    initializeViewInternal()
+    dispatchUpdateViewHeight()
+  }
 
-    replyPanelRoot = findViewById(R.id.reply_panel_root)
-    replyInputEditText = findViewById(R.id.reply_input_edit_text)
-    replyPanelExpandCollapseButton = findViewById(R.id.reply_panel_expand_collapse_button)
-    replyPanelTopPart = findViewById(R.id.reply_panel_top_part)
-    replyPanelBottomPart = findViewById(R.id.reply_panel_bottom_part)
-    replyAttachmentsRecyclerView = findViewById(R.id.reply_attachments_recycler_view)
-    replyAttachmentsRecyclerView.setController(controller)
-
-    replyPanelExpandCollapseButton.setOnThrottlingClickListener {
-      scope.launch { updateExpandedCollapsedState(viewState.expanded.not()) }
-    }
-
-    setOnApplyWindowInsetsListenerAndDoRequest { parentView, insets ->
-      if (viewState.expanded) {
-        parentView.updatePadding(top = insets.systemWindowInsetTop)
-      } else {
-        parentView.updatePadding(top = 0)
-      }
-
-      return@setOnApplyWindowInsetsListenerAndDoRequest insets
-    }
-
-    replyAttachmentsRecyclerView.setOnApplyWindowInsetsListenerAndDoRequest { recyclerView, insets ->
-      if (viewState.expanded) {
-        recyclerView.updatePadding(bottom = insets.systemWindowInsetBottom)
-      } else {
-        recyclerView.updatePadding(bottom = 0)
-      }
-
-      return@setOnApplyWindowInsetsListenerAndDoRequest insets
-    }
-
-    if (::textWatcher.isInitialized) {
-      replyInputEditText.removeTextChangedListener(textWatcher)
-    }
-
-    textWatcher = replyInputEditText.doOnTextChanged { text, _, _, _ ->
-      viewState.text = text?.toString()
-      viewState.selectionStart = replyInputEditText.selectionStart
-      viewState.selectionEnd = replyInputEditText.selectionEnd
-    }
-
+  private fun dispatchUpdateViewHeight() {
     doOnLayout {
       val replyAttachmentsRecyclerViewWidth = when {
         replyAttachmentsRecyclerView.width > 0 -> replyAttachmentsRecyclerView.width
@@ -120,6 +82,72 @@ class KurobaBottomReplyPanel(
       updateLayoutManagerAndSpanCount(replyAttachmentsRecyclerViewWidth)
       updateReplyPanelBottomPartHeight(replyPanelTopPartHeight)
     }
+  }
+
+  private fun initializeViewInternal() {
+    val layoutInflater = LayoutInflater.from(context)
+
+    val view = if (viewState.expanded) {
+      layoutInflater.inflate(R.layout.kuroba_bottom_reply_panel_expanded, this, false)
+    } else {
+      layoutInflater.inflate(R.layout.kuroba_bottom_reply_panel_collapsed, this, false)
+    }
+
+    view.visibility = INVISIBLE
+    addView(view)
+
+    replyPanelRoot = findViewById(R.id.reply_panel_root)
+    replyInputEditText = findViewById(R.id.reply_input_edit_text)
+    replyPanelExpandCollapseButton = findViewById(R.id.reply_panel_expand_collapse_button)
+    replyPanelTopPart = findViewById(R.id.reply_panel_top_part)
+    replyPanelBottomPart = findViewById(R.id.reply_panel_bottom_part)
+    replyAttachmentsRecyclerView = findViewById(R.id.reply_attachments_recycler_view)
+    replyAttachmentsRecyclerView.setController(controller)
+
+    replyPanelExpandCollapseButton.setOnThrottlingClickListener {
+      scope.launch { updateExpandedCollapsedState(viewState.expanded.not()) }
+    }
+
+    setOnApplyWindowInsetsListenerAndDoRequest { parentView, insets ->
+      lastInsetBottom = insets.systemWindowInsetBottom
+
+      if (viewState.expanded) {
+        parentView.updatePadding(top = insets.systemWindowInsetTop)
+      } else {
+        parentView.updatePadding(top = 0)
+      }
+
+      return@setOnApplyWindowInsetsListenerAndDoRequest insets
+    }
+
+    replyAttachmentsRecyclerView.setOnApplyWindowInsetsListenerAndDoRequest { recyclerView, insets ->
+      lastInsetBottom = insets.systemWindowInsetBottom
+
+      if (viewState.expanded) {
+        recyclerView.updatePadding(bottom = insets.systemWindowInsetBottom)
+      } else {
+        recyclerView.updatePadding(bottom = 0)
+      }
+
+      return@setOnApplyWindowInsetsListenerAndDoRequest insets
+    }
+
+    if (::textWatcher.isInitialized) {
+      replyInputEditText.removeTextChangedListener(textWatcher)
+    }
+
+    textWatcher = replyInputEditText.doOnTextChanged { text, _, _, _ ->
+      viewState.text = text?.toString()
+      viewState.selectionStart = replyInputEditText.selectionStart
+      viewState.selectionEnd = replyInputEditText.selectionEnd
+    }
+  }
+
+  override suspend fun onPanelAttachedToParent() {
+    val view = getChildAtOrNull(0)
+      ?: return
+
+    view.visibility = View.VISIBLE
   }
 
   private fun updateReplyPanelBottomPartHeight(replyPanelTopPartHeight: Int) {
@@ -208,16 +236,34 @@ class KurobaBottomReplyPanel(
   }
 
   private suspend fun updateExpandedCollapsedState(expanded: Boolean) {
-    this.setVisibilityFast(View.INVISIBLE)
+    this.visibility = View.INVISIBLE
 
+    val prevHeight = getCurrentHeight()
     viewState.expanded = expanded
-    callbacks.updateParentPanelHeight(getCurrentHeight())
+    val currentHeight = getCurrentHeight()
 
-    removeAllViews()
-    initializeView()
+    replyPanelSizeChangeAnimation.sizeChangeAnimation(
+      parentPanel,
+      this,
+      prevHeight,
+      currentHeight,
+      lastInsetBottom,
+      updateParentPanelHeightFunc = {
+        callbacks.updateParentPanelHeight(currentHeight)
+      },
+      onBeforePanelBecomesVisibleFunc = {
+        removeAllViews()
+        initializeViewInternal()
 
-    restoreState(viewModel.getBottomPanelState(controllerType))
-    this.setVisibilityFast(View.VISIBLE)
+        restoreState(viewModel.getBottomPanelState(controllerType))
+      }
+    )
+
+    onPanelAttachedToParent()
+    dispatchUpdateViewHeight()
+
+    this.visibility = View.VISIBLE
+    this.currentlyExpanded = expanded
   }
 
   override fun getCurrentHeight(): Int {
@@ -254,9 +300,12 @@ class KurobaBottomReplyPanel(
   }
 
   override fun handleBack(): Boolean {
+    if (replyPanelSizeChangeAnimation.isRunning()) {
+      return true
+    }
+
     if (viewState.expanded) {
       scope.launch { updateExpandedCollapsedState(expanded = false) }
-
       return true
     }
 

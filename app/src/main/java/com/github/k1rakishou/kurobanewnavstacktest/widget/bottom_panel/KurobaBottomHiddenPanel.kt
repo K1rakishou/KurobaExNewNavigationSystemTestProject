@@ -14,6 +14,10 @@ class KurobaBottomHiddenPanel(
     LayoutInflater.from(context).inflate(R.layout.kuroba_bottom_hidden_panel, this, true)
   }
 
+  override suspend fun onPanelAttachedToParent() {
+
+  }
+
   override fun getCurrentHeight(): Int {
     return 0
   }

@@ -52,6 +52,10 @@ class KurobaBottomNavPanel(
     itemsArray.forEach { item -> item.setOnThrottlingClickListener(this) }
   }
 
+  override suspend fun onPanelAttachedToParent() {
+
+  }
+
   override fun onFinishInflate() {
     super.onFinishInflate()
 

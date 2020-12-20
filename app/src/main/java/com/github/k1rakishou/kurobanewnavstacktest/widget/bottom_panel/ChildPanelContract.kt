@@ -13,4 +13,5 @@ interface ChildPanelContract {
 
   suspend fun initializeView()
   suspend fun updateHeight(parentHeight: Int)
+  suspend fun onPanelAttachedToParent()
 }
