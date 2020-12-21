@@ -30,7 +30,7 @@ class SplitThreadController(
   private lateinit var threadFab: KurobaFloatingActionButton
   private lateinit var bottomPanel: KurobaBottomPanel
 
-  private val collapsingViewsHolder = CollapsingViewsHolder()
+  private val collapsingViewsHolder by lazy { CollapsingViewsHolder(currentContext()) }
   private val splitFabViewController by lazy { activityContract().mainActivityOrError().splitFabViewController }
 
   override fun instantiateView(
@@ -70,8 +70,8 @@ class SplitThreadController(
         "Unexpected panelControllerType: $panelControllerType"
       }
 
-      splitFabViewController.onBottomPanelStateChanged(controllerType, newState)
-      lockUnlockCollapsableViews(panelControllerType, newState)
+      splitFabViewController.onBottomPanelStateChanged(panelControllerType, newState)
+      onBottomPanelStateChanged(panelControllerType, newState)
     }
     bottomPanel.addOnBottomPanelHeightChangeListener { controllerType, panelHeight ->
       collapsingViewsHolder.getRecyclerForController(controllerType)?.updatePanelHeight(panelHeight)
@@ -79,27 +79,6 @@ class SplitThreadController(
 
     bottomPanel.bottomPanelPreparationsCompleted(controllerType, KurobaBottomPanelStateKind.Hidden)
     bottomPanel.onControllerFocused(controllerType)
-  }
-
-  private fun lockUnlockCollapsableViews(
-    controllerType: ControllerType,
-    newState: KurobaBottomPanelStateKind
-  ) {
-    val recyclerView = collapsingViewsHolder.getRecyclerForController(controllerType)
-
-    if (newState != KurobaBottomPanelStateKind.Hidden) {
-      collapsingViewsHolder.lockUnlockCollapsableViews(
-        recyclerView = recyclerView,
-        lock = true,
-        animate = true
-      )
-    } else {
-      collapsingViewsHolder.lockUnlockCollapsableViews(
-        recyclerView = recyclerView,
-        lock = false,
-        animate = true
-      )
-    }
   }
 
   override fun myHandleBack(): Boolean {
@@ -158,16 +137,18 @@ class SplitThreadController(
     )
   }
 
-  override fun lockUnlockCollapsableViews(
-    recyclerView: PaddingAwareRecyclerView?,
-    lock: Boolean,
-    animate: Boolean
+  override fun toolbarSearchVisibilityChanged(
+    controllerType: ControllerType,
+    toolbarSearchVisible: Boolean
   ) {
-    collapsingViewsHolder.lockUnlockCollapsableViews(
-      recyclerView = recyclerView,
-      lock = lock,
-      animate = animate
-    )
+    collapsingViewsHolder.toolbarSearchVisibilityChanged(controllerType, toolbarSearchVisible)
+  }
+
+  override fun onBottomPanelStateChanged(
+    controllerType: ControllerType,
+    stateKind: KurobaBottomPanelStateKind
+  ) {
+    collapsingViewsHolder.onBottomPanelStateChanged(controllerType, stateKind)
   }
 
   override fun showFab(lock: Boolean?) {

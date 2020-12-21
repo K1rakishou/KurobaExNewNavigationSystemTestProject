@@ -42,7 +42,7 @@ class SlideUiElementsController(
   private lateinit var slideModeFabViewController: SlideModeFabViewController
   private lateinit var slideNavControllerContainer: FrameLayout
 
-  private val collapsingViewsHolder = CollapsingViewsHolder()
+  private val collapsingViewsHolder by lazy { CollapsingViewsHolder(currentContext()) }
   private val slideFabViewController by lazy { activityContract().mainActivityOrError().slideFabViewController }
 
   override fun instantiateView(
@@ -93,7 +93,7 @@ class SlideUiElementsController(
     bottomPanel.addOnBottomPanelStateChanged { controllerType, newState ->
       slideFabViewController.onBottomPanelStateChanged(controllerType, newState)
 
-      lockUnlockCollapsableViews(controllerType, newState)
+      onBottomPanelStateChanged(controllerType, newState)
       lockUnlockDrawer(controllerType, newState)
       lockUnlockSlidePaneLayout(controllerType, newState)
     }
@@ -277,16 +277,18 @@ class SlideUiElementsController(
     }
   }
 
-  override fun lockUnlockCollapsableViews(
-    recyclerView: PaddingAwareRecyclerView?,
-    lock: Boolean,
-    animate: Boolean
+  override fun toolbarSearchVisibilityChanged(
+    controllerType: ControllerType,
+    toolbarSearchVisible: Boolean
   ) {
-    collapsingViewsHolder.lockUnlockCollapsableViews(
-      recyclerView = recyclerView,
-      lock = lock,
-      animate = animate
-    )
+    collapsingViewsHolder.toolbarSearchVisibilityChanged(controllerType, toolbarSearchVisible)
+  }
+
+  override fun onBottomPanelStateChanged(
+    controllerType: ControllerType,
+    stateKind: KurobaBottomPanelStateKind
+  ) {
+    collapsingViewsHolder.onBottomPanelStateChanged(controllerType, stateKind)
   }
 
   override fun showFab(lock: Boolean?) {
@@ -300,27 +302,6 @@ class SlideUiElementsController(
   override fun getControllerTag(): ControllerTag = CONTROLLER_TAG
 
   override fun isSplitLayout(): Boolean = false
-
-  private fun lockUnlockCollapsableViews(
-    controllerType: ControllerType,
-    newState: KurobaBottomPanelStateKind
-  ) {
-    val recyclerView = collapsingViewsHolder.getRecyclerForController(controllerType)
-
-    if (newState != KurobaBottomPanelStateKind.BottomNavPanel) {
-      collapsingViewsHolder.lockUnlockCollapsableViews(
-        recyclerView = recyclerView,
-        lock = true,
-        animate = true
-      )
-    } else {
-      collapsingViewsHolder.lockUnlockCollapsableViews(
-        recyclerView = recyclerView,
-        lock = false,
-        animate = true
-      )
-    }
-  }
 
   private fun createControllerBySelectedItemId(
     selectedItem: KurobaBottomNavPanelSelectedItem,
@@ -370,11 +351,13 @@ class SlideUiElementsController(
     val CONTROLLER_TAG = ControllerTag("SlideCatalogUiElementsControllerTag")
 
     private val DISABLE_DRAWER_BOTTOM_PANEL_STATE = arrayOf(
+      KurobaBottomPanelStateKind.Uninitialized,
       KurobaBottomPanelStateKind.ReplyLayoutPanel,
       KurobaBottomPanelStateKind.SelectionPanel
     )
 
     private val DISABLE_SLIDING_PANE_BOTTOM_PANEL_STATE = arrayOf(
+      KurobaBottomPanelStateKind.Uninitialized,
       KurobaBottomPanelStateKind.ReplyLayoutPanel,
       KurobaBottomPanelStateKind.SelectionPanel
     )

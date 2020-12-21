@@ -89,13 +89,9 @@ class SlideFabViewController : FabViewController {
       return
     }
 
-    val bottomPanelState = state.bottomPanelState
-
     val searchToolbarShown = state.searchToolbarShown[currentControllerType]
       ?: false
-    val isBottomPanelStateNotOk = bottomPanelState == KurobaBottomPanelStateKind.Uninitialized
-      || bottomPanelState == KurobaBottomPanelStateKind.SelectionPanel
-      || bottomPanelState == KurobaBottomPanelStateKind.ReplyLayoutPanel
+    val isBottomPanelStateNotOk = state.bottomPanelState in FAB_SHOULD_BE_HIDDEN_BOTTOM_PANEL_STATES
 
     check(::fab.isInitialized) { "fab is not initialized" }
 
@@ -113,5 +109,13 @@ class SlideFabViewController : FabViewController {
     var bottomPanelInitialized: Boolean = false,
     var bottomPanelState: KurobaBottomPanelStateKind = KurobaBottomPanelStateKind.Uninitialized
   )
+
+  companion object {
+    private val FAB_SHOULD_BE_HIDDEN_BOTTOM_PANEL_STATES = arrayOf(
+      KurobaBottomPanelStateKind.Uninitialized,
+      KurobaBottomPanelStateKind.SelectionPanel,
+      KurobaBottomPanelStateKind.ReplyLayoutPanel
+    )
+  }
 
 }

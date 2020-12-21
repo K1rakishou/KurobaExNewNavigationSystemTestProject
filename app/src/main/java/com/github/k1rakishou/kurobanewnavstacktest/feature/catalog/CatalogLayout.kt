@@ -6,12 +6,11 @@ import android.os.Bundle
 import android.util.AttributeSet
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.doOnPreDraw
-import androidx.core.view.updatePadding
-import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.activity.ImageViewerActivity
-import com.github.k1rakishou.kurobanewnavstacktest.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.UiElementsControllerCallbacks
+import com.github.k1rakishou.kurobanewnavstacktest.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.kurobanewnavstacktest.core.test.TestHelpers
 import com.github.k1rakishou.kurobanewnavstacktest.data.*
 import com.github.k1rakishou.kurobanewnavstacktest.epoxy.catalogThreadView
@@ -29,7 +28,6 @@ import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarContrac
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import timber.log.Timber
-import java.lang.IllegalStateException
 
 class CatalogLayout @JvmOverloads constructor(
   context: Context,
@@ -106,6 +104,8 @@ class CatalogLayout @JvmOverloads constructor(
   }
 
   private fun onToolbarAction(toolbarAction: ToolbarAction) {
+    Timber.tag(TAG).d("onToolbarAction($toolbarAction)")
+
     check(toolbarAction.toolbarType == KurobaToolbarType.Catalog) {
       "Bad toolbarType: ${toolbarAction.toolbarType}"
     }
@@ -122,21 +122,17 @@ class CatalogLayout @JvmOverloads constructor(
 
         when (searchAction) {
           is ToolbarAction.Search.SearchShown -> {
-            Timber.tag(TAG).d("SearchShown")
-            uiElementsControllerCallbacks?.lockUnlockCollapsableViews(
-              recyclerView = catalogRecyclerView,
-              lock = true,
-              animate = true
+            uiElementsControllerCallbacks?.toolbarSearchVisibilityChanged(
+              controllerType = ControllerType.Catalog,
+              toolbarSearchVisible = true
             )
 
             catalogControllerCallbacks?.onSearchToolbarShown()
           }
           is ToolbarAction.Search.SearchHidden -> {
-            Timber.tag(TAG).d("SearchHidden")
-            uiElementsControllerCallbacks?.lockUnlockCollapsableViews(
-              recyclerView = catalogRecyclerView,
-              lock = false,
-              animate = true
+            uiElementsControllerCallbacks?.toolbarSearchVisibilityChanged(
+              controllerType = ControllerType.Catalog,
+              toolbarSearchVisible = false
             )
 
             catalogControllerCallbacks?.onSearchToolbarHidden()

@@ -41,8 +41,8 @@ class SplitUiElementsController(
   private lateinit var splitControllerCatalogControllerContainer: FrameLayout
   private lateinit var threadNavigationContract: ThreadNavigationContract
 
+  private val collapsingViewsHolder by lazy { CollapsingViewsHolder(currentContext()) }
   private val splitFabViewController by lazy { activityContract().mainActivityOrError().splitFabViewController }
-  private val collapsingViewsHolder = CollapsingViewsHolder()
 
   fun threadNavigationContract(threadNavigationContract: ThreadNavigationContract) {
     this.threadNavigationContract = threadNavigationContract
@@ -79,9 +79,9 @@ class SplitUiElementsController(
     }
     bottomPanel.addOnBottomPanelStateChanged { panelControllerType, newState ->
       check(panelControllerType == ControllerType.Catalog)
-      splitFabViewController.onBottomPanelStateChanged(ControllerType.Catalog, newState)
 
-      lockUnlockCollapsableViews(ControllerType.Catalog, newState)
+      splitFabViewController.onBottomPanelStateChanged(panelControllerType, newState)
+      onBottomPanelStateChanged(panelControllerType, newState)
     }
     bottomPanel.addOnBottomNavPanelItemSelectedListener { selectedItem ->
       splitControllerCatalogControllerContainer.switchTo(
@@ -162,18 +162,6 @@ class SplitUiElementsController(
     )
   }
 
-  override fun lockUnlockCollapsableViews(
-    recyclerView: PaddingAwareRecyclerView?,
-    lock: Boolean,
-    animate: Boolean
-  ) {
-    collapsingViewsHolder.lockUnlockCollapsableViews(
-      recyclerView = recyclerView,
-      lock = lock,
-      animate = animate
-    )
-  }
-
   override fun showFab(lock: Boolean?) {
     catalogFab.showFab(lock)
   }
@@ -205,25 +193,18 @@ class SplitUiElementsController(
     threadNavigationContract.openThread(threadDescriptor)
   }
 
-  private fun lockUnlockCollapsableViews(
+  override fun toolbarSearchVisibilityChanged(
     controllerType: ControllerType,
-    newState: KurobaBottomPanelStateKind
+    toolbarSearchVisible: Boolean
   ) {
-    val recyclerView = collapsingViewsHolder.getRecyclerForController(controllerType)
+    collapsingViewsHolder.toolbarSearchVisibilityChanged(controllerType, toolbarSearchVisible)
+  }
 
-    if (newState != KurobaBottomPanelStateKind.BottomNavPanel) {
-      collapsingViewsHolder.lockUnlockCollapsableViews(
-        recyclerView = recyclerView,
-        lock = true,
-        animate = true
-      )
-    } else {
-      collapsingViewsHolder.lockUnlockCollapsableViews(
-        recyclerView = recyclerView,
-        lock = false,
-        animate = true
-      )
-    }
+  override fun onBottomPanelStateChanged(
+    controllerType: ControllerType,
+    stateKind: KurobaBottomPanelStateKind
+  ) {
+    collapsingViewsHolder.onBottomPanelStateChanged(controllerType, stateKind)
   }
 
   private fun createControllerBySelectedItemId(
