@@ -84,6 +84,10 @@ class SlideNavController(
     this.toolbarContract = toolbarContract
   }
 
+  fun lockUnlockSlidingPaneLayout(lock: Boolean) {
+    slidingPaneLayout.setSlidingEnabled(!lock)
+  }
+
   override fun handleBack(): Boolean {
     if (toolbarContract.onBackPressed()) {
       return true

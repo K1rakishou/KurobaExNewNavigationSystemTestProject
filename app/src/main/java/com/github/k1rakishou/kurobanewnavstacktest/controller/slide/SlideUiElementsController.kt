@@ -7,7 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.core.view.GravityCompat
-import androidx.recyclerview.widget.RecyclerView
+import androidx.drawerlayout.widget.DrawerLayout
 import com.bluelinelabs.conductor.RouterTransaction
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.core.base.BaseController
@@ -92,7 +92,10 @@ class SlideUiElementsController(
     }
     bottomPanel.addOnBottomPanelStateChanged { controllerType, newState ->
       slideFabViewController.onBottomPanelStateChanged(controllerType, newState)
+
       lockUnlockCollapsableViews(controllerType, newState)
+      lockUnlockDrawer(controllerType, newState)
+      lockUnlockSlidePaneLayout(controllerType, newState)
     }
     bottomPanel.addOnBottomNavPanelItemSelectedListener { selectedItem ->
       slideNavControllerContainer.switchTo(
@@ -105,6 +108,33 @@ class SlideUiElementsController(
     bottomPanel.addOnBottomPanelHeightChangeListener { controllerType, panelHeight ->
       collapsingViewsHolder.getRecyclerForController(controllerType)?.updatePanelHeight(panelHeight)
     }
+  }
+
+  private fun lockUnlockSlidePaneLayout(
+    controllerType: ControllerType,
+    newState: KurobaBottomPanelStateKind
+  ) {
+    val lock = newState in DISABLE_SLIDING_PANE_BOTTOM_PANEL_STATE
+    getSlideNavControllerOrNull()?.lockUnlockSlidingPaneLayout(lock)
+  }
+
+  private fun lockUnlockDrawer(
+    controllerType: ControllerType,
+    newState: KurobaBottomPanelStateKind
+  ) {
+    val newDrawerLockMode = if (newState in DISABLE_DRAWER_BOTTOM_PANEL_STATE) {
+      DrawerLayout.LOCK_MODE_LOCKED_CLOSED
+    } else {
+      DrawerLayout.LOCK_MODE_UNDEFINED
+    }
+
+    val prevDrawerLockMode = drawer.getDrawerLockMode(GravityCompat.START)
+
+    if (newDrawerLockMode == prevDrawerLockMode) {
+      return
+    }
+
+    drawer.setDrawerLockMode(newDrawerLockMode)
   }
 
   override fun handleBack(): Boolean {
@@ -329,9 +359,24 @@ class SlideUiElementsController(
     }
   }
 
+  private fun getSlideNavControllerOrNull(): SlideNavController? {
+    return getChildRouter(slideNavControllerContainer)
+      .getControllerWithTag(SlideNavController.CONTROLLER_TAG.tag) as? SlideNavController
+  }
+
   companion object {
     private const val TAG = "SlideCatalogUiElementsController"
 
     val CONTROLLER_TAG = ControllerTag("SlideCatalogUiElementsControllerTag")
+
+    private val DISABLE_DRAWER_BOTTOM_PANEL_STATE = arrayOf(
+      KurobaBottomPanelStateKind.ReplyLayoutPanel,
+      KurobaBottomPanelStateKind.SelectionPanel
+    )
+
+    private val DISABLE_SLIDING_PANE_BOTTOM_PANEL_STATE = arrayOf(
+      KurobaBottomPanelStateKind.ReplyLayoutPanel,
+      KurobaBottomPanelStateKind.SelectionPanel
+    )
   }
 }

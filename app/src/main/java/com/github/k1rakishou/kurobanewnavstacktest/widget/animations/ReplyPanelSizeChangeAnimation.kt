@@ -35,10 +35,13 @@ class ReplyPanelSizeChangeAnimation : SimpleKurobaAnimation() {
       else -> 1f
     }
 
+    // TODO(KurobaEx): there is a little bug in either scale or translation animation which leads
+    //  to the bottom part of the panel to appear higher than it should be when expand animating is
+    //  running. Probably newScale is calculated without accounting for the bottom inset (lastInsetBottom).
     val prevPivotY = kurobaBottomReplyPanel.pivotY
     val prevTranslationY = kurobaBottomReplyPanel.translationY
-
     var newTranslationY = prevTranslationY - (newHeight - prevHeight)
+    
     if (newHeight > prevHeight) {
       newTranslationY += lastInsetBottom
     } else {

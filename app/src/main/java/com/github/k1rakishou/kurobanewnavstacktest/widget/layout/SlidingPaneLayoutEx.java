@@ -148,6 +148,8 @@ public class SlidingPaneLayoutEx extends ViewGroup {
      */
     private boolean mCanSlide;
 
+    private boolean slidingEnabled = true;
+
     /**
      * The child view that can slide, if any.
      */
@@ -767,6 +769,21 @@ public class SlidingPaneLayoutEx extends ViewGroup {
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         final int action = ev.getActionMasked();
 
+        if (!slidingEnabled) {
+            mDragHelper.cancel();
+
+            final float x = ev.getX();
+            final float y = ev.getY();
+
+            if (isOpen() && mDragHelper.isViewUnder(mSlideableView, (int) x, (int) y)) {
+                // Pass the clicks to onTouchEvent() (where they will be consumed and ignored)
+                // if the click is inside overhang area, do nothing if the click
+                return true;
+            }
+
+            return super.onInterceptTouchEvent(ev);
+        }
+
         // Preserve the open state based on the last view that was touched.
         if (!mCanSlide && action == MotionEvent.ACTION_DOWN && getChildCount() > 1) {
             // After the first things will be slideable.
@@ -831,6 +848,10 @@ public class SlidingPaneLayoutEx extends ViewGroup {
 
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
+        if (!slidingEnabled) {
+            return true;
+        }
+
         if (!mCanSlide) {
             return super.onTouchEvent(ev);
         }
@@ -872,6 +893,10 @@ public class SlidingPaneLayoutEx extends ViewGroup {
     }
 
     private boolean closePane(int initialVelocity) {
+        if (!slidingEnabled) {
+            return false;
+        }
+
         if (mFirstLayout || smoothSlideTo(0.f, initialVelocity)) {
             mPreservedOpenState = false;
             return true;
@@ -880,6 +905,10 @@ public class SlidingPaneLayoutEx extends ViewGroup {
     }
 
     private boolean openPane(int initialVelocity) {
+        if (!slidingEnabled) {
+            return false;
+        }
+
         if (mFirstLayout || smoothSlideTo(1.f, initialVelocity)) {
             mPreservedOpenState = true;
             return true;
@@ -966,6 +995,10 @@ public class SlidingPaneLayoutEx extends ViewGroup {
      */
     public boolean isSlideable() {
         return mCanSlide;
+    }
+
+    public void setSlidingEnabled(boolean enabled) {
+        this.slidingEnabled = enabled;
     }
 
     void onPanelDragged(int newLeft) {
