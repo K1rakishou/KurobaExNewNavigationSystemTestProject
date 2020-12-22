@@ -132,10 +132,10 @@ class SlideNavController(
     )
 
     slidingPaneLayout.setOverhangSize(ChanSettings.OVERHANG_SIZE)
-    slidingPaneLayout.setSlidingPaneLayoutDefaultState(boardDescriptor, threadDescriptor)
+    val isNowOpen = slidingPaneLayout.setSlidingPaneLayoutDefaultState(boardDescriptor, threadDescriptor)
 
-    slideModeFabViewControllerCallbacks.onSlidingPaneInitialState(slidingPaneLayout.isOpen)
-    slidingPaneLayoutSlideHandler = SlidingPaneLayoutSlideHandler(slidingPaneLayout.isOpen)
+    slideModeFabViewControllerCallbacks.onSlidingPaneInitialState(isNowOpen)
+    slidingPaneLayoutSlideHandler = SlidingPaneLayoutSlideHandler(isNowOpen)
     slidingPaneLayoutSlideHandler.addListener(slidingPaneLayoutSlideListener)
 
     slidingPaneLayout.setPanelSlideListener(slidingPaneLayoutSlideHandler)
@@ -209,9 +209,11 @@ class SlideNavController(
   private fun SlidingPaneLayoutEx.setSlidingPaneLayoutDefaultState(
     boardDescriptor: BoardDescriptor?,
     threadDescriptor: ThreadDescriptor?
-  ) {
+  ): Boolean {
     val isNowOpen = openOrCloseSlidingPane(threadDescriptor)
     fireSlidingPaneListeners(isNowOpen)
+
+    return isNowOpen
   }
 
   private fun SlidingPaneLayoutEx.openOrCloseSlidingPane(
