@@ -12,6 +12,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ThreadNavigat
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.UiElementsControllerCallbacks
 import com.github.k1rakishou.kurobanewnavstacktest.data.BoardDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
+import com.github.k1rakishou.kurobanewnavstacktest.viewmodel.MainControllerViewModel
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarContract
 
 abstract class CatalogController(
@@ -26,7 +27,9 @@ abstract class CatalogController(
 
   protected val controllerType = ControllerType.Catalog
   private val testHelpers by lazy { (activity as MainActivity).testHelpers }
-  private val catalogViewModel by lazy { viewModels(CatalogViewModel::class).value }
+
+  private val catalogViewModel by viewModels(CatalogViewModel::class)
+  private val mainControllerViewModel by viewModels(MainControllerViewModel::class)
 
   fun uiElementsControllerCallbacks(uiElementsControllerCallbacks: UiElementsControllerCallbacks) {
     this.uiElementsControllerCallbacks = uiElementsControllerCallbacks
@@ -53,11 +56,12 @@ abstract class CatalogController(
     super.onControllerCreated(savedViewState)
 
     catalogLayout.onCreate(
-      toolbarContract,
-      uiElementsControllerCallbacks,
-      this,
-      catalogViewModel,
-      testHelpers
+      toolbarContract = toolbarContract,
+      uiElementsControllerCallbacks = uiElementsControllerCallbacks,
+      catalogControllerCallbacks = this,
+      catalogViewModel = catalogViewModel,
+      mainControllerViewModel = mainControllerViewModel,
+      testHelpers = testHelpers
     )
   }
 

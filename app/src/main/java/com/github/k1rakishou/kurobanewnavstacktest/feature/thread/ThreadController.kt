@@ -10,6 +10,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ThreadNavigationContract
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.UiElementsControllerCallbacks
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
+import com.github.k1rakishou.kurobanewnavstacktest.viewmodel.MainControllerViewModel
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarContract
 
 abstract class ThreadController(
@@ -22,7 +23,9 @@ abstract class ThreadController(
 
   protected val controllerType = ControllerType.Thread
   private val testHelpers by lazy { (activity as MainActivity).testHelpers }
-  private val threadViewModel by lazy { viewModels(ThreadViewModel::class).value }
+
+  private val threadViewModel by viewModels(ThreadViewModel::class)
+  private val mainControllerViewModel by viewModels(MainControllerViewModel::class)
 
   protected val isToolbarContractInitialized: Boolean
     get() = ::toolbarContract.isInitialized
@@ -52,6 +55,7 @@ abstract class ThreadController(
       uiElementsControllerCallbacks = uiElementsControllerCallbacks,
       threadControllerCallbacks = this,
       threadViewModel = threadViewModel,
+      mainControllerViewModel = mainControllerViewModel,
       testHelpers = testHelpers
     )
   }

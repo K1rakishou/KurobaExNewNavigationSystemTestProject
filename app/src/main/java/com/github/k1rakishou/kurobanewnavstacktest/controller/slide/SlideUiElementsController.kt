@@ -19,6 +19,8 @@ import com.github.k1rakishou.kurobanewnavstacktest.core.CollapsingViewsHolder
 import com.github.k1rakishou.kurobanewnavstacktest.data.BoardDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.*
+import com.github.k1rakishou.kurobanewnavstacktest.viewstate.*
+import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomNavPanel
 import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomPanelStateKind
 import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomNavPanelSelectedItem
 import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.SlideKurobaFloatingActionButton
@@ -89,6 +91,8 @@ class SlideUiElementsController(
       // Doesn't matter what we use here since Slide layout has only one bottom panel
       slideFabViewController.onBottomPanelInitialized(controllerType)
       slideControllerFab.initialized()
+
+      onBottomPanelInitialized()
     }
     bottomPanel.addOnBottomPanelStateChanged { controllerType, newState ->
       slideFabViewController.onBottomPanelStateChanged(controllerType, newState)
@@ -108,6 +112,22 @@ class SlideUiElementsController(
     bottomPanel.addOnBottomPanelHeightChangeListener { controllerType, panelHeight ->
       collapsingViewsHolder.getRecyclerForController(controllerType)?.updatePanelHeight(panelHeight)
     }
+  }
+
+  private fun onBottomPanelInitialized() {
+    val openBoardDescriptor = args.getBoardDescriptorOrNull()
+    val openThreadDescriptor = args.getThreadDescriptorOrNull()
+
+    val topPanel = requireNotNull(bottomPanel.getTopChildPanel<KurobaBottomNavPanel>()) {
+      "BottomPanel is not fully initialized yet!"
+    }
+
+    if (openBoardDescriptor == null && openThreadDescriptor == null) {
+      topPanel.selectPrevSelectedItemIdOrDefault()
+      return
+    }
+
+    topPanel.select(KurobaBottomNavPanelSelectedItem.Browse)
   }
 
   private fun lockUnlockSlidePaneLayout(
@@ -264,10 +284,16 @@ class SlideUiElementsController(
     if (!bottomPanel.isBottomPanelInitialized(controllerType)) {
       bottomPanel.bottomPanelPreparationsCompleted(
         controllerType,
-        KurobaBottomPanelStateKind.BottomNavPanel
-      )
+        KurobaBottomPanelStateKind.BottomNavPanel,
+        onBottomPanelInitializedCallback = {
+          notifyBottomPanelControllerFocused(controllerType)
+        })
+    } else {
+      notifyBottomPanelControllerFocused(controllerType)
     }
+  }
 
+  private fun notifyBottomPanelControllerFocused(controllerType: ControllerType) {
     bottomPanel.onControllerFocused(controllerType) {
       val panelHeight = bottomPanel.getBottomPanelHeight(controllerType)
       if (panelHeight != null) {
@@ -331,7 +357,10 @@ class SlideUiElementsController(
     slideModeFabViewControllerCallbacks: SlideModeFabViewControllerCallbacks,
     toolbarContract: ToolbarContract
   ): SlideNavController {
-    return SlideNavController().apply {
+    return SlideNavController.create(
+      args.getBoardDescriptorOrNull(),
+      args.getThreadDescriptorOrNull()
+    ).apply {
       setUiElementsControllerCallbacks(uiElementsControllerCallbacks)
       setSlideCatalogUiElementsControllerCallbacks(slideCatalogUiElementsControllerCallbacks)
       recyclerViewProvider(recyclerViewProvider)
@@ -361,5 +390,13 @@ class SlideUiElementsController(
       KurobaBottomPanelStateKind.ReplyLayoutPanel,
       KurobaBottomPanelStateKind.SelectionPanel
     )
+
+    fun create(boardDescriptor: BoardDescriptor?, threadDescriptor: ThreadDescriptor?): SlideUiElementsController {
+      val args = Bundle()
+      args.putBoardDescriptor(boardDescriptor)
+      args.putThreadDescriptor(threadDescriptor)
+
+      return SlideUiElementsController(args)
+    }
   }
 }

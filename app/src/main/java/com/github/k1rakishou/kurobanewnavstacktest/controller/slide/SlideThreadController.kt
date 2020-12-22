@@ -8,6 +8,9 @@ import com.github.k1rakishou.kurobanewnavstacktest.controller.FocusableControlle
 import com.github.k1rakishou.kurobanewnavstacktest.controller.RecyclerViewProvider
 import com.github.k1rakishou.kurobanewnavstacktest.feature.thread.ThreadController
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadData
+import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
+import com.github.k1rakishou.kurobanewnavstacktest.viewstate.getThreadDescriptorOrNull
+import com.github.k1rakishou.kurobanewnavstacktest.viewstate.putThreadDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.widget.recycler.PaddingAwareRecyclerView
 
 class SlideThreadController(
@@ -19,6 +22,12 @@ class SlideThreadController(
 
   fun recyclerViewProvider(recyclerViewProvider: RecyclerViewProvider) {
     this.recyclerViewProvider = recyclerViewProvider
+  }
+
+  override fun onControllerCreated(savedViewState: Bundle?) {
+    super.onControllerCreated(savedViewState)
+
+    args.getThreadDescriptorOrNull()?.let { threadDescriptor -> openThread(threadDescriptor) }
   }
 
   override fun provideRecyclerView(recyclerView: PaddingAwareRecyclerView) {
@@ -58,5 +67,12 @@ class SlideThreadController(
     val CONTROLLER_TAG = ControllerTag("SlideThreadControllerTag")
 
     private val CONTROLLER_TYPE = ControllerType.Thread
+
+    fun create(threadDescriptor: ThreadDescriptor?): SlideThreadController {
+      val args = Bundle()
+      args.putThreadDescriptor(threadDescriptor)
+
+      return SlideThreadController(args)
+    }
   }
 }

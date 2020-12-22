@@ -15,8 +15,4 @@ class KurobaBottomPanelViewModel : BaseViewModel() {
     return kurobaBottomPanelViewState[controllerType]!!
   }
 
-  override fun onDestroy() {
-
-  }
-
 }

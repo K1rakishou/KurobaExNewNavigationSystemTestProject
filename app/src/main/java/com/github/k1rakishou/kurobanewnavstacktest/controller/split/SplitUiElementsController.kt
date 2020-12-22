@@ -21,8 +21,12 @@ import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.utils.getBehaviorExt
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setBehaviorExt
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.ViewScreenAttachSide
+import com.github.k1rakishou.kurobanewnavstacktest.viewstate.getBoardDescriptorOrNull
+import com.github.k1rakishou.kurobanewnavstacktest.viewstate.getThreadDescriptorOrNull
+import com.github.k1rakishou.kurobanewnavstacktest.viewstate.putBoardDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomPanelStateKind
 import com.github.k1rakishou.kurobanewnavstacktest.widget.behavior.CatalogFabBehavior
+import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomNavPanel
 import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomNavPanelSelectedItem
 import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
 import com.github.k1rakishou.kurobanewnavstacktest.widget.layout.DrawerWidthAdjustingLayout
@@ -76,6 +80,8 @@ class SplitUiElementsController(
     bottomPanel.addOnBottomPanelInitialized {
       splitFabViewController.onBottomPanelInitialized(ControllerType.Catalog)
       catalogFab.initialized()
+
+      onBottomPanelInitialized()
     }
     bottomPanel.addOnBottomPanelStateChanged { panelControllerType, newState ->
       check(panelControllerType == ControllerType.Catalog)
@@ -96,10 +102,27 @@ class SplitUiElementsController(
     }
     bottomPanel.bottomPanelPreparationsCompleted(
       ControllerType.Catalog,
-      KurobaBottomPanelStateKind.BottomNavPanel
+      KurobaBottomPanelStateKind.BottomNavPanel,
+      onBottomPanelInitializedCallback = {
+        bottomPanel.onControllerFocused(ControllerType.Catalog)
+      }
     )
+  }
 
-    bottomPanel.onControllerFocused(ControllerType.Catalog)
+  private fun onBottomPanelInitialized() {
+    val openBoardDescriptor = args.getBoardDescriptorOrNull()
+    val openThreadDescriptor = args.getThreadDescriptorOrNull()
+
+    val topPanel = requireNotNull(bottomPanel.getTopChildPanel<KurobaBottomNavPanel>()) {
+      "BottomPanel is not fully initialized yet!"
+    }
+
+    if (openBoardDescriptor == null && openThreadDescriptor == null) {
+      topPanel.selectPrevSelectedItemIdOrDefault()
+      return
+    }
+
+    topPanel.select(KurobaBottomNavPanelSelectedItem.Browse)
   }
 
   override fun onControllerCreated(savedViewState: Bundle?) {
@@ -213,9 +236,15 @@ class SplitUiElementsController(
   ): BaseController {
     return when (selectedItem) {
       KurobaBottomNavPanelSelectedItem.Search -> TODO()
-      KurobaBottomNavPanelSelectedItem.Bookmarks -> createBookmarksController(uiElementsControllerCallbacks)
-      KurobaBottomNavPanelSelectedItem.Browse -> createSplitCatalogController(uiElementsControllerCallbacks)
-      KurobaBottomNavPanelSelectedItem.Settings -> createSettingsController(uiElementsControllerCallbacks)
+      KurobaBottomNavPanelSelectedItem.Bookmarks -> {
+        createBookmarksController(uiElementsControllerCallbacks)
+      }
+      KurobaBottomNavPanelSelectedItem.Browse -> {
+        createSplitCatalogController(uiElementsControllerCallbacks)
+      }
+      KurobaBottomNavPanelSelectedItem.Settings -> {
+        createSettingsController(uiElementsControllerCallbacks)
+      }
       else -> throw IllegalStateException("Unknown itemId: $selectedItem")
     }
   }
@@ -223,7 +252,9 @@ class SplitUiElementsController(
   private fun createSplitCatalogController(
     uiElementsControllerCallbacks: UiElementsControllerCallbacks
   ): SplitCatalogController {
-    return SplitCatalogController().apply {
+    return SplitCatalogController.create(
+      args.getBoardDescriptorOrNull()
+    ).apply {
       uiElementsControllerCallbacks(uiElementsControllerCallbacks)
       recyclerViewProvider(this@SplitUiElementsController)
       threadNavigationContract(this@SplitUiElementsController)
@@ -234,5 +265,12 @@ class SplitUiElementsController(
   companion object {
     private const val TAG = "SplitUiElementsController"
     val CONTROLLER_TAG = ControllerTag("SplitUiElementsControllerTag")
+
+    fun create(boardDescriptor: BoardDescriptor?): SplitUiElementsController {
+      val args = Bundle()
+      args.putBoardDescriptor(boardDescriptor)
+
+      return SplitUiElementsController(args)
+    }
   }
 }

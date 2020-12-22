@@ -19,6 +19,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.controller.split.SplitNavCont
 import com.github.k1rakishou.kurobanewnavstacktest.data.BoardDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.utils.ChanSettings
+import com.github.k1rakishou.kurobanewnavstacktest.viewmodel.MainControllerViewModel
 import timber.log.Timber
 
 class MainController(
@@ -27,7 +28,7 @@ class MainController(
   ControllerPresenterDelegate,
   ChanNavigationContract {
   private lateinit var contentContainer: FrameLayout
-
+  private val viewModel by viewModels(MainControllerViewModel::class)
   private var presenterDelegate: ControllerPresenterDelegate? = null
 
   fun setControllerPresenterDelegate(controllerPresenterDelegate: ControllerPresenterDelegate) {
@@ -47,12 +48,23 @@ class MainController(
   override fun onControllerCreated(savedViewState: Bundle?) {
     super.onControllerCreated(savedViewState)
 
+    val lastOpenedBoard = viewModel.lastOpenedBoard
+    val lastOpenedThread = viewModel.lastOpenedThread
+
+    Timber.tag(TAG).d("onControllerCreated() lastOpenedBoard=$lastOpenedBoard, lastOpenedThread=$lastOpenedThread")
+
     val controller = if (isSplitMode()) {
-      SplitNavController().apply {
+      SplitNavController.create(
+        lastOpenedBoard,
+        lastOpenedThread
+      ).apply {
         setControllerPresenterDelegate(this@MainController)
       }
     } else {
-      SlideUiElementsController().apply {
+      SlideUiElementsController.create(
+        lastOpenedBoard,
+        lastOpenedThread
+      ).apply {
         setControllerPresenterDelegate(this@MainController)
       }
     }

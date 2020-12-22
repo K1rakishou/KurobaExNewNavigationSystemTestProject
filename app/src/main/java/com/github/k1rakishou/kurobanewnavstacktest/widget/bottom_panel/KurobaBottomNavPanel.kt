@@ -30,6 +30,25 @@ class KurobaBottomNavPanel(
   private val viewState: KurobaBottomNavPanelViewState
     get() = viewModel.getBottomPanelState(controllerType).bottomNavPanelState
 
+  fun selectPrevSelectedItemIdOrDefault() {
+    enableOrDisableControls(enable = true)
+
+    if (viewState.selectedItem == KurobaBottomNavPanelSelectedItem.Uninitialized) {
+      select(KurobaBottomNavPanelSelectedItem.Browse)
+      return
+    }
+
+    select(viewState.selectedItem)
+  }
+
+  fun select(newSelectedItem: KurobaBottomNavPanelSelectedItem): Boolean {
+    if (viewState.selectedItem == newSelectedItem) {
+      return false
+    }
+
+    return selectInternal(newSelectedItem)
+  }
+
   override suspend fun initializeView() {
     LayoutInflater.from(context).inflate(R.layout.kuroba_bottom_nav_panel, this, true)
 
@@ -50,16 +69,11 @@ class KurobaBottomNavPanel(
     )
 
     itemsArray.forEach { item -> item.setOnThrottlingClickListener(this) }
+    enableOrDisableControls(enable = false)
   }
 
   override suspend fun onPanelAttachedToParent() {
 
-  }
-
-  override fun onFinishInflate() {
-    super.onFinishInflate()
-
-    select(KurobaBottomNavPanelSelectedItem.Browse)
   }
 
   override fun restoreState(bottomPanelViewState: KurobaBottomPanelViewState) {
@@ -87,10 +101,7 @@ class KurobaBottomNavPanel(
   }
 
   override fun enableOrDisableControls(enable: Boolean) {
-    searchItemHolder.setEnabledFast(enable)
-    bookmarksItemHolder.setEnabledFast(enable)
-    browseItemHolder.setEnabledFast(enable)
-    settingsItemHolder.setEnabledFast(enable)
+    enableOrDisableControlsInternal(enable, viewState.selectedItem)
   }
 
   override fun onDestroy() {
@@ -121,12 +132,19 @@ class KurobaBottomNavPanel(
     return false
   }
 
-  fun select(newSelectedItem: KurobaBottomNavPanelSelectedItem): Boolean {
-    if (viewState.selectedItem == newSelectedItem) {
-      return false
-    }
+  private fun enableOrDisableControlsInternal(
+    enable: Boolean,
+    selectedItem: KurobaBottomNavPanelSelectedItem? = null
+  ) {
+    itemsArray.forEach { item ->
+      item.setEnabledFast(enable)
 
-    return selectInternal(newSelectedItem)
+      if (enable && item.tag == selectedItem) {
+        item.setAlphaFast(1f)
+      } else {
+        item.setAlphaFast(.3f)
+      }
+    }
   }
 
   private fun selectInternal(newSelectedItem: KurobaBottomNavPanelSelectedItem): Boolean {
@@ -135,15 +153,9 @@ class KurobaBottomNavPanel(
     }
 
     // TODO(KurobaEx): animations
-    itemsArray.forEach { item ->
-      if (item.tag == newSelectedItem) {
-        item.setAlphaFast(1f)
-      } else {
-        item.setAlphaFast(.3f)
-      }
-    }
-
+    enableOrDisableControlsInternal(enable = true, selectedItem = newSelectedItem)
     viewState.selectedItem = newSelectedItem
+
     return true
   }
 

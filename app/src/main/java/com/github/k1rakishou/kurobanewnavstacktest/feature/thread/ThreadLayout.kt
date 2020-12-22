@@ -24,6 +24,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.repository.ChanRepository
 import com.github.k1rakishou.kurobanewnavstacktest.utils.BackgroundUtils
 import com.github.k1rakishou.kurobanewnavstacktest.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.kurobanewnavstacktest.utils.setOnApplyWindowInsetsListenerAndDoRequest
+import com.github.k1rakishou.kurobanewnavstacktest.viewmodel.MainControllerViewModel
 import com.github.k1rakishou.kurobanewnavstacktest.viewstate.ViewStateConstants
 import com.github.k1rakishou.kurobanewnavstacktest.widget.fab.KurobaFloatingActionButton
 import com.github.k1rakishou.kurobanewnavstacktest.widget.recycler.PaddingAwareRecyclerView
@@ -41,7 +42,6 @@ class ThreadLayout @JvmOverloads constructor(
 ) : CoordinatorLayout(context, attributeSet, attrDefStyle) {
   private val chanRepository = ChanRepository
   private val kurobaCoroutineScope = KurobaCoroutineScope()
-
   private val threadRecyclerView: PaddingAwareRecyclerView
 
   private var job: Job? = null
@@ -50,6 +50,7 @@ class ThreadLayout @JvmOverloads constructor(
   private var threadControllerCallbacks: ThreadControllerCallbacks? = null
   private var uiElementsControllerCallbacks: UiElementsControllerCallbacks? = null
   private var threadViewModel: ThreadViewModel? = null
+  private var mainControllerViewModel: MainControllerViewModel? = null
   private var testHelpers: TestHelpers? = null
 
   init {
@@ -66,12 +67,14 @@ class ThreadLayout @JvmOverloads constructor(
     uiElementsControllerCallbacks: UiElementsControllerCallbacks,
     threadControllerCallbacks: ThreadControllerCallbacks,
     threadViewModel: ThreadViewModel,
+    mainControllerViewModel: MainControllerViewModel,
     testHelpers: TestHelpers
   ) {
     this.toolbarContract = toolbarContract
     this.uiElementsControllerCallbacks = uiElementsControllerCallbacks
     this.threadControllerCallbacks = threadControllerCallbacks
     this.threadViewModel = threadViewModel
+    this.mainControllerViewModel = mainControllerViewModel
     this.testHelpers = testHelpers
 
     kurobaCoroutineScope.launch { reloadThread() }
@@ -95,12 +98,12 @@ class ThreadLayout @JvmOverloads constructor(
     job?.cancel()
     job = null
 
-    this.boundThreadDescriptor = null
-    this.toolbarContract = null
-    this.threadControllerCallbacks = null
-    this.uiElementsControllerCallbacks = null
-    this.threadViewModel = null
-    this.testHelpers = null
+    boundThreadDescriptor = null
+    toolbarContract = null
+    threadControllerCallbacks = null
+    uiElementsControllerCallbacks = null
+    threadViewModel = null
+    testHelpers = null
 
     threadRecyclerView.swapAdapter(
       adapter = null,
@@ -119,14 +122,17 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   private fun closeOpenedThread(): Boolean {
-    if (this.boundThreadDescriptor == null) {
+    BackgroundUtils.ensureMainThread()
+
+    if (boundThreadDescriptor == null) {
       return false
     }
 
     Timber.tag(TAG).d("closeOpenedThread()")
 
-    this.boundThreadDescriptor = null
-    this.toolbarContract?.closeToolbar(KurobaToolbarType.Thread)
+    boundThreadDescriptor = null
+    toolbarContract?.closeToolbar(KurobaToolbarType.Thread)
+    mainControllerViewModel?.lastOpenedThread = null
 
     job?.cancel()
     job = null
@@ -136,8 +142,15 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   fun openThread(threadDescriptor: ThreadDescriptor) {
+    BackgroundUtils.ensureMainThread()
+
+    if (boundThreadDescriptor == threadDescriptor) {
+      return
+    }
+
     Timber.tag(TAG).d("openThread($threadDescriptor)")
-    this.boundThreadDescriptor = threadDescriptor
+    boundThreadDescriptor = threadDescriptor
+    mainControllerViewModel?.lastOpenedThread = threadDescriptor
 
     job?.cancel()
     job = null

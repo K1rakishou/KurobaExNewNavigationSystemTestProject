@@ -20,6 +20,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.repository.ChanRepository
 import com.github.k1rakishou.kurobanewnavstacktest.utils.BackgroundUtils
 import com.github.k1rakishou.kurobanewnavstacktest.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.kurobanewnavstacktest.utils.errorMessageOrClassName
+import com.github.k1rakishou.kurobanewnavstacktest.viewmodel.MainControllerViewModel
 import com.github.k1rakishou.kurobanewnavstacktest.viewstate.ViewStateConstants
 import com.github.k1rakishou.kurobanewnavstacktest.widget.recycler.PaddingAwareRecyclerView
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.KurobaToolbarType
@@ -45,6 +46,7 @@ class CatalogLayout @JvmOverloads constructor(
   private var uiElementsControllerCallbacks: UiElementsControllerCallbacks? = null
   private var testHelpers: TestHelpers? = null
   private var catalogViewModel: CatalogViewModel? = null
+  private var mainControllerViewModel: MainControllerViewModel? = null
 
   init {
     inflate(context, R.layout.controller_catalog, this).apply {
@@ -57,6 +59,7 @@ class CatalogLayout @JvmOverloads constructor(
     uiElementsControllerCallbacks: UiElementsControllerCallbacks,
     catalogControllerCallbacks: CatalogControllerCallbacks,
     catalogViewModel: CatalogViewModel,
+    mainControllerViewModel: MainControllerViewModel,
     testHelpers: TestHelpers
   ) {
     this.toolbarContract = toolbarContract
@@ -64,6 +67,7 @@ class CatalogLayout @JvmOverloads constructor(
     this.catalogControllerCallbacks = catalogControllerCallbacks
     this.testHelpers = testHelpers
     this.catalogViewModel = catalogViewModel
+    this.mainControllerViewModel = mainControllerViewModel
 
     kurobaCoroutineScope.launch {
       toolbarContract.listenForToolbarActions(KurobaToolbarType.Catalog)
@@ -146,8 +150,16 @@ class CatalogLayout @JvmOverloads constructor(
   }
 
   fun openBoard(boardDescriptor: BoardDescriptor) {
+    BackgroundUtils.ensureMainThread()
+
+    if (boundBoardDescriptor == boardDescriptor) {
+      return
+    }
+
     Timber.tag(TAG).d("openBoard($boardDescriptor)")
-    this.boundBoardDescriptor = boardDescriptor
+
+    mainControllerViewModel?.lastOpenedBoard = boardDescriptor
+    boundBoardDescriptor = boardDescriptor
 
     job?.cancel()
     job = null

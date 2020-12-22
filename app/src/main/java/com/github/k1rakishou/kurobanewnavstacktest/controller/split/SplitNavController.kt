@@ -15,6 +15,7 @@ import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ChanNavigatio
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.ThreadNavigationContract
 import com.github.k1rakishou.kurobanewnavstacktest.data.BoardDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
+import com.github.k1rakishou.kurobanewnavstacktest.viewstate.*
 import timber.log.Timber
 
 class SplitNavController(
@@ -38,11 +39,14 @@ class SplitNavController(
   override fun onControllerCreated(savedViewState: Bundle?) {
     super.onControllerCreated(savedViewState)
 
+    val boardDescriptor = args.getBoardDescriptorOrNull()
+    val threadDescriptor = args.getThreadDescriptorOrNull()
+
     leftControllerContainer.setupChildRouterIfNotSet(
-      RouterTransaction.with(createSplitUiElementsController())
+      RouterTransaction.with(createSplitUiElementsController(boardDescriptor))
     )
     rightControllerContainer.setupChildRouterIfNotSet(
-      RouterTransaction.with(createSplitThreadController())
+      RouterTransaction.with(createSplitThreadController(threadDescriptor))
     )
   }
 
@@ -96,14 +100,18 @@ class SplitNavController(
     (splitThreadController as ThreadNavigationContract).openThread(threadDescriptor)
   }
 
-  private fun createSplitUiElementsController(): SplitUiElementsController {
-    return SplitUiElementsController().apply {
+  private fun createSplitUiElementsController(
+    boardDescriptor: BoardDescriptor?
+  ): SplitUiElementsController {
+    return SplitUiElementsController.create(boardDescriptor).apply {
       threadNavigationContract(this@SplitNavController)
     }
   }
 
-  private fun createSplitThreadController(): SplitThreadController {
-    return SplitThreadController()
+  private fun createSplitThreadController(
+    threadDescriptor: ThreadDescriptor?
+  ): SplitThreadController {
+    return SplitThreadController.create(threadDescriptor)
   }
 
   override fun getControllerTag(): ControllerTag = CONTROLLER_TAG
@@ -111,6 +119,17 @@ class SplitNavController(
   companion object {
     private const val TAG = "SplitNavController"
     val CONTROLLER_TAG = ControllerTag("SplitNavControllerTag")
+
+    fun create(
+      boardDescriptor: BoardDescriptor?,
+      threadDescriptor: ThreadDescriptor?
+    ): SplitNavController {
+      val args = Bundle()
+      args.putBoardDescriptor(boardDescriptor)
+      args.putThreadDescriptor(threadDescriptor)
+
+      return SplitNavController(args)
+    }
   }
 
 }

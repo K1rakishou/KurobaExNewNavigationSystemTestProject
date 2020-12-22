@@ -5,8 +5,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.doOnPreDraw
-import androidx.recyclerview.widget.RecyclerView
-import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.core.base.ControllerTag
 import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
@@ -14,8 +12,11 @@ import com.github.k1rakishou.kurobanewnavstacktest.feature.thread.ThreadControll
 import com.github.k1rakishou.kurobanewnavstacktest.controller.base.UiElementsControllerCallbacks
 import com.github.k1rakishou.kurobanewnavstacktest.core.CollapsingViewsHolder
 import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadData
+import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.utils.*
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.ViewScreenAttachSide
+import com.github.k1rakishou.kurobanewnavstacktest.viewstate.getThreadDescriptorOrNull
+import com.github.k1rakishou.kurobanewnavstacktest.viewstate.putThreadDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomPanelStateKind
 import com.github.k1rakishou.kurobanewnavstacktest.widget.behavior.SplitThreadFabBehavior
 import com.github.k1rakishou.kurobanewnavstacktest.widget.bottom_panel.KurobaBottomPanel
@@ -54,9 +55,24 @@ class SplitThreadController(
       super.uiElementsControllerCallbacks(this@SplitThreadController)
 
       splitFabViewController.setThreadFab(threadFab)
-
-      initBottomPanel()
     }
+  }
+
+  override fun onControllerCreated(savedViewState: Bundle?) {
+    super.onControllerCreated(savedViewState)
+
+    threadFab.setOnApplyWindowInsetsListenerAndDoRequest { v, insets ->
+      threadFab.updateMargins(
+        end = KurobaFloatingActionButton.DEFAULT_MARGIN_RIGHT + insets.systemWindowInsetRight,
+        bottom = KurobaFloatingActionButton.DEFAULT_MARGIN_RIGHT
+      )
+
+      return@setOnApplyWindowInsetsListenerAndDoRequest insets
+    }
+
+    initBottomPanel()
+
+    args.getThreadDescriptorOrNull()?.let { threadDescriptor -> openThread(threadDescriptor) }
   }
 
   private fun initBottomPanel() {
@@ -77,8 +93,13 @@ class SplitThreadController(
       collapsingViewsHolder.getRecyclerForController(controllerType)?.updatePanelHeight(panelHeight)
     }
 
-    bottomPanel.bottomPanelPreparationsCompleted(controllerType, KurobaBottomPanelStateKind.Hidden)
-    bottomPanel.onControllerFocused(controllerType)
+    bottomPanel.bottomPanelPreparationsCompleted(
+      controllerType,
+      KurobaBottomPanelStateKind.Hidden,
+      onBottomPanelInitializedCallback = {
+        bottomPanel.onControllerFocused(controllerType)
+      }
+    )
   }
 
   override fun myHandleBack(): Boolean {
@@ -91,19 +112,6 @@ class SplitThreadController(
     }
 
     return super.myHandleBack()
-  }
-
-  override fun onControllerCreated(savedViewState: Bundle?) {
-    super.onControllerCreated(savedViewState)
-
-    threadFab.setOnApplyWindowInsetsListenerAndDoRequest { v, insets ->
-      threadFab.updateMargins(
-        end = KurobaFloatingActionButton.DEFAULT_MARGIN_RIGHT + insets.systemWindowInsetRight,
-        bottom = KurobaFloatingActionButton.DEFAULT_MARGIN_RIGHT
-      )
-
-      return@setOnApplyWindowInsetsListenerAndDoRequest insets
-    }
   }
 
   override fun onControllerShown() {
@@ -178,6 +186,13 @@ class SplitThreadController(
 
   companion object {
     val CONTROLLER_TAG = ControllerTag("SplitThreadControllerTag")
+
+    fun create(threadDescriptor: ThreadDescriptor?): SplitThreadController {
+      val args = Bundle()
+      args.putThreadDescriptor(threadDescriptor)
+
+      return SplitThreadController(args)
+    }
   }
 
 }

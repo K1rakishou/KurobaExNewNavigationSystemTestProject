@@ -56,6 +56,9 @@ class KurobaBottomPanel @JvmOverloads constructor(
   private var controllerType: ControllerType = ControllerType.Catalog
   private var attachedFab: KurobaFloatingActionButton? = null
 
+  private var panelCurrentStateKind: KurobaBottomPanelStateKind = KurobaBottomPanelStateKind.Uninitialized
+  private var panelInitialStateKind: KurobaBottomPanelStateKind = KurobaBottomPanelStateKind.Uninitialized
+
   private val bottomPanelInitializationListeners = mutableListOf<(ControllerType) -> Unit>()
   private val bottomPanelHeightChangeListeners = mutableListOf<(ControllerType, Int) -> Unit>()
   private val bottomPanelStateUpdatesListeners = mutableListOf<(ControllerType, KurobaBottomPanelStateKind) -> Unit>()
@@ -87,6 +90,12 @@ class KurobaBottomPanel @JvmOverloads constructor(
 
       setVisibilityFast(View.INVISIBLE)
     }
+  }
+
+  private fun currentStateAllowsFabUpdate(): Boolean {
+    return panelCurrentStateKind == KurobaBottomPanelStateKind.BottomNavPanel
+      || panelCurrentStateKind == KurobaBottomPanelStateKind.Uninitialized
+      || panelCurrentStateKind == KurobaBottomPanelStateKind.Hidden
   }
 
   private fun updateContainerPaddings(v: View, insetBottom: Int) {
@@ -137,7 +146,7 @@ class KurobaBottomPanel @JvmOverloads constructor(
   private fun canUpdateFab(): Boolean {
     return height > 0
       && attachedFab != null
-      && viewState.currentStateAllowsFabUpdate()
+      && currentStateAllowsFabUpdate()
   }
 
   override fun height(): Float {
@@ -185,7 +194,7 @@ class KurobaBottomPanel @JvmOverloads constructor(
       allAnimations.forEach { animation -> animation.endAnimationAndAwait() }
 
       this@KurobaBottomPanel.controllerType = controllerType
-      val currentPanelStateKind = viewState.panelCurrentStateKind
+      val currentPanelStateKind = panelCurrentStateKind
 
       bottomPanelInitialized[controllerType]!!.await()
       panelAvailableVerticalSpace[controllerType]!!.await()
@@ -196,7 +205,7 @@ class KurobaBottomPanel @JvmOverloads constructor(
   }
 
   fun switchInto(newState: KurobaBottomPanelStateKind) {
-    if (newState == viewState.panelCurrentStateKind) {
+    if (newState == panelCurrentStateKind) {
       return
     }
 
@@ -226,31 +235,33 @@ class KurobaBottomPanel @JvmOverloads constructor(
 
   fun bottomPanelPreparationsCompleted(
     controllerType: ControllerType,
-    initialState: KurobaBottomPanelStateKind
+    initialState: KurobaBottomPanelStateKind,
+    onBottomPanelInitializedCallback: (() -> Unit)? = null
   ) {
     this.controllerType = controllerType
     check(bottomPanelInitialized[controllerType]!!.isCompleted.not()) { "Already initialized" }
 
-    log("bottomPanelPreparationsCompleted controllerType=$controllerType, initialState=$initialState")
-
     scope.launch {
-      viewState.panelInitialStateKind = initialState
-      val prevState = viewState.panelCurrentStateKind
+      panelInitialStateKind = initialState
+      val prevState = panelCurrentStateKind
+
+      log("bottomPanelPreparationsCompleted controllerType=$controllerType, " +
+        "initialState=$initialState, prevState=$prevState")
 
       insetBottomDeferredInitial.await()
 
       if (prevState == KurobaBottomPanelStateKind.Uninitialized) {
         initBottomPanel(controllerType, initialState)
-        bottomPanelInitialized[controllerType]!!.complete(Unit)
       } else {
         panelAvailableVerticalSpace[controllerType]!!.await()
 
-        if (viewState.panelCurrentStateKind != KurobaBottomPanelStateKind.Hidden) {
-          switchIntoInternal(viewState.panelCurrentStateKind)
+        if (panelCurrentStateKind != KurobaBottomPanelStateKind.Hidden) {
+          switchIntoInternal(panelCurrentStateKind)
         }
       }
 
       bottomPanelInitialized[controllerType]!!.complete(Unit)
+      onBottomPanelInitializedCallback?.invoke()
     }
   }
 
@@ -261,11 +272,14 @@ class KurobaBottomPanel @JvmOverloads constructor(
   }
 
   fun addOnBottomPanelInitialized(func: (ControllerType) -> Unit) {
-    if (viewState.panelCurrentStateKind != KurobaBottomPanelStateKind.Uninitialized) {
+    val isAlreadyInitialized = panelCurrentStateKind != KurobaBottomPanelStateKind.Uninitialized
+      && getTopChildPanel<ChildPanelContract>() != null
+
+    if (isAlreadyInitialized) {
       func(controllerType)
 
       bottomPanelStateUpdatesListeners.forEach { listener ->
-        listener(controllerType, viewState.panelCurrentStateKind)
+        listener(controllerType, panelCurrentStateKind)
       }
       return
     }
@@ -293,6 +307,17 @@ class KurobaBottomPanel @JvmOverloads constructor(
     return getCurrentChildPanelOrNull()?.getCurrentHeight()
   }
 
+  fun getCurrentPanelStateKind(): KurobaBottomPanelStateKind {
+    return panelCurrentStateKind
+  }
+
+  fun <T : ChildPanelContract> getTopChildPanel(): T? {
+    val topPanel = panelContainer.getChildAtOrNull(0)
+      ?: return null
+
+    return topPanel as T
+  }
+
   fun cleanup() {
     allAnimations.forEach { animation -> animation.endAnimation() }
 
@@ -314,8 +339,8 @@ class KurobaBottomPanel @JvmOverloads constructor(
       return true
     }
 
-    val state = viewState.panelCurrentStateKind
-    val initialState = viewState.panelInitialStateKind
+    val state = panelCurrentStateKind
+    val initialState = panelInitialStateKind
 
     if (state == KurobaBottomPanelStateKind.Uninitialized
       || initialState == KurobaBottomPanelStateKind.Uninitialized
@@ -323,7 +348,7 @@ class KurobaBottomPanel @JvmOverloads constructor(
       return false
     }
 
-    val childPanel = panelContainer.getChildAtOrNull(0) as? ChildPanelContract
+    val childPanel = getTopChildPanel() as? ChildPanelContract
     if (childPanel != null && childPanel.handleBack()) {
       return true
     }
@@ -337,23 +362,21 @@ class KurobaBottomPanel @JvmOverloads constructor(
   }
 
   private fun destroyChildPanel() {
-    (panelContainer.getChildAtOrNull(0) as? ChildPanelContract)?.onDestroy()
+    (getTopChildPanel() as? ChildPanelContract)?.onDestroy()
     panelContainer.removeAllViews()
   }
 
   private suspend fun hidePanel() {
     val newState = KurobaBottomPanelStateKind.Hidden
 
-    if (viewState.panelCurrentStateKind == newState) {
+    if (panelCurrentStateKind == newState) {
       return
     }
 
-    val childPanel = panelContainer.getChildAtOrNull(0)
+    val childPanel = getTopChildPanel<ChildPanelContract>()
       ?: return
 
-    childPanel as ChildPanelContract
     childPanel.enableOrDisableControls(enable = false)
-
     val prevHeight = childPanel.getCurrentHeight().coerceAtLeast(1)
 
     panelDisappearanceAnimation.disappearanceAnimation(
@@ -380,13 +403,13 @@ class KurobaBottomPanel @JvmOverloads constructor(
       func(controllerType, kurobaBottomHiddenPanel.getCurrentHeight())
     }
 
-    viewState.panelCurrentStateKind = newState
+    panelCurrentStateKind = newState
 
     childPanel.enableOrDisableControls(enable = true)
   }
 
-  suspend fun switchIntoInternal(newStateKind: KurobaBottomPanelStateKind) {
-    val currentChildPanel = panelContainer.getChildAtOrNull(0) as? ChildPanelContract
+  private suspend fun switchIntoInternal(newStateKind: KurobaBottomPanelStateKind) {
+    val currentChildPanel = getTopChildPanel() as? ChildPanelContract
     val isTheSamePanel = isTheSamePanel(newStateKind, currentChildPanel)
 
     log("switchIntoInternal newStateKind=$newStateKind, " +
@@ -411,15 +434,24 @@ class KurobaBottomPanel @JvmOverloads constructor(
       currentChildPanel.updateCurrentControllerType(controllerType)
     }
 
+    check(bottomPanelInitializationListeners.isEmpty()) {
+      val listeners = bottomPanelInitializationListeners
+        .joinToString { lambda -> lambda.javaClass.simpleName }
+
+      "Some initialization listeners weren't handled properly: ${listeners}"
+    }
+
     bottomPanelStateUpdatesListeners.forEach { func ->
       func(controllerType, newStateKind)
     }
     bottomPanelHeightChangeListeners.forEach { func ->
-      val addedChildPanel = panelContainer.getChildAtOrNull(0) as ChildPanelContract
+      val addedChildPanel = getTopChildPanel<ChildPanelContract>()
+      checkNotNull(addedChildPanel) { "addedChildPanel is null" }
+
       func(controllerType, addedChildPanel.getCurrentHeight())
     }
 
-    viewState.panelCurrentStateKind = newStateKind
+    panelCurrentStateKind = newStateKind
   }
 
   private fun isTheSamePanel(
@@ -553,7 +585,7 @@ class KurobaBottomPanel @JvmOverloads constructor(
     controllerType: ControllerType,
     initialStateKind: KurobaBottomPanelStateKind
   ) {
-    if (viewState.panelCurrentStateKind == initialStateKind) {
+    if (panelCurrentStateKind == initialStateKind) {
       return
     }
 
@@ -565,20 +597,20 @@ class KurobaBottomPanel @JvmOverloads constructor(
       else -> throw NotImplementedError("Not implemented for state: $initialStateKind")
     }
 
-    bottomPanelInitializationListeners.forEach { func -> func(controllerType) }
-    bottomPanelInitializationListeners.clear()
-
     bottomPanelStateUpdatesListeners.forEach { func -> func(controllerType, initialStateKind) }
     bottomPanelHeightChangeListeners.forEach { func ->
       func(controllerType, childPanelContract.getCurrentHeight())
     }
 
-    viewState.panelCurrentStateKind = initialStateKind
+    panelCurrentStateKind = initialStateKind
     childPanelContract.enableOrDisableControls(enable = true)
+
+    bottomPanelInitializationListeners.forEach { func -> func(controllerType) }
+    bottomPanelInitializationListeners.clear()
   }
 
   private suspend fun initBottomHiddenPanel(): ChildPanelContract {
-    val currentChildPanel = panelContainer.getChildAtOrNull(0)
+    val currentChildPanel = getTopChildPanel<ChildPanelContract>()
     if (currentChildPanel is KurobaBottomHiddenPanel) {
       return currentChildPanel
     }
@@ -604,7 +636,7 @@ class KurobaBottomPanel @JvmOverloads constructor(
   }
 
   private suspend fun initBottomNavViewPanel(): ChildPanelContract {
-    val currentChildPanel = panelContainer.getChildAtOrNull(0)
+    val currentChildPanel = getTopChildPanel<ChildPanelContract>()
     if (currentChildPanel is KurobaBottomNavPanel) {
       return currentChildPanel
     }
@@ -639,14 +671,11 @@ class KurobaBottomPanel @JvmOverloads constructor(
   }
 
   private fun getCurrentChildPanelOrNull(): ChildPanelContract? {
-    val childView = panelContainer.getChildAtOrNull(0)
-      ?: return null
-
-    return childView as ChildPanelContract
+    return getTopChildPanel()
   }
 
   private fun log(message: String) {
-    Timber.tag(TAG).d(message)
+    Timber.tag(TAG).d("${controllerType} $message")
   }
 
   companion object {

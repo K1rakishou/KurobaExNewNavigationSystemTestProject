@@ -10,13 +10,10 @@ abstract class BaseViewModel : ViewModel() {
   private val job = SupervisorJob()
   protected val scope = CoroutineScope(job + Dispatchers.Main)
 
-  final override fun onCleared() {
+  override fun onCleared() {
     super.onCleared()
 
     job.cancelChildren()
-    onDestroy()
   }
-
-  abstract fun onDestroy()
 
 }

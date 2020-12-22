@@ -5,7 +5,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import androidx.recyclerview.widget.RecyclerView
 import com.bluelinelabs.conductor.RouterTransaction
 import com.github.k1rakishou.kurobanewnavstacktest.R
 import com.github.k1rakishou.kurobanewnavstacktest.core.base.BaseController
@@ -18,6 +17,10 @@ import com.github.k1rakishou.kurobanewnavstacktest.data.ThreadDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.utils.ChanSettings
 import com.github.k1rakishou.kurobanewnavstacktest.utils.ScreenOrientationUtils
 import com.github.k1rakishou.kurobanewnavstacktest.viewcontroller.SlideModeFabViewControllerCallbacks
+import com.github.k1rakishou.kurobanewnavstacktest.viewstate.getBoardDescriptorOrNull
+import com.github.k1rakishou.kurobanewnavstacktest.viewstate.getThreadDescriptorOrNull
+import com.github.k1rakishou.kurobanewnavstacktest.viewstate.putBoardDescriptor
+import com.github.k1rakishou.kurobanewnavstacktest.viewstate.putThreadDescriptor
 import com.github.k1rakishou.kurobanewnavstacktest.widget.layout.SlidingPaneLayoutEx
 import com.github.k1rakishou.kurobanewnavstacktest.widget.layout.SlidingPaneLayoutSlideHandler
 import com.github.k1rakishou.kurobanewnavstacktest.widget.recycler.PaddingAwareRecyclerView
@@ -117,16 +120,19 @@ class SlideNavController(
   override fun onControllerCreated(savedViewState: Bundle?) {
     super.onControllerCreated(savedViewState)
 
+    val boardDescriptor = args.getBoardDescriptorOrNull()
+    val threadDescriptor = args.getThreadDescriptorOrNull()
+
     catalogControllerContainer.setupChildRouterIfNotSet(
-      RouterTransaction.with(createSlideCatalogController())
+      RouterTransaction.with(createSlideCatalogController(boardDescriptor))
     )
 
     threadControllerContainer.setupChildRouterIfNotSet(
-      RouterTransaction.with(createSlideThreadController())
+      RouterTransaction.with(createSlideThreadController(threadDescriptor))
     )
 
     slidingPaneLayout.setOverhangSize(ChanSettings.OVERHANG_SIZE)
-    slidingPaneLayout.setSlidingPaneLayoutDefaultState()
+    slidingPaneLayout.setSlidingPaneLayoutDefaultState(boardDescriptor, threadDescriptor)
 
     slideModeFabViewControllerCallbacks.onSlidingPaneInitialState(slidingPaneLayout.isOpen)
     slidingPaneLayoutSlideHandler = SlidingPaneLayoutSlideHandler(slidingPaneLayout.isOpen)
@@ -165,7 +171,7 @@ class SlideNavController(
     val catalogController = getCatalogControllerOrNull()
       ?: return
 
-    if (!slidingPaneLayout.isOpen) {
+    if (slidingPaneLayout.slidingEnabled() && !slidingPaneLayout.isOpen) {
       slidingPaneLayout.open()
     }
 
@@ -176,23 +182,23 @@ class SlideNavController(
     val threadController = getThreadControllerOrNull()
       ?: return
 
-    if (slidingPaneLayout.isOpen) {
+    if (slidingPaneLayout.slidingEnabled() && slidingPaneLayout.isOpen) {
       slidingPaneLayout.close()
     }
 
     (threadController as ThreadNavigationContract).openThread(threadDescriptor)
   }
 
-  private fun createSlideThreadController(): SlideThreadController {
-    return SlideThreadController().apply {
+  private fun createSlideThreadController(threadDescriptor: ThreadDescriptor?): SlideThreadController {
+    return SlideThreadController.create(threadDescriptor).apply {
       recyclerViewProvider(this@SlideNavController)
       uiElementsControllerCallbacks(uiElementsControllerCallbacks)
       provideToolbarContract(toolbarContract)
     }
   }
 
-  private fun createSlideCatalogController(): SlideCatalogController {
-    return SlideCatalogController().apply {
+  private fun createSlideCatalogController(boardDescriptor: BoardDescriptor?): SlideCatalogController {
+    return SlideCatalogController.create(boardDescriptor).apply {
       recyclerViewProvider(this@SlideNavController)
       uiElementsControllerCallbacks(uiElementsControllerCallbacks)
       threadNavigationContract(this@SlideNavController)
@@ -200,19 +206,44 @@ class SlideNavController(
     }
   }
 
-  private fun SlidingPaneLayoutEx.setSlidingPaneLayoutDefaultState() {
-    check(openPane()) { "Failed to open pane" }
+  private fun SlidingPaneLayoutEx.setSlidingPaneLayoutDefaultState(
+    boardDescriptor: BoardDescriptor?,
+    threadDescriptor: ThreadDescriptor?
+  ) {
+    val isNowOpen = openOrCloseSlidingPane(threadDescriptor)
+    fireSlidingPaneListeners(isNowOpen)
+  }
 
-    fireSlidingPaneListeners(isOpen)
+  private fun SlidingPaneLayoutEx.openOrCloseSlidingPane(
+    threadDescriptor: ThreadDescriptor?
+  ): Boolean {
+    if (threadDescriptor == null) {
+      // Open the sliding pane (show catalog)
+      if (!isOpen) {
+        check(slidingEnabled()) { "Sliding must not be disabled here" }
+        check(openPane()) { "Failed to open pane" }
+      }
+
+      return true
+    }
+
+    // Close sliding pane (show thread)
+    if (isOpen) {
+      check(closePane())
+    }
+
+    return false
   }
 
   private fun fireSlidingPaneListeners(open: Boolean) {
     if (open) {
+      // Catalog controller focued
       getThreadControllerOrNull()?.onLostFocus()
       getCatalogControllerOrNull()?.onGainedFocus()
 
       slideCatalogUiElementsControllerCallbacks.onControllerGainedFocus(isCatalogController = true)
     } else {
+      // Thread controller focused
       getCatalogControllerOrNull()?.onLostFocus()
       getThreadControllerOrNull()?.onGainedFocus()
 
@@ -241,5 +272,13 @@ class SlideNavController(
     private const val TAG = "SlideNavController"
 
     val CONTROLLER_TAG = ControllerTag("SlideNavControllerTag")
+
+    fun create(boardDescriptor: BoardDescriptor?, threadDescriptor: ThreadDescriptor?): SlideNavController {
+      val args = Bundle()
+      args.putBoardDescriptor(boardDescriptor)
+      args.putThreadDescriptor(threadDescriptor)
+
+      return SlideNavController(args)
+    }
   }
 }

@@ -975,7 +975,15 @@ public class SlidingPaneLayoutEx extends ViewGroup {
      * @return true if sliding panels are completely open
      */
     public boolean isOpen() {
+        if (mFirstLayout) {
+            return mSlideOffset == 1;
+        }
+
         return !mCanSlide || mSlideOffset == 1;
+    }
+
+    public boolean slidingEnabled() {
+        return slidingEnabled;
     }
 
     /**
