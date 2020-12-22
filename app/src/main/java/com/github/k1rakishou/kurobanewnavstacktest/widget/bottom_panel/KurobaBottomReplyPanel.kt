@@ -5,8 +5,8 @@ import android.content.Context
 import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.EditText
-import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -18,8 +18,8 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.kurobanewnavstacktest.R
-import com.github.k1rakishou.kurobanewnavstacktest.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.kurobanewnavstacktest.controller.ControllerType
+import com.github.k1rakishou.kurobanewnavstacktest.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.kurobanewnavstacktest.data.ReplyAttachmentFile
 import com.github.k1rakishou.kurobanewnavstacktest.epoxy.EpoxyAttachNewFileButtonView
 import com.github.k1rakishou.kurobanewnavstacktest.epoxy.EpoxyAttachNewFileButtonViewModel_
@@ -77,7 +77,7 @@ class KurobaBottomReplyPanel(
         else -> throw IllegalStateException("View is not measured!")
       }
 
-      updateLayoutParams<FrameLayout.LayoutParams> { height = getCurrentHeight() }
+      updateLayoutParams<ViewGroup.LayoutParams> { height = getCurrentHeight() }
 
       updateLayoutManagerAndSpanCount(replyAttachmentsRecyclerViewWidth)
       updateReplyPanelBottomPartHeight(replyPanelTopPartHeight)
@@ -163,7 +163,7 @@ class KurobaBottomReplyPanel(
     val replyPanelBottomPartHeight = availableVerticalSpace - replyPanelTopPartHeight
     check(replyPanelBottomPartHeight > 0) { "Bad recyclerHeight: $replyPanelBottomPartHeight" }
 
-    replyPanelBottomPart.updateLayoutParams<ConstraintLayout.LayoutParams> {
+    replyPanelBottomPart.updateLayoutParams<ViewGroup.LayoutParams> {
       height = replyPanelBottomPartHeight
     }
   }
@@ -325,7 +325,7 @@ class KurobaBottomReplyPanel(
   }
 
   override suspend fun updateHeight(parentHeight: Int) {
-    replyPanelRoot.updateLayoutParams<LayoutParams> { height = getCurrentHeight() }
+    replyPanelRoot.updateLayoutParams<ViewGroup.LayoutParams> { height = getCurrentHeight() }
     replyPanelRoot.requestLayoutAndAwait()
   }
 
