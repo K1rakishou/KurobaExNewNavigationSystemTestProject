@@ -78,8 +78,9 @@ class SplitThreadController(
   private fun initBottomPanel() {
     bottomPanel.attachFab(threadFab)
     bottomPanel.addOnBottomPanelInitialized {
-      splitFabViewController.onBottomPanelInitialized(controllerType)
+      // Must be called before onBottomPanelInitialized
       threadFab.initialized()
+      splitFabViewController.onBottomPanelInitialized(controllerType)
     }
     bottomPanel.addOnBottomPanelStateChanged { panelControllerType, newState ->
       check(panelControllerType == controllerType) {

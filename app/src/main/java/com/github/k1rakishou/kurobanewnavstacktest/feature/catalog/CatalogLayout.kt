@@ -70,6 +70,11 @@ class CatalogLayout @JvmOverloads constructor(
     this.mainControllerViewModel = mainControllerViewModel
 
     kurobaCoroutineScope.launch {
+      // HACK! We want to first subscribe to flow, and then call restoreLastToolbarActions().
+      // If we call restoreLastToolbarActions() after collect() flow won't have any subscribers so
+      // all even emitted by the result of calling restoreLastToolbarActions() will be ignored.
+      kurobaCoroutineScope.launch { toolbarContract.restoreLastToolbarActions(KurobaToolbarType.Catalog) }
+
       toolbarContract.listenForToolbarActions(KurobaToolbarType.Catalog)
         .collect { toolbarAction -> onToolbarAction(toolbarAction) }
     }
@@ -122,31 +127,35 @@ class CatalogLayout @JvmOverloads constructor(
         throw IllegalStateException("ToolbarAction.Thread does not belong to CatalogController")
       }
       is ToolbarAction.Search -> {
-        val searchAction = toolbarAction as ToolbarAction.Search
-
-        when (searchAction) {
-          is ToolbarAction.Search.SearchShown -> {
-            uiElementsControllerCallbacks?.toolbarSearchVisibilityChanged(
-              controllerType = ControllerType.Catalog,
-              toolbarSearchVisible = true
-            )
-
-            catalogControllerCallbacks?.onSearchToolbarShown()
-          }
-          is ToolbarAction.Search.SearchHidden -> {
-            uiElementsControllerCallbacks?.toolbarSearchVisibilityChanged(
-              controllerType = ControllerType.Catalog,
-              toolbarSearchVisible = false
-            )
-
-            catalogControllerCallbacks?.onSearchToolbarHidden()
-          }
-          is ToolbarAction.Search.QueryUpdated -> {
-            Timber.tag(TAG).d("QueryUpdated")
-          }
+        when (val searchAction = toolbarAction as ToolbarAction.Search) {
+          is ToolbarAction.Search.SearchShown -> onToolbarSearchShown(searchAction)
+          is ToolbarAction.Search.SearchHidden -> onToolbarSearchHidden(searchAction)
+          is ToolbarAction.Search.QueryUpdated -> onToolbarSearchQueryUpdated(searchAction)
         }
       }
     }
+  }
+
+  private fun onToolbarSearchQueryUpdated(searchAction: ToolbarAction.Search) {
+    Timber.tag(TAG).d("QueryUpdated")
+  }
+
+  private fun onToolbarSearchHidden(searchAction: ToolbarAction.Search) {
+    uiElementsControllerCallbacks?.toolbarSearchVisibilityChanged(
+      controllerType = ControllerType.Catalog,
+      toolbarSearchVisible = false
+    )
+
+    catalogControllerCallbacks?.onSearchToolbarHidden()
+  }
+
+  private fun onToolbarSearchShown(searchAction: ToolbarAction.Search) {
+    uiElementsControllerCallbacks?.toolbarSearchVisibilityChanged(
+      controllerType = ControllerType.Catalog,
+      toolbarSearchVisible = true
+    )
+
+    catalogControllerCallbacks?.onSearchToolbarShown()
   }
 
   fun openBoard(boardDescriptor: BoardDescriptor) {

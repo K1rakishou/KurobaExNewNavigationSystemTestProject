@@ -78,8 +78,9 @@ class SplitUiElementsController(
     bottomPanel.attachFab(catalogFab)
 
     bottomPanel.addOnBottomPanelInitialized {
-      splitFabViewController.onBottomPanelInitialized(ControllerType.Catalog)
+      // Must be called before onBottomPanelInitialized
       catalogFab.initialized()
+      splitFabViewController.onBottomPanelInitialized(ControllerType.Catalog)
 
       onBottomPanelInitialized()
     }

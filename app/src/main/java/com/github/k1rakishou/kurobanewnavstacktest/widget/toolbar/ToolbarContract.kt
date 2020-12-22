@@ -8,13 +8,14 @@ interface ToolbarContract : CollapsableView {
   fun setToolbarVisibility(visibility: Int)
   fun onBackPressed(): Boolean
 
+  fun restoreLastToolbarActions(toolbarType: KurobaToolbarType)
   fun showDefaultToolbar(toolbarType: KurobaToolbarType)
   fun showSearchToolbar(toolbarType: KurobaToolbarType)
   fun closeSearchToolbar(toolbarType: KurobaToolbarType)
+
   fun closeToolbar(toolbarType: KurobaToolbarType)
 
   fun listenForToolbarActions(toolbarType: KurobaToolbarType): Flow<ToolbarAction>
-
   fun setTitle(toolbarType: KurobaToolbarType, title: String)
   fun setSubTitle(subtitle: String)
 }

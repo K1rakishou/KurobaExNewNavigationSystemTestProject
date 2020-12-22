@@ -99,6 +99,17 @@ class SlideToolbar @JvmOverloads constructor(
     translationY = newTranslationY
   }
 
+  override fun restoreLastToolbarActions(toolbarType: KurobaToolbarType) {
+    when (toolbarType) {
+      KurobaToolbarType.Catalog -> {
+        actualCatalogToolbar.restoreLastToolbarActions(toolbarType)
+      }
+      KurobaToolbarType.Thread -> {
+        actualThreadToolbar.restoreLastToolbarActions(toolbarType)
+      }
+    }.exhaustive
+  }
+
   override fun showSearchToolbar(toolbarType: KurobaToolbarType) {
     when (toolbarType) {
       KurobaToolbarType.Catalog -> {

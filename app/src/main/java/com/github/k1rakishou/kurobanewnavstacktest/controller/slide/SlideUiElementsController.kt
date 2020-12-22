@@ -88,9 +88,10 @@ class SlideUiElementsController(
     bottomPanel.attachFab(slideControllerFab)
 
     bottomPanel.addOnBottomPanelInitialized { controllerType ->
+      // Must be called before onBottomPanelInitialized
+      slideControllerFab.initialized()
       // Doesn't matter what we use here since Slide layout has only one bottom panel
       slideFabViewController.onBottomPanelInitialized(controllerType)
-      slideControllerFab.initialized()
 
       onBottomPanelInitialized()
     }

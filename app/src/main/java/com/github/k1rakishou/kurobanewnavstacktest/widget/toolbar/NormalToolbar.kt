@@ -88,6 +88,10 @@ class NormalToolbar @JvmOverloads constructor(
     translationY = newTranslationY
   }
 
+  override fun restoreLastToolbarActions(kurobaToolbarType: KurobaToolbarType) {
+    actualToolbar.restoreLastToolbarActions(kurobaToolbarType)
+  }
+
   override fun showSearchToolbar(toolbarType: KurobaToolbarType) {
     actualToolbar.pushNewToolbarStateClass(toolbarType, ToolbarStateClass.Search)
   }

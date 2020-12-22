@@ -80,6 +80,11 @@ class ThreadLayout @JvmOverloads constructor(
     kurobaCoroutineScope.launch { reloadThread() }
 
     kurobaCoroutineScope.launch {
+      // HACK! We want to first subscribe to flow, and then call restoreLastToolbarActions().
+      // If we call restoreLastToolbarActions() after collect() flow won't have any subscribers so
+      // all even emitted by the result of calling restoreLastToolbarActions() will be ignored.
+      kurobaCoroutineScope.launch { toolbarContract.restoreLastToolbarActions(KurobaToolbarType.Thread) }
+
       toolbarContract.listenForToolbarActions(KurobaToolbarType.Thread)
         .collect { toolbarAction -> onToolbarAction(toolbarAction) }
     }
@@ -180,33 +185,39 @@ class ThreadLayout @JvmOverloads constructor(
         // no-op
       }
       is ToolbarAction.Search -> {
-        val searchAction = toolbarAction as ToolbarAction.Search
-
-        when (searchAction) {
-          is ToolbarAction.Search.SearchShown -> {
-            Timber.tag(TAG).d("SearchShown")
-            uiElementsControllerCallbacks?.toolbarSearchVisibilityChanged(
-              controllerType = ControllerType.Thread,
-              toolbarSearchVisible = true
-            )
-
-            threadControllerCallbacks?.onSearchToolbarShown()
-          }
-          is ToolbarAction.Search.SearchHidden -> {
-            Timber.tag(TAG).d("SearchHidden")
-            uiElementsControllerCallbacks?.toolbarSearchVisibilityChanged(
-              controllerType = ControllerType.Thread,
-              toolbarSearchVisible = false
-            )
-
-            threadControllerCallbacks?.onSearchToolbarHidden()
-          }
-          is ToolbarAction.Search.QueryUpdated -> {
-            Timber.tag(TAG).d("QueryUpdated")
-          }
+        when (val searchAction = toolbarAction as ToolbarAction.Search) {
+          is ToolbarAction.Search.SearchShown -> onToolbarSearchShown(searchAction)
+          is ToolbarAction.Search.SearchHidden -> onToolbarSearchHidden(searchAction)
+          is ToolbarAction.Search.QueryUpdated -> onToolbarSearchQueryUpdated(searchAction)
         }
       }
     }
+  }
+
+  private fun onToolbarSearchQueryUpdated(searchAction: ToolbarAction.Search) {
+    Timber.tag(TAG).d("QueryUpdated")
+
+    // TODO(KurobaEx):
+  }
+
+  private fun onToolbarSearchHidden(searchAction: ToolbarAction.Search) {
+    Timber.tag(TAG).d("SearchHidden")
+    uiElementsControllerCallbacks?.toolbarSearchVisibilityChanged(
+      controllerType = ControllerType.Thread,
+      toolbarSearchVisible = false
+    )
+
+    threadControllerCallbacks?.onSearchToolbarHidden()
+  }
+
+  private fun onToolbarSearchShown(searchAction: ToolbarAction.Search) {
+    Timber.tag(TAG).d("SearchShown")
+    uiElementsControllerCallbacks?.toolbarSearchVisibilityChanged(
+      controllerType = ControllerType.Thread,
+      toolbarSearchVisible = true
+    )
+
+    threadControllerCallbacks?.onSearchToolbarShown()
   }
 
   private fun applyInsetsForRecyclerView() {

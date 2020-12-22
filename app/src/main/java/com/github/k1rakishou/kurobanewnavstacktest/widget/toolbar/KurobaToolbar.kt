@@ -139,6 +139,25 @@ class KurobaToolbar @JvmOverloads constructor(
     )
   }
 
+  fun restoreLastToolbarActions(toolbarType: KurobaToolbarType) {
+    val toolbarStateClass = toolbarViewModel.getToolbarStateStack(toolbarType).getPrevToolbarStateClass()
+    if (toolbarStateClass == ToolbarStateClass.Uninitialized) {
+      return
+    }
+
+    val toolbarStateContract = toolbarViewModel.getToolbarState<ToolbarStateContract>(
+      kurobaToolbarType,
+      toolbarStateClass
+    )
+
+    val lastToolbarActions = toolbarStateContract.restoreLastToolbarActions(toolbarType)
+    if (lastToolbarActions.isEmpty()) {
+      return
+    }
+
+    lastToolbarActions.forEach { toolbarAction -> toolbarViewModel.fireAction(toolbarAction) }
+  }
+
   override fun popToolbarStateClass(
     kurobaToolbarType: KurobaToolbarType,
     toolbarStateClass: ToolbarStateClass

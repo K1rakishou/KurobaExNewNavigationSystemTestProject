@@ -1,31 +1,26 @@
 package com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar
 
-import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.catalog.KurobaCatalogToolbarState
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.search.KurobaSearchToolbarState
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.thread.KurobaThreadToolbarState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.BroadcastChannel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.distinctUntilChangedBy
-import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.*
 import java.lang.IllegalStateException
 
 class KurobaToolbarViewModel : ViewModel() {
   private val stateMap = mutableMapOf<KurobaToolbarType, MutableMap<ToolbarStateClass, ToolbarStateContract>>()
   private val toolbarStateStackMap = mutableMapOf<KurobaToolbarType, KurobaToolbarStateStack>()
 
-  @OptIn(ExperimentalCoroutinesApi::class)
-  private val toolbarStateChangeFlow = BroadcastChannel<NewToolbarStateUpdate>(capacity = 128)
-  @OptIn(ExperimentalCoroutinesApi::class)
-  private val toolbarActionFlow = BroadcastChannel<ToolbarAction>(capacity = 128)
+  private val toolbarStateChangeFlow =  MutableSharedFlow<NewToolbarStateUpdate>(
+    replay = 1,
+    extraBufferCapacity = 1024
+  )
 
-  @VisibleForTesting
-  fun getStateMap() = stateMap
-  @VisibleForTesting
-  fun getToolbarStateStackMap() = stateMap
+  private val toolbarActionFlow = MutableSharedFlow<ToolbarAction>(
+    replay = 1,
+    extraBufferCapacity = 1024
+  )
 
   fun initStateStackForToolbar(kurobaToolbarType: KurobaToolbarType) {
     if (toolbarStateStackMap.containsKey(kurobaToolbarType)) {
@@ -43,18 +38,18 @@ class KurobaToolbarViewModel : ViewModel() {
 
   @OptIn(ExperimentalCoroutinesApi::class)
   fun listenForToolbarStateChanges(): Flow<NewToolbarStateUpdate> {
-    return toolbarStateChangeFlow.asFlow()
+    return toolbarStateChangeFlow.asSharedFlow()
   }
 
   fun listenForToolbarActions(toolbarType: KurobaToolbarType): Flow<ToolbarAction> {
     return toolbarActionFlow
-      .asFlow()
+      .asSharedFlow()
       .filter { toolbarAction -> toolbarAction.toolbarType == toolbarType }
       .distinctUntilChangedBy { toolbarAction -> toolbarAction }
   }
 
   fun fireAction(toolbarAction: ToolbarAction) {
-    toolbarActionFlow.offer(toolbarAction)
+    toolbarActionFlow.tryEmit(toolbarAction)
   }
 
   fun newState(toolbarType: KurobaToolbarType, newStateUpdate: ToolbarStateUpdate) {
@@ -69,7 +64,7 @@ class KurobaToolbarViewModel : ViewModel() {
       newStateUpdate.toolbarStateClass
     )
 
-    toolbarStateChangeFlow.offer(newToolbarStateUpdate)
+    toolbarStateChangeFlow.tryEmit(newToolbarStateUpdate)
   }
 
   fun resetState(toolbarType: KurobaToolbarType, toolbarStateClass: ToolbarStateClass) {

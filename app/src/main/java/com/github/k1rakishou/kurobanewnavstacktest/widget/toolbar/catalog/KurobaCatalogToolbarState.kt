@@ -1,6 +1,8 @@
 package com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.catalog
 
 import com.github.k1rakishou.kurobanewnavstacktest.utils.exhaustive
+import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.KurobaToolbarType
+import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarAction
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarStateContract
 import com.github.k1rakishou.kurobanewnavstacktest.widget.toolbar.ToolbarStateUpdate
 
@@ -33,6 +35,10 @@ data class KurobaCatalogToolbarState(
         enableControls = true
       }
     }.exhaustive
+  }
+
+  override fun restoreLastToolbarActions(toolbarType: KurobaToolbarType): List<ToolbarAction> {
+    return emptyList()
   }
 
   override fun reset() {
